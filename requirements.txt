@@ -8,3 +8,6 @@ flask-jwt-extended
 passlib~=1.7.4
 Flask-Mail
 itsdangerous~=2.1.2
+flask-migrate
+gunicorn
+psycopg2-binary

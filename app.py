@@ -4,7 +4,6 @@ from dotenv import load_dotenv, find_dotenv
 import os
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
-
 from routes.customer_routes import customer_api
 from routes.customer_admin_routes import customer_admin_api
 from routes.payroll_routes import payroll_api
@@ -14,9 +13,8 @@ from routes.employee_admin_routes import employee_admin_api
 from routes.inventory_admin_routes import inventory_admin_api
 from routes.service_routes import service_api
 from routes.employee_routes import employee_api
-
 from models import db
-
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 
@@ -31,7 +29,6 @@ app.register_blueprint(inventory_admin_api)
 app.register_blueprint(service_api)
 app.register_blueprint(employee_api)
 
-
 # os environment here
 load_dotenv(find_dotenv())
 
@@ -44,8 +41,9 @@ MY_PASSWORD = os.environ.get("MY_PASSWORD")
 mail = Mail(app)
 
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI","sqlite:///posts.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///csms.db")
 db.init_app(app)
+migrate = Migrate(app, db)
 
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 jwt = JWTManager(app)
@@ -61,6 +59,3 @@ def home():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5013)
-
-
-
