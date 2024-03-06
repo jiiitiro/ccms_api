@@ -47,7 +47,9 @@ class Employee(db.Model):
     password = db.Column(db.String(200), nullable=False)
     phone = db.Column(db.String(11), nullable=False)
     position = db.Column(db.String(100), nullable=False)
-    hire_date = db.Column(db.Date, nullable=False)
+    hire_date = db.Column(db.Date, nullable=True)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
 
     attendances = db.relationship('Attendance', back_populates='employee', lazy=True)
     schedules = db.relationship('Schedule', back_populates='employee', lazy=True)
@@ -108,6 +110,7 @@ class Service(db.Model):
     __tablename__ = 'service_tbl'
     service_id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(255), nullable=False)
+    category = db.Column(db.String(255), nullable=False)
     duration = db.Column(db.Float, nullable=False)  # in hours
     price = db.Column(db.Float, nullable=False)
 
