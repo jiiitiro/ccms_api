@@ -8,6 +8,7 @@ class Customer(db.Model):
     first_name = db.Column(db.String(250), nullable=False)
     middle_name = db.Column(db.String(250), nullable=True)
     last_name = db.Column(db.String(250), nullable=False)
+    address = db.Column(db.String(250), nullable=False)
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(200), nullable=False)
     phone = db.Column(db.String(11), nullable=False)
@@ -41,6 +42,7 @@ class Employee(db.Model):
     first_name = db.Column(db.String(250), nullable=False)
     middle_name = db.Column(db.String(250), nullable=True)
     last_name = db.Column(db.String(250), nullable=False)
+    address = db.Column(db.String(250), nullable=False)
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(200), nullable=False)
     phone = db.Column(db.String(11), nullable=False)
@@ -144,46 +146,56 @@ class Billing(db.Model):
 
 
 # Define the payroll_login_tbl
-class PayrollAdminLogin(db.Model):
+class BillingAdminLogin(db.Model):
     __tablename__ = "payroll_admin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
 
 
-class BillingAdminLogin(db.Model):
+class PayrollAdminLogin(db.Model):
     __tablename__ = "billing_admin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
 
 
 class EmployeeAdminLogin(db.Model):
     __tablename__ = "employee_admin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
 
 
 class CustomerAdminLogin(db.Model):
     __tablename__ = "customer_admin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
 
 
 class InventoryAdminLogin(db.Model):
     __tablename__ = "inventory_admin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)

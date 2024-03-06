@@ -14,9 +14,12 @@ customer_api = Blueprint('customer_api', __name__)
 
 # api-key
 API_KEY = os.environ.get('API_KEY')
+
 # email-smtp
 MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
+
+BASE_URL = "http://127.0.0.1:5013"
 
 s = URLSafeTimedSerializer('Thisisasecret!')
 
@@ -34,6 +37,7 @@ def get_all_customer_data():
                 "first_name": data.first_name,
                 "middle_name": data.middle_name,
                 "last_name": data.last_name,
+                "address": data.address,
                 "email": data.email,
                 "phone": data.phone,
                 "is_active": data.is_active,
@@ -58,6 +62,7 @@ def get_specific_customer_data(customer_id):
                 "first_name": customer_data.first_name,
                 "middle_name": customer_data.middle_name,
                 "last_name": customer_data.last_name,
+                "address": customer_data.address,
                 "email": customer_data.email,
                 "phone": customer_data.phone,
                 "is_active": customer_data.is_active,
@@ -85,11 +90,11 @@ def register_customer():
             if existing_customer:
                 return jsonify(error={"message": "Email already exists. Please use a different email address."}), 400
 
-            recipient_email = request.form['email']
+            recipient_email = request.form.get("email")
             token = s.dumps(recipient_email, salt='email-confirm')
 
             subject = 'Confirm Email'
-            body = f"Click the following link to reset your password: http://127.0.0.1:5013/customer/confirm_email/{token}"
+            body = f"Click the following link to confirm your email: {BASE_URL}/customer/confirm-email/{token}"
 
             msg = MIMEText(body)
             msg['Subject'] = subject
@@ -97,15 +102,21 @@ def register_customer():
             msg['To'] = recipient_email
 
             # Connect to the SMTP server and send the email
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()
-                server.login(MY_EMAIL, MY_PASSWORD)
-                server.sendmail(MY_EMAIL, recipient_email, msg.as_string())
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.starttls()
+                    server.login(MY_EMAIL, MY_PASSWORD)
+                    server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
+
+                print("Email notification sent successfully")
+            except Exception as e:
+                print(f"Failed to send email notification. Error: {str(e)}")
 
             new_customer = Customer(
                 first_name=request.form.get("first_name"),
                 middle_name=request.form.get("middle_name"),
                 last_name=request.form.get("last_name"),
+                address=request.form.get("address"),
                 email=request.form.get("email"),
                 password=pbkdf2_sha256.hash(request.form.get("password")),
                 phone=request.form.get("phone"),
@@ -119,11 +130,11 @@ def register_customer():
                     "first_name": new_customer.first_name,
                     "middle_name": new_customer.middle_name,
                     "last_name": new_customer.last_name,
+                    "address": new_customer.address,
                     "email": new_customer.email,
                     "phone": new_customer.phone,
                     "is_active": new_customer.is_active,
                     "email_confirm": new_customer.email_confirm,
-                    "password": new_customer.password,
                 }
             ]
 
@@ -138,10 +149,10 @@ def register_customer():
 
 
 # email confirmation
-@customer_api.get("/customer/confirm_email/<token>")
+@customer_api.get("/customer/confirm-email/<token>")
 def confirm_email(token):
     try:
-        email = s.loads(token, salt='email-confirm', max_age=3600)
+        email = s.loads(token, salt='email-confirm', max_age=1800)
 
         # Find the customer with the confirmed email
         customer = Customer.query.filter_by(email=email).first()
@@ -167,6 +178,10 @@ def login_customer():
         try:
             customer = Customer.query.filter(Customer.email == request.form.get("email")).first()
 
+            if not customer:
+                return jsonify(error={"message": "Email doesn't exists in the database. "
+                                                 "Please use a registered email address."}), 400
+
             if not customer.email_confirm:
                 return jsonify(error={"message": "Confirm your email before logging in."}), 401
 
@@ -182,7 +197,7 @@ def login_customer():
             return jsonify(error={"message": "Invalid credentials."}), 401
         except Exception as e:
             db.session.rollback()
-            return jsonify(error={"Message": f"Failed to register a new customer. Error: {str(e)}"}), 500
+            return jsonify(error={"Message": f"Failed to login. Error: {str(e)}"}), 500
     else:
         return jsonify(
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
@@ -210,8 +225,9 @@ def send_email_notification(old_email, new_email):
         print(f"Failed to send email notification. Error: {str(e)}")
 
 
-@customer_api.put("/customer/<int:customer_id>")
-def update_customer(customer_id):
+# NOT YET IMPLEMENTED
+@customer_api.put("/customer/<int:customer_id>/11")
+def update_customer1(customer_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
@@ -280,7 +296,7 @@ def update_customer(customer_id):
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-@customer_api.post("/customer/forgot_password")
+@customer_api.post("/customer/reset-password")
 def customer_forgot_password():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -307,13 +323,10 @@ def customer_forgot_password():
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-def generate_random_token(length=32):
-    return secrets.token_hex(length)
-
-
 def send_reset_email(email, reset_token):
     subject = 'Password Reset'
-    body = f"Click the following link to reset your password: http://127.0.0.1:5013/customer/reset_password/{reset_token}"
+    body = (f"Click the following link to reset your password: "
+            f"http://127.0.0.1:5013/customer/reset-password/{reset_token}")
 
     msg = MIMEText(body)
     msg['Subject'] = subject
@@ -332,11 +345,11 @@ def send_reset_email(email, reset_token):
         print(f"Failed to send reset email. Error: {str(e)}")
 
 
-@customer_api.route("/customer/reset_password/<token>", methods=['GET', 'POST'])
-def customer_link_change_password(token):
+@customer_api.route("/customer/reset-password/<token>", methods=['GET', 'POST'])
+def customer_link_forgot_password(token):
     try:
 
-        email = s.loads(token, salt='password-reset', max_age=3600)
+        email = s.loads(token, salt='password-reset', max_age=1800)
 
         # Find the customer with the confirmed email
         customer = Customer.query.filter_by(email=email).first()
@@ -370,4 +383,86 @@ def delete_customer_data(customer_id):
     else:
         return jsonify(
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+
+@customer_api.patch('/customer/<int:customer_id>')
+def update_customer(customer_id):
+    api_key_header = request.headers.get("x-api-key")
+    if api_key_header == API_KEY:
+        try:
+            customer_to_update = Customer.query.filter_by(customer_id=customer_id).first()
+
+            if customer_to_update:
+                # Get the fields to update from the form data
+                update_data = {'first_name': request.form.get('first_name', customer_to_update.first_name),
+                               'middle_name': request.form.get('middle_name', customer_to_update.middle_name),
+                               'last_name': request.form.get('last_name', customer_to_update.last_name),
+                               'address': request.form.get('address', customer_to_update.address),
+                               'phone': request.form.get('phone', customer_to_update.phone)}
+
+                # Update the customer fields
+                for key, value in update_data.items():
+                    setattr(customer_to_update, key, value)
+
+                db.session.commit()
+
+                updated_customer_data = {
+                    "customer_id": customer_to_update.customer_id,
+                    "first_name": customer_to_update.first_name,
+                    "middle_name": customer_to_update.middle_name,
+                    "last_name": customer_to_update.last_name,
+                    "address": customer_to_update.address,
+                    "email": customer_to_update.email,
+                    "phone": customer_to_update.phone,
+                    "is_active": customer_to_update.is_active,
+                    "email_confirm": customer_to_update.email_confirm,
+                }
+
+                return jsonify(success={"message": "Customer data updated successfully",
+                                        "customer_data": updated_customer_data}), 200
+            else:
+                return jsonify(error={"message": "Customer not found"}), 404
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify(error={"message": f"Failed to update customer data. Error: {str(e)}"}), 500
+    else:
+        return jsonify(
+            error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+
+@customer_api.put("/customer/change-password/<int:customer_id>")
+def user_change_password(customer_id):
+    api_key_header = request.headers.get("x-api-key")
+    if api_key_header == API_KEY:
+        try:
+            # Assuming you have a CustomerLogin model
+            customer_to_change_pass = Customer.query.filter_by(customer_id=customer_id).first()
+
+            if customer_to_change_pass:
+
+                # Validate old password
+                old_password = request.form.get("old_password")
+                if old_password and not pbkdf2_sha256.verify(old_password, customer_to_change_pass.password):
+                    return jsonify(error={"message": "Incorrect old password."}), 400
+
+                # Update the password if a new password is provided
+                new_password = request.form.get("new_password")
+                if new_password:
+                    customer_to_change_pass.password = pbkdf2_sha256.hash(new_password)
+
+                # Commit the changes to the database
+                db.session.commit()
+
+                return jsonify(success={"message": "Successfully change the password."}), 200
+            else:
+                return jsonify(error={"message": "User not found"}), 404
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify(error={"message": f"Failed to update customer password. Error: {str(e)}"}), 500
+    else:
+        return jsonify(
+            error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
 
