@@ -10,6 +10,7 @@ from routes.customer_admin_routes import customer_admin_api
 from routes.payroll_routes import payroll_api
 from routes.payroll_admin_routes import payroll_admin_api
 from routes.billing_admin_routes import billing_admin_api
+from routes.employee_admin_routes import employee_admin_api
 
 from models import db
 
@@ -22,6 +23,7 @@ app.register_blueprint(customer_admin_api)
 app.register_blueprint(payroll_api)
 app.register_blueprint(payroll_admin_api)
 app.register_blueprint(billing_admin_api)
+app.register_blueprint(employee_admin_api)
 
 
 # os environment here

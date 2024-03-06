@@ -234,7 +234,7 @@ def delete_data(login_id):
         if cust_admin_to_delete:
             db.session.delete(cust_admin_to_delete)
             db.session.commit()
-            return jsonify(success={"Success": "Successfully deleted the customer admin login data."}), 200
+            return jsonify(success={"Success": "Successfully deleted admin login data."}), 200
         else:
             return jsonify(error={"Not Found": "Sorry a data with that id was not found in the database."}), 404
     else:

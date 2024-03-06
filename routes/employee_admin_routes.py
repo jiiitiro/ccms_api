@@ -1,13 +1,13 @@
 import os
 from flask import Blueprint, request, jsonify, render_template
-from models import db, BillingAdminLogin
+from models import db, EmployeeAdminLogin
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
 import smtplib
 from passlib.hash import pbkdf2_sha256
 
-payroll_admin_api = Blueprint('payroll_admin_api', __name__)
+employee_admin_api = Blueprint('employee_admin_api', __name__)
 
 # api-key
 API_KEY = os.environ.get('API_KEY')
@@ -19,11 +19,11 @@ BASE_URL = "http://127.0.0.1:5013"
 s = URLSafeTimedSerializer('Thisisasecret!')
 
 
-@payroll_admin_api.get("/payroll/admin/all")
+@employee_admin_api.get("/employee/admin/all")
 def get_all_data():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        response_data = db.session.execute(db.select(BillingAdminLogin)).scalars().all()
+        response_data = db.session.execute(db.select(EmployeeAdminLogin)).scalars().all()
         user_data = [
             {
                 "login_id": data.login_id,
@@ -41,11 +41,11 @@ def get_all_data():
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
-@payroll_admin_api.get("/payroll/admin/<int:login_id>")
+@employee_admin_api.get("/employee/admin/<int:login_id>")
 def get_specific_data(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        login_data = db.session.query(BillingAdminLogin).filter_by(login_id=login_id).first()
+        login_data = db.session.query(EmployeeAdminLogin).filter_by(login_id=login_id).first()
         if login_data:
             login_data_dict = {
                 "login_id": login_data.login_id,
@@ -64,14 +64,14 @@ def get_specific_data(login_id):
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-@payroll_admin_api.post("/payroll/admin/register")
+@employee_admin_api.post("/employee/admin/register")
 def register():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
 
             # Check if the email already exists
-            existing_customer = BillingAdminLogin.query.filter_by(email=request.form.get("email")).first()
+            existing_customer = EmployeeAdminLogin.query.filter_by(email=request.form.get("email")).first()
 
             if existing_customer:
                 return jsonify(error={"message": "Email already exists. Please use a different email address."}), 400
@@ -81,7 +81,7 @@ def register():
 
             subject = 'Confirm Email'
             body = (f"Click the following link to confirm your email: "
-                    f"{BASE_URL}/payroll/admin/confirm-email/{token}")
+                    f"{BASE_URL}/employee/admin/confirm-email/{token}")
 
             msg = MIMEText(body)
             msg['Subject'] = subject
@@ -99,7 +99,7 @@ def register():
             except Exception as e:
                 print(f"Failed to send email notification. Error: {str(e)}")
 
-            new_login = BillingAdminLogin(
+            new_login = EmployeeAdminLogin(
                 name=request.form.get("name"),
                 email=request.form.get("email"),
                 password=pbkdf2_sha256.hash(request.form.get("password")),
@@ -130,13 +130,13 @@ def register():
 
 
 # Confirm Email
-@payroll_admin_api.get("/payroll/admin/confirm-email/<token>")
+@employee_admin_api.get("/employee/admin/confirm-email/<token>")
 def confirm_email(token):
     try:
         email = s.loads(token, salt='email-confirm', max_age=1800)
 
         # Find the user with the confirmed email
-        user = BillingAdminLogin.query.filter_by(email=email).first()
+        user = EmployeeAdminLogin.query.filter_by(email=email).first()
 
         if user:
             # Update the email_confirm status to True
@@ -152,12 +152,12 @@ def confirm_email(token):
         return '<h1>Token is expired.</h1>'
 
 
-@payroll_admin_api.post("/payroll/admin/login")
+@employee_admin_api.post("/employee/admin/login")
 def login_admin():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
-            user = BillingAdminLogin.query.filter(BillingAdminLogin.email == request.form.get("email")).first()
+            user = EmployeeAdminLogin.query.filter(EmployeeAdminLogin.email == request.form.get("email")).first()
 
             if not user:
                 return jsonify(error={"message": "Email doesn't exists in the database. "
@@ -184,12 +184,12 @@ def login_admin():
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
-@payroll_admin_api.patch("/payroll/admin/<int:login_id>")
+@employee_admin_api.patch("/employee/admin/<int:login_id>")
 def update_user(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
-            user_to_update = BillingAdminLogin.query.filter_by(login_id=login_id).first()
+            user_to_update = EmployeeAdminLogin.query.filter_by(login_id=login_id).first()
 
             if user_to_update:
                 # Get the fields to update from the form data
@@ -225,16 +225,16 @@ def update_user(login_id):
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-@payroll_admin_api.delete("/payroll/admin/<int:login_id>")
+@employee_admin_api.delete("/employee/admin/<int:login_id>")
 def delete_data(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        cust_admin_to_delete = db.session.execute(db.select(BillingAdminLogin).
-                                                  where(BillingAdminLogin.login_id == login_id)).scalar()
+        cust_admin_to_delete = db.session.execute(db.select(EmployeeAdminLogin).
+                                                  where(EmployeeAdminLogin.login_id == login_id)).scalar()
         if cust_admin_to_delete:
             db.session.delete(cust_admin_to_delete)
             db.session.commit()
-            return jsonify(success={"Success": "Successfully deleted admin login data."}), 200
+            return jsonify(success={"Success": "Successfully deleted the admin login data."}), 200
         else:
             return jsonify(error={"Not Found": "Sorry a data with that id was not found in the database."}), 404
     else:
@@ -245,7 +245,7 @@ def delete_data(login_id):
 def send_reset_email(email, reset_token):
     subject = 'Password Reset'
     body = (f"Click the following link to reset your password: "
-            f"http://127.0.0.1:5013/payroll/admin/reset-password/{reset_token}")
+            f"http://127.0.0.1:5013/employee/admin/reset-password/{reset_token}")
 
     msg = MIMEText(body)
     msg['Subject'] = subject
@@ -264,13 +264,13 @@ def send_reset_email(email, reset_token):
         print(f"Failed to send reset email. Error: {str(e)}")
 
 
-@payroll_admin_api.post("/payroll/admin/reset-password")
+@employee_admin_api.post("/employee/admin/reset-password")
 def user_forgot_password():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
             email = request.form.get("email")
-            existing_user = BillingAdminLogin.query.filter_by(email=email).first()
+            existing_user = EmployeeAdminLogin.query.filter_by(email=email).first()
 
             if not existing_user:
                 return jsonify(error={"message": "Email not found in the database. "
@@ -291,14 +291,14 @@ def user_forgot_password():
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-@payroll_admin_api.route("/payroll/admin/reset-password/<token>", methods=['GET', 'POST'])
+@employee_admin_api.route("/employee/admin/reset-password/<token>", methods=['GET', 'POST'])
 def user_link_forgot_password(token):
     try:
 
         email = s.loads(token, salt='password-reset', max_age=1800)
 
         # Find the customer with the confirmed email
-        user_ = BillingAdminLogin.query.filter_by(email=email).first()
+        user_ = EmployeeAdminLogin.query.filter_by(email=email).first()
 
         if user_:
             if request.method == 'GET':
@@ -315,13 +315,13 @@ def user_link_forgot_password(token):
         return '<h1>Token is expired.</h1>'
 
 
-@payroll_admin_api.put("/payroll/admin/change-password/<int:login_id>")
+@employee_admin_api.put("/employee/admin/change-password/<int:login_id>")
 def user_change_password(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
             # Assuming you have a CustomerLogin model
-            user_to_change_pass = BillingAdminLogin.query.filter_by(login_id=login_id).first()
+            user_to_change_pass = EmployeeAdminLogin.query.filter_by(login_id=login_id).first()
 
             if user_to_change_pass:
 
