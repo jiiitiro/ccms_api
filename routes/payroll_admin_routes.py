@@ -58,7 +58,7 @@ def get_specific_data(login_id):
             response = jsonify({"login_data": login_data_dict})
             return response, 200
         else:
-            return jsonify(error={"message": "Customer not found"}), 404
+            return jsonify(error={"message": "login data not found"}), 404
     else:
         return jsonify(
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
@@ -173,7 +173,16 @@ def login_admin():
             if user and pbkdf2_sha256.verify(request.form.get("password"), user.password):
                 # access_token = create_access_token(identity=customer.customer_id)
                 # return {"access_token": access_token}
-                return jsonify(success={"message": "email and password are match."}), 200
+                login_data_dict = {
+                    "login_id": user.login_id,
+                    "name": user.name,
+                    "email": user.email,
+                    "role": user.role,
+                    "is_active": user.is_active,
+                    "email_confirm": user.email_confirm,
+                }
+
+                return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
 
             return jsonify(error={"message": "Invalid credentials."}), 401
         except Exception as e:
