@@ -10,6 +10,8 @@ from flask import Blueprint, request, jsonify
 from models import db, Payroll
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
+from app import APP_BASE_URL
+BASE_URL = "https://csms-rest-api.onrender.com"
 
 
 payroll_api = Blueprint('payroll_api', __name__)
