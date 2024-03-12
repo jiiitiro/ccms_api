@@ -11,9 +11,6 @@ from models import db, Payroll
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 
-
-
-
 payroll_api = Blueprint('payroll_api', __name__)
 
 # api-key

@@ -254,7 +254,7 @@ def delete_data(login_id):
 def send_reset_email(email, reset_token):
     subject = 'Password Reset'
     body = (f"Click the following link to reset your password: "
-            f"http://127.0.0.1:5013/payroll/admin/reset-password/{reset_token}")
+            f"{BASE_URL}payroll/admin/reset-password/{reset_token}")
 
     msg = MIMEText(body)
     msg['Subject'] = subject

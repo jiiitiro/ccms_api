@@ -263,7 +263,7 @@ def employee_forgot_password():
 def send_reset_email(email, reset_token):
     subject = 'Password Reset'
     body = (f"Click the following link to reset your password: "
-            f"http://127.0.0.1:5013/employee/reset-password/{reset_token}")
+            f"{BASE_URL}/employee/reset-password/{reset_token}")
 
     msg = MIMEText(body)
     msg['Subject'] = subject
