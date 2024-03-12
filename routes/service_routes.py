@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
 from models import db, Service
 from itsdangerous import URLSafeTimedSerializer
+from app import BASE_URL
 
 service_api = Blueprint('service_api', __name__)
 
@@ -19,7 +20,7 @@ API_KEY = os.environ.get('API_KEY')
 MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
 
-BASE_URL = "http://127.0.0.1:5013"
+# BASE_URL = "http://127.0.0.1:5013"
 
 s = URLSafeTimedSerializer('Thisisasecret!')
 

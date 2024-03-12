@@ -10,6 +10,7 @@ from flask import Blueprint, request, jsonify
 from models import db, Payroll
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
+from app import BASE_URL
 
 payroll_api = Blueprint('payroll_api', __name__)
 
