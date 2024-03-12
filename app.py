@@ -15,6 +15,7 @@ from routes.service_routes import service_api
 from routes.employee_routes import employee_api
 from models import db
 from flask_migrate import Migrate
+APP_BASE_URL = "https://csms-rest-api.onrender.com"
 
 app = Flask(__name__)
 
