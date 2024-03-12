@@ -10,7 +10,7 @@ from flask import Blueprint, request, jsonify
 from models import db, Employee
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
-from app import BASE_URL
+
 
 employee_api = Blueprint('employee_api', __name__)
 
@@ -20,8 +20,7 @@ API_KEY = os.environ.get('API_KEY')
 # email-smtp
 MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
-
-# BASE_URL = "http://127.0.0.1:5013"
+BASE_URL = os.environ.get("BASE_URL")
 
 s = URLSafeTimedSerializer('Thisisasecret!')
 
