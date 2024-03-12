@@ -11,7 +11,7 @@ from models import db, Employee
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 from app import APP_BASE_URL
-BASE_URL = APP_BASE_URL
+BASE_URL = "https://csms-rest-api.onrender.com"
 
 employee_api = Blueprint('employee_api', __name__)
 

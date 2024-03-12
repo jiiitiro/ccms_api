@@ -9,8 +9,6 @@ from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
 from models import db, Customer
 from itsdangerous import URLSafeTimedSerializer
-from app import APP_BASE_URL
-BASE_URL = APP_BASE_URL
 
 customer_api = Blueprint('customer_api', __name__)
 
@@ -20,6 +18,8 @@ API_KEY = os.environ.get('API_KEY')
 # email-smtp
 MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
+
+BASE_URL = "https://csms-rest-api.onrender.com"
 
 s = URLSafeTimedSerializer('Thisisasecret!')
 

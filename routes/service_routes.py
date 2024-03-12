@@ -10,7 +10,7 @@ from flask import Blueprint, request, jsonify
 from models import db, Service
 from itsdangerous import URLSafeTimedSerializer
 from app import APP_BASE_URL
-BASE_URL = APP_BASE_URL
+BASE_URL = "https://csms-rest-api.onrender.com"
 
 service_api = Blueprint('service_api', __name__)
 

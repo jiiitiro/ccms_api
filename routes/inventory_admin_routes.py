@@ -7,7 +7,7 @@ from itsdangerous import SignatureExpired
 import smtplib
 from passlib.hash import pbkdf2_sha256
 from app import APP_BASE_URL
-BASE_URL = APP_BASE_URL
+BASE_URL = "https://csms-rest-api.onrender.com"
 
 inventory_admin_api = Blueprint('inventory_admin_api', __name__)
 
