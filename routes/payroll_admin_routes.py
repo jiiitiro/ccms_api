@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify, render_template
-from models import db, BillingAdminLogin
+from models import db, PayrollAdminLogin
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
@@ -23,7 +23,7 @@ s = URLSafeTimedSerializer('Thisisasecret!')
 def get_all_data():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        response_data = db.session.execute(db.select(BillingAdminLogin)).scalars().all()
+        response_data = db.session.execute(db.select(PayrollAdminLogin)).scalars().all()
         user_data = [
             {
                 "login_id": data.login_id,
@@ -45,7 +45,7 @@ def get_all_data():
 def get_specific_data(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        login_data = db.session.query(BillingAdminLogin).filter_by(login_id=login_id).first()
+        login_data = db.session.query(PayrollAdminLogin).filter_by(login_id=login_id).first()
         if login_data:
             login_data_dict = {
                 "login_id": login_data.login_id,
@@ -71,7 +71,7 @@ def register():
         try:
 
             # Check if the email already exists
-            existing_customer = BillingAdminLogin.query.filter_by(email=request.form.get("email")).first()
+            existing_customer = PayrollAdminLogin.query.filter_by(email=request.form.get("email")).first()
 
             if existing_customer:
                 return jsonify(error={"message": "Email already exists. Please use a different email address."}), 400
@@ -99,7 +99,7 @@ def register():
             except Exception as e:
                 print(f"Failed to send email notification. Error: {str(e)}")
 
-            new_login = BillingAdminLogin(
+            new_login = PayrollAdminLogin(
                 name=request.form.get("name"),
                 email=request.form.get("email"),
                 password=pbkdf2_sha256.hash(request.form.get("password")),
@@ -136,12 +136,11 @@ def confirm_email(token):
         email = s.loads(token, salt='email-confirm', max_age=1800)
 
         # Find the user with the confirmed email
-        user = BillingAdminLogin.query.filter_by(email=email).first()
+        user = PayrollAdminLogin.query.filter_by(email=email).first()
 
         if user:
             # Update the email_confirm status to True
             user.email_confirm = True
-            user.is_active = True
             db.session.commit()
 
             return '<h1>Email Confirm Successfully!</h1>'
@@ -157,7 +156,7 @@ def login_admin():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
-            user = BillingAdminLogin.query.filter(BillingAdminLogin.email == request.form.get("email")).first()
+            user = PayrollAdminLogin.query.filter(PayrollAdminLogin.email == request.form.get("email")).first()
 
             if not user:
                 return jsonify(error={"message": "Email doesn't exists in the database. "
@@ -198,7 +197,7 @@ def update_user(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
-            user_to_update = BillingAdminLogin.query.filter_by(login_id=login_id).first()
+            user_to_update = PayrollAdminLogin.query.filter_by(login_id=login_id).first()
 
             if user_to_update:
                 # Get the fields to update from the form data
@@ -238,8 +237,8 @@ def update_user(login_id):
 def delete_data(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        cust_admin_to_delete = db.session.execute(db.select(BillingAdminLogin).
-                                                  where(BillingAdminLogin.login_id == login_id)).scalar()
+        cust_admin_to_delete = db.session.execute(db.select(PayrollAdminLogin).
+                                                  where(PayrollAdminLogin.login_id == login_id)).scalar()
         if cust_admin_to_delete:
             db.session.delete(cust_admin_to_delete)
             db.session.commit()
@@ -279,7 +278,7 @@ def user_forgot_password():
     if api_key_header == API_KEY:
         try:
             email = request.form.get("email")
-            existing_user = BillingAdminLogin.query.filter_by(email=email).first()
+            existing_user = PayrollAdminLogin.query.filter_by(email=email).first()
 
             if not existing_user:
                 return jsonify(error={"message": "Email not found in the database. "
@@ -307,7 +306,7 @@ def user_link_forgot_password(token):
         email = s.loads(token, salt='password-reset', max_age=1800)
 
         # Find the customer with the confirmed email
-        user_ = BillingAdminLogin.query.filter_by(email=email).first()
+        user_ = PayrollAdminLogin.query.filter_by(email=email).first()
 
         if user_:
             if request.method == 'GET':
@@ -330,7 +329,7 @@ def user_change_password(login_id):
     if api_key_header == API_KEY:
         try:
             # Assuming you have a CustomerLogin model
-            user_to_change_pass = BillingAdminLogin.query.filter_by(login_id=login_id).first()
+            user_to_change_pass = PayrollAdminLogin.query.filter_by(login_id=login_id).first()
 
             if user_to_change_pass:
 

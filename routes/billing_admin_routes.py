@@ -141,7 +141,6 @@ def confirm_email(token):
         if user:
             # Update the email_confirm status to True
             user.email_confirm = True
-            user.is_active = True
             db.session.commit()
 
             return '<h1>Email Confirm Successfully!</h1>'
