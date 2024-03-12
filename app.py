@@ -13,6 +13,7 @@ from routes.employee_admin_routes import employee_admin_api
 from routes.inventory_admin_routes import inventory_admin_api
 from routes.service_routes import service_api
 from routes.employee_routes import employee_api
+from routes.superadmin_routes import superadmin_api
 from models import db
 from flask_migrate import Migrate
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
@@ -29,6 +30,7 @@ app.register_blueprint(employee_admin_api)
 app.register_blueprint(inventory_admin_api)
 app.register_blueprint(service_api)
 app.register_blueprint(employee_api)
+app.register_blueprint(superadmin_api)
 
 
 # os environment here
