@@ -16,8 +16,6 @@ from routes.employee_routes import employee_api
 from models import db
 from flask_migrate import Migrate
 
-BASE_URL = "https://csms-rest-api.onrender.com"
-
 app = Flask(__name__)
 
 app.config.from_pyfile('config.cfg')
@@ -31,6 +29,7 @@ app.register_blueprint(inventory_admin_api)
 app.register_blueprint(service_api)
 app.register_blueprint(employee_api)
 
+
 # os environment here
 load_dotenv(find_dotenv())
 
@@ -39,6 +38,7 @@ API_KEY = os.environ.get('API_KEY')
 # email-smtp
 MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
+
 
 mail = Mail(app)
 
