@@ -9,7 +9,8 @@ from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
 from models import db, Customer
 from itsdangerous import URLSafeTimedSerializer
-
+from forms import ChangePasswordForm
+from flask_bootstrap import Bootstrap5
 
 customer_api = Blueprint('customer_api', __name__)
 
@@ -21,7 +22,10 @@ MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
 BASE_URL = os.environ.get("BASE_URL")
 
+
+
 s = URLSafeTimedSerializer('Thisisasecret!')
+
 
 
 # customer
@@ -277,23 +281,23 @@ def send_reset_email(email, reset_token):
 
 @customer_api.route("/customer/reset-password/<token>", methods=['GET', 'POST'])
 def customer_link_forgot_password(token):
-    try:
 
+    form = ChangePasswordForm()
+    try:
         email = s.loads(token, salt='password-reset', max_age=1800)
 
-        # Find the customer with the confirmed email
-        customer = Customer.query.filter_by(email=email).first()
+        user = Customer.query.filter_by(email=email).first()
 
-        if customer:
-            if request.method == 'GET':
-                return render_template("reset_password.html")
+        if user:
+            if form.validate_on_submit():
+                user.password = pbkdf2_sha256.hash(form.new_password.data)
+                db.session.commit()
 
-            customer.password = pbkdf2_sha256.hash(request.form["new_password"])
-            db.session.commit()
-
-            return '<h1>Change Password Successfully!</h1>'
+                return '<h1>Change Password Successfully!</h1>'
+            else:
+                return render_template("reset_password.html", form=form)
         else:
-            return jsonify(error={"Message": "Email not found."}), 404
+            return jsonify(error={"Message": "Email not found."})
 
     except SignatureExpired:
         return '<h1>Token is expired.</h1>'

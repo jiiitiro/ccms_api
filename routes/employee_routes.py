@@ -7,6 +7,8 @@ from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
+
+from forms import ChangePasswordForm
 from models import db, Employee
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
@@ -284,23 +286,22 @@ def send_reset_email(email, reset_token):
 
 @employee_api.route("/employee/reset-password/<token>", methods=['GET', 'POST'])
 def employee_link_forgot_password(token):
+    form = ChangePasswordForm()
     try:
-
         email = s.loads(token, salt='password-reset', max_age=1800)
 
-        # Find the employee with the confirmed email
-        employee = Employee.query.filter_by(email=email).first()
+        user = Employee.query.filter_by(email=email).first()
 
-        if employee:
-            if request.method == 'GET':
-                return render_template("reset_password.html")
+        if user:
+            if form.validate_on_submit():
+                user.password = pbkdf2_sha256.hash(form.new_password.data)
+                db.session.commit()
 
-            employee.password = pbkdf2_sha256.hash(request.form["new_password"])
-            db.session.commit()
-
-            return '<h1>Change Password Successfully!</h1>'
+                return '<h1>Change Password Successfully!</h1>'
+            else:
+                return render_template("reset_password.html", form=form)
         else:
-            return jsonify(error={"Message": "Email not found."}), 404
+            return jsonify(error={"Message": "Email not found."})
 
     except SignatureExpired:
         return '<h1>Token is expired.</h1>'

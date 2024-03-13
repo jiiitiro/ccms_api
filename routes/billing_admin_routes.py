@@ -1,5 +1,7 @@
 import os
 from flask import Blueprint, request, jsonify, render_template
+
+from forms import ChangePasswordForm
 from models import db, BillingAdminLogin
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
@@ -292,23 +294,22 @@ def user_forgot_password():
 
 @billing_admin_api.route("/billing/admin/reset-password/<token>", methods=['GET', 'POST'])
 def user_link_forgot_password(token):
+    form = ChangePasswordForm()
     try:
-
         email = s.loads(token, salt='password-reset', max_age=1800)
 
-        # Find the customer with the confirmed email
-        user_ = BillingAdminLogin.query.filter_by(email=email).first()
+        user = BillingAdminLogin.query.filter_by(email=email).first()
 
-        if user_:
-            if request.method == 'GET':
-                return render_template("reset_password.html")
+        if user:
+            if form.validate_on_submit():
+                user.password = pbkdf2_sha256.hash(form.new_password.data)
+                db.session.commit()
 
-            user_.password = pbkdf2_sha256.hash(request.form["new_password"])
-            db.session.commit()
-
-            return '<h1>Change Password Successfully!</h1>'
+                return '<h1>Change Password Successfully!</h1>'
+            else:
+                return render_template("reset_password.html", form=form)
         else:
-            return jsonify(error={"Message": "Email not found."}), 404
+            return jsonify(error={"Message": "Email not found."})
 
     except SignatureExpired:
         return '<h1>Token is expired.</h1>'

@@ -17,10 +17,14 @@ from routes.superadmin_routes import superadmin_api
 from models import db
 from flask_migrate import Migrate
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
+from flask_bootstrap import Bootstrap5
+
 
 app = Flask(__name__)
 
+
 app.config.from_pyfile('config.cfg')
+app.config['SECRET_KEY'] = os.environ.get("FLASK_KEY")
 app.register_blueprint(customer_api)
 app.register_blueprint(customer_admin_api)
 app.register_blueprint(payroll_api)
@@ -44,6 +48,7 @@ MY_PASSWORD = os.environ.get("MY_PASSWORD")
 
 
 mail = Mail(app)
+Bootstrap5(app)
 
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///csms.db")
