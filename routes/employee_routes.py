@@ -202,7 +202,16 @@ def login_employee():
             if employee and pbkdf2_sha256.verify(request.form.get("password"), employee.password):
                 # access_token = create_access_token(identity=employee.employee_id)
                 # return {"access_token": access_token}
-                return jsonify(success={"message": "email and password are match."}), 200
+                login_data_dict = {
+                    "login_id": employee.login_id,
+                    "name": employee.name,
+                    "email": employee.email,
+                    "role": employee.role,
+                    "is_active": employee.is_active,
+                    "email_confirm": employee.email_confirm,
+                }
+
+                return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
 
             return jsonify(error={"message": "Invalid credentials."}), 401
         except Exception as e:

@@ -197,7 +197,16 @@ def login_customer():
             if customer and pbkdf2_sha256.verify(request.form.get("password"), customer.password):
                 # access_token = create_access_token(identity=customer.customer_id)
                 # return {"access_token": access_token}
-                return jsonify(success={"message": "email and password are match."}), 200
+                login_data_dict = {
+                    "login_id": customer.login_id,
+                    "name": customer.name,
+                    "email": customer.email,
+                    "role": customer.role,
+                    "is_active": customer.is_active,
+                    "email_confirm": customer.email_confirm,
+                }
+
+                return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
 
             return jsonify(error={"message": "Invalid credentials."}), 401
         except Exception as e:
