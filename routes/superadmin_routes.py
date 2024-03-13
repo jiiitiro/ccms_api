@@ -14,6 +14,43 @@ superadmin_api = Blueprint('superadmin_api', __name__)
 API_KEY = os.environ.get('SUPERADMIN_API_KEY')
 
 
+@superadmin_api.get("/superadmin/login")
+def login_superadmin():
+    return render_template("superadmin_login.html")
+
+
+@superadmin_api.get("/superadmin/dashboard")
+def dashboard_superadmin():
+    return render_template("superadmin_dashboard.html")
+
+
+@superadmin_api.get("/superadmin/billing")
+def billing_superadmin():
+    return render_template("billing_tables.html")
+
+
+@superadmin_api.get("/superadmin/customer")
+def customer_superadmin():
+    return render_template("customer_tables.html")
+
+
+@superadmin_api.get("/superadmin/employee")
+def employee_superadmin():
+    return render_template("employee_tables.html")
+
+
+@superadmin_api.get("/superadmin/inventory")
+def inventory_superadmin():
+    return render_template("inventory_tables.html")
+
+
+@superadmin_api.get("/superadmin/payroll")
+def payroll_superadmin():
+    return render_template("payroll_tables.html")
+
+
+
+
 @superadmin_api.post("/superadmin/customer-admin/activate/<int:login_id>")
 def activate_customer_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
