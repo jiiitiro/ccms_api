@@ -26,29 +26,104 @@ def dashboard_superadmin():
 
 @superadmin_api.get("/superadmin/billing")
 def billing_superadmin():
-    return render_template("billing_tables.html")
+    billing_admin_logins = BillingAdminLogin.query.all()
+
+    # Convert the data to a list of dictionaries for easier JSON serialization
+    result = [
+        {
+            "login_id": entry.login_id,
+            "name": entry.name,
+            "email": entry.email,
+            "role": entry.role,
+            "is_active": entry.is_active,
+            "email_confirm": entry.email_confirm
+        }
+
+        for entry in billing_admin_logins
+    ]
+
+    return render_template("billing_tables.html", result=result)
 
 
 @superadmin_api.get("/superadmin/customer")
 def customer_superadmin():
-    return render_template("customer_tables.html")
+    customer_admin_logins = CustomerAdminLogin.query.all()
+
+    # Convert the data to a list of dictionaries for easier JSON serialization
+    result = [
+        {
+            "login_id": entry.login_id,
+            "name": entry.name,
+            "email": entry.email,
+            "role": entry.role,
+            "is_active": entry.is_active,
+            "email_confirm": entry.email_confirm
+        }
+
+        for entry in customer_admin_logins
+    ]
+    return render_template("customer_tables.html", result=result)
 
 
 @superadmin_api.get("/superadmin/employee")
 def employee_superadmin():
-    return render_template("employee_tables.html")
+    employee_admin_logins = EmployeeAdminLogin.query.all()
+
+    # Convert the data to a list of dictionaries for easier JSON serialization
+    result = [
+        {
+            "login_id": entry.login_id,
+            "name": entry.name,
+            "email": entry.email,
+            "role": entry.role,
+            "is_active": entry.is_active,
+            "email_confirm": entry.email_confirm
+        }
+
+        for entry in employee_admin_logins
+    ]
+    return render_template("employee_tables.html", result=result)
 
 
 @superadmin_api.get("/superadmin/inventory")
 def inventory_superadmin():
-    return render_template("inventory_tables.html")
+    inventory_admin_logins = InventoryAdminLogin.query.all()
+
+    # Convert the data to a list of dictionaries for easier JSON serialization
+    result = [
+        {
+            "login_id": entry.login_id,
+            "name": entry.name,
+            "email": entry.email,
+            "role": entry.role,
+            "is_active": entry.is_active,
+            "email_confirm": entry.email_confirm
+        }
+
+        for entry in inventory_admin_logins
+    ]
+    return render_template("inventory_tables.html", result=result)
 
 
 @superadmin_api.get("/superadmin/payroll")
 def payroll_superadmin():
-    return render_template("payroll_tables.html")
+    payroll_admin_logins = PayrollAdminLogin.query.all()
 
+    # Convert the data to a list of dictionaries for easier JSON serialization
+    result = [
+        {
+            "login_id": entry.login_id,
+            "name": entry.name,
+            "email": entry.email,
+            "role": entry.role,
+            "is_active": entry.is_active,
+            "email_confirm": entry.email_confirm
+        }
 
+        for entry in payroll_admin_logins
+    ]
+
+    return render_template("payroll_tables.html", result=result)
 
 
 @superadmin_api.post("/superadmin/customer-admin/activate/<int:login_id>")
