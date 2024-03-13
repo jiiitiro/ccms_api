@@ -18,7 +18,7 @@ from models import db
 from flask_migrate import Migrate
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
 from flask_bootstrap import Bootstrap5
-from mock_data import admin_data
+# from mock_data import admin_data
 
 
 app = Flask(__name__)
