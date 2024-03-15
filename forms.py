@@ -1,7 +1,7 @@
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, EmailField, TextAreaField, SelectField
-from wtforms.validators import DataRequired, URL, Email, ValidationError, Regexp, Length
+from wtforms import SubmitField, PasswordField
+from wtforms.validators import DataRequired, Regexp, Length
 
 
 class ChangePasswordForm(FlaskForm):
@@ -12,4 +12,12 @@ class ChangePasswordForm(FlaskForm):
     ])
 
     submit = SubmitField("Submit")
+
+
+class ActivateAccount(FlaskForm):
+    submit = SubmitField("Activate")
+
+
+class DeactivateAccount(FlaskForm):
+    submit = SubmitField("Deactivate")
 

@@ -1,12 +1,6 @@
 import os
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from models import db, CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
-from email.mime.text import MIMEText
-from itsdangerous import URLSafeTimedSerializer
-from itsdangerous import SignatureExpired
-import smtplib
-from passlib.hash import pbkdf2_sha256
-
 
 superadmin_api = Blueprint('superadmin_api', __name__)
 
@@ -45,6 +39,28 @@ def billing_superadmin():
     return render_template("billing_tables.html", result=result)
 
 
+@superadmin_api.post("/superadmin/billing/activate/<int:login_id>")
+def activate_billing_account(login_id):
+    admin_user = BillingAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.billing_superadmin"))
+
+
+@superadmin_api.post("/superadmin/billing/deactivate/<int:login_id>")
+def deactivate_billing_account(login_id):
+    admin_user = BillingAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.billing_superadmin"))
+
+
 @superadmin_api.get("/superadmin/customer")
 def customer_superadmin():
     customer_admin_logins = CustomerAdminLogin.query.all()
@@ -63,6 +79,28 @@ def customer_superadmin():
         for entry in customer_admin_logins
     ]
     return render_template("customer_tables.html", result=result)
+
+
+@superadmin_api.post("/superadmin/customer/activate/<int:login_id>")
+def activate_customer_account(login_id):
+    admin_user = CustomerAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.customer_superadmin"))
+
+
+@superadmin_api.post("/superadmin/customer/deactivate/<int:login_id>")
+def deactivate_customer_account(login_id):
+    admin_user = CustomerAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.customer_superadmin"))
 
 
 @superadmin_api.get("/superadmin/employee")
@@ -85,6 +123,28 @@ def employee_superadmin():
     return render_template("employee_tables.html", result=result)
 
 
+@superadmin_api.post("/superadmin/employee/activate/<int:login_id>")
+def activate_employee_account(login_id):
+    admin_user = EmployeeAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.employee_superadmin"))
+
+
+@superadmin_api.post("/superadmin/employee/deactivate/<int:login_id>")
+def deactivate_employee_account(login_id):
+    admin_user = EmployeeAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.employee_superadmin"))
+
+
 @superadmin_api.get("/superadmin/inventory")
 def inventory_superadmin():
     inventory_admin_logins = InventoryAdminLogin.query.all()
@@ -103,6 +163,28 @@ def inventory_superadmin():
         for entry in inventory_admin_logins
     ]
     return render_template("inventory_tables.html", result=result)
+
+
+@superadmin_api.post("/superadmin/inventory/activate/<int:login_id>")
+def activate_inventory_account(login_id):
+    admin_user = InventoryAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.inventory_superadmin"))
+
+
+@superadmin_api.post("/superadmin/inventory/deactivate/<int:login_id>")
+def deactivate_inventory_account(login_id):
+    admin_user = InventoryAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.inventory_superadmin"))
 
 
 @superadmin_api.get("/superadmin/payroll")
@@ -124,6 +206,28 @@ def payroll_superadmin():
     ]
 
     return render_template("payroll_tables.html", result=result)
+
+
+@superadmin_api.post("/superadmin/payroll/activate/<int:login_id>")
+def activate_payroll_account(login_id):
+    admin_user = PayrollAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.payroll_superadmin"))
+
+
+@superadmin_api.post("/superadmin/payroll/deactivate/<int:login_id>")
+def deactivate_payroll_account(login_id):
+    admin_user = PayrollAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+    return redirect(url_for("superadmin_api.payroll_superadmin"))
 
 
 @superadmin_api.post("/superadmin/customer-admin/activate/<int:login_id>")

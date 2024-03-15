@@ -38,7 +38,7 @@
                                         </tr>
                                     </tfoot>
                                     <tbody>
-                                        {% for entry in result %}
+                                        {% for entry in result|sort(attribute='login_id') %}
                                             <tr>
                                                 <td>{{ entry.login_id }}</td>
                                                 <td>{{ entry.name }}</td>
@@ -47,12 +47,81 @@
                                                 <td>{{ entry.email_confirm }}</td>
                                                 <td>
                                                     {% if entry.is_active %}
-                                                        <button class="btn btn-danger">Deactivate</button>
+                                                        <button onclick="confirmDeactivate('{{ entry.login_id }}')" class="btn btn-danger">Deactivate</button>
                                                     {% else %}
-                                                        <button class="btn btn-success">Activate</button>
+                                                        <button onclick="confirmActivate('{{ entry.login_id }}')" class="btn btn-success">Activate</button>
                                                     {% endif %}
                                                 </td>
                                             </tr>
+                                            <script>
+                                                function confirmDeactivate(login_id) {
+                                                    Swal.fire({
+                                                        title: 'Are you sure?',
+                                                        text: "You are about to deactivate this account.",
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        confirmButtonColor: '#d33',
+                                                        cancelButtonColor: '#3085d6',
+                                                        confirmButtonText: 'Yes, deactivate it!'
+                                                    }).then((result) => {
+                                                        if (result.isConfirmed) {
+                                                            // Create a form element
+                                                            var form = document.createElement('form');
+
+                                                            // Set form attributes
+                                                            form.method = 'POST';
+                                                            form.action = "/superadmin/employee/deactivate/" + login_id;
+
+                                                            // Append a hidden input for login_id
+                                                            var loginIdInput = document.createElement('input');
+                                                            loginIdInput.type = 'hidden';
+                                                            loginIdInput.name = 'login_id';
+                                                            loginIdInput.value = login_id;
+                                                            form.appendChild(loginIdInput);
+
+                                                            // Append the form to the document body
+                                                            document.body.appendChild(form);
+
+                                                            // Submit the form
+                                                            form.submit();
+                                                        }
+                                                    });
+                                                }
+
+                                                function confirmActivate(login_id) {
+                                                    Swal.fire({
+                                                        title: 'Are you sure?',
+                                                        text: "You are about to activate this account.",
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        confirmButtonColor: '#3085d6',
+                                                        cancelButtonColor: '#d33',
+                                                        confirmButtonText: 'Yes, activate it!'
+                                                    }).then((result) => {
+                                                        if (result.isConfirmed) {
+                                                            // Create a form element
+                                                            var form = document.createElement('form');
+
+                                                            // Set form attributes
+                                                            form.method = 'POST';
+                                                            form.action = "/superadmin/employee/activate/" + login_id;
+
+                                                            // Append a hidden input for login_id
+                                                            var loginIdInput = document.createElement('input');
+                                                            loginIdInput.type = 'hidden';
+                                                            loginIdInput.name = 'login_id';
+                                                            loginIdInput.value = login_id;
+                                                            form.appendChild(loginIdInput);
+
+                                                            // Append the form to the document body
+                                                            document.body.appendChild(form);
+
+                                                            // Submit the form
+                                                            form.submit();
+                                                        }
+                                                    });
+                                                }
+                                            </script>
                                         {% endfor %}
                                     </tbody>
                                 </table>
