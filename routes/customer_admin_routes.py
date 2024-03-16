@@ -306,7 +306,7 @@ def user_forgot_password():
 def user_link_forgot_password(token):
     form = ChangePasswordForm()
     try:
-        email = s.loads(token, salt='password-reset', max_age=1800)
+        email = s.loads(token, salt='password-reset', max_age=3600)
 
         user = CustomerAdminLogin.query.filter_by(email=email).first()
 

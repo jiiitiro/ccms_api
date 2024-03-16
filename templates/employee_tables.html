@@ -25,6 +25,7 @@
                                             <th>Role</th>
                                             <th>Email Confirm</th>
                                             <th>Active</th>
+                                            <th>Control</th>
                                         </tr>
                                     </thead>
                                     <tfoot>
@@ -35,6 +36,7 @@
                                             <th>Role</th>
                                             <th>Email Confirm</th>
                                             <th>Active</th>
+                                            <th>Control</th>
                                         </tr>
                                     </tfoot>
                                     <tbody>
@@ -45,6 +47,7 @@
                                                 <td>{{ entry.email }}</td>
                                                 <td>{{ entry.role }}</td>
                                                 <td>{{ entry.email_confirm }}</td>
+                                                <td>{{ entry.is_active }}</td>
                                                 <td>
                                                     {% if entry.is_active %}
                                                         <button onclick="confirmDeactivate('{{ entry.login_id }}')" class="btn btn-danger">Deactivate</button>
