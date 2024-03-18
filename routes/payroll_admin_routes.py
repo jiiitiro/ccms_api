@@ -88,7 +88,7 @@ def register():
                     f"{BASE_URL}/payroll/admin/confirm-email/{token}")
 
             subject1 = "Account Activation"
-            body1 = (f"Click the following link to confirm your email: "
+            body1 = (f"Click the following link to activate account: "
                     f"{BASE_URL}/superadmin/payroll-admin/account-activation/{token}")
 
             msg = MIMEText(body)
