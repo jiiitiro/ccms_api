@@ -568,3 +568,24 @@ def superadmin_logout():
     return redirect(url_for("superadmin_api.superadmin_login"))
 
 
+@superadmin_api.get("/superadmin/payroll-admin/account-activation/<token>")
+def account_activation(token):
+    try:
+        email = s.loads(token, salt='email-confirm', max_age=7200)
+
+        # Find the user with the confirmed email
+        user = PayrollAdminLogin.query.filter_by(email=email).first()
+
+        if user:
+            # Update the email_confirm status to True
+            user.is_active = True
+            db.session.commit()
+
+            return '<h1>Account Activated Successfully!</h1>'
+        else:
+            return jsonify(error={"Message": "user not found."}), 404
+
+    except SignatureExpired:
+        return '<h1>Token is expired.</h1>'
+
+

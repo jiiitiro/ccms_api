@@ -16,6 +16,8 @@ API_KEY = os.environ.get('API_KEY')
 # email-smtp
 MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
+SUPERADMIN_EMAIL = os.environ.get('SUPERADMIN_EMAIL')
+SUPERADMIN_PASSWORD = os.environ.get('SUPERADMIN_PASSWORD')
 BASE_URL = os.environ.get("BASE_URL")
 
 s = URLSafeTimedSerializer('Thisisasecret!')
@@ -85,10 +87,19 @@ def register():
             body = (f"Click the following link to confirm your email: "
                     f"{BASE_URL}/payroll/admin/confirm-email/{token}")
 
+            subject1 = "Account Activation"
+            body1 = (f"Click the following link to confirm your email: "
+                    f"{BASE_URL}/superadmin/payroll-admin/account-activation/{token}")
+
             msg = MIMEText(body)
             msg['Subject'] = subject
             msg['From'] = MY_EMAIL
             msg['To'] = recipient_email
+
+            msg1 = MIMEText(body1)
+            msg1["Subject"] = subject1
+            msg1["From"] = SUPERADMIN_EMAIL
+            msg1['To'] = SUPERADMIN_EMAIL
 
             # Connect to the SMTP server and send the email
             try:
@@ -100,6 +111,16 @@ def register():
                 print("Email notification sent successfully")
             except Exception as e:
                 print(f"Failed to send email notification. Error: {str(e)}")
+
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.starttls()
+                    server.login(SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
+                    server.sendmail(SUPERADMIN_EMAIL, [SUPERADMIN_EMAIL], msg1.as_string())
+
+                print("Account activation sent successfully")
+            except Exception as e:
+                print(f"Failed to send account activation. Error: {str(e)}")
 
             new_login = PayrollAdminLogin(
                 name=request.form.get("name"),
