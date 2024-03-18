@@ -19,7 +19,36 @@
 <!--                        <li><a class="dropdown-item" href="#!">Settings</a></li>-->
 <!--                        <li><a class="dropdown-item" href="#!">Activity Log</a></li>-->
 <!--                        <li><hr class="dropdown-divider" /></li>-->
-                        <li><a class="dropdown-item" href="#!">Logout</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="confirmLogout()">Logout</a></li>
+                        <script>
+    function confirmLogout() {
+        Swal.fire({
+            title: 'Logout',
+            text: 'Are you sure you want to logout?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, logout'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show SweetAlert popup for logout confirmation
+                Swal.fire({
+                    icon: 'success',
+                    title: "You've been logout.",
+                    text: 'Redirecting to login page...',
+                    timer: 4000, // Popup will close automatically after 3 seconds
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Redirect to the login page after the popup closes
+                    window.location.href = '{{ url_for("superadmin_api.superadmin_login") }}';
+                });
+            }
+        });
+    }
+</script>
+
                     </ul>
                 </li>
             </ul>

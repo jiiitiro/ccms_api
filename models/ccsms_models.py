@@ -202,3 +202,15 @@ class InventoryAdminLogin(db.Model):
     role = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
+
+
+class SuperadminLogin(db.Model):
+    __tablename__ = "superadmin_login_tbl"
+    login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
+

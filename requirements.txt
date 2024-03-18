@@ -15,3 +15,4 @@ Flask_WTF==1.2.1
 WTForms==3.1.2
 Flask_CKEditor==0.5.1
 Bootstrap_Flask==2.3.3
+email_validator==2.1.0.post1

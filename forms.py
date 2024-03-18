@@ -1,7 +1,8 @@
 
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, PasswordField, BooleanField
-from wtforms.validators import DataRequired, Regexp, Length
+from wtforms.fields.simple import EmailField
+from wtforms.validators import DataRequired, Regexp, Length, Email
 
 
 class ChangePasswordForm(FlaskForm):
@@ -20,4 +21,17 @@ class ActivateAccount(FlaskForm):
 
 class DeactivateAccount(FlaskForm):
     submit = SubmitField("Deactivate")
+
+
+class SuperadminLoginForm(FlaskForm):
+    email = EmailField("Email", validators=[DataRequired(), Email()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Login")
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = EmailField("Email", validators=[DataRequired(), Email()])
+    submit = SubmitField("Send")
+
+
 
