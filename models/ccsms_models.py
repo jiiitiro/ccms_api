@@ -26,7 +26,7 @@ class CustomerAddress(db.Model):
     __tablename__ = 'customer_address'
     address_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), unique=True, nullable=False)
-    houseno = db.Column(db.String(100), nullable=False)
+    houseno_street = db.Column(db.String(100), nullable=False)
     barangay = db.Column(db.String(100), nullable=False)
     city = db.Column(db.String(100), nullable=False)
     region = db.Column(db.String(100), nullable=False)
@@ -167,7 +167,7 @@ class Billing(db.Model):
 
 # Define the payroll_login_tbl
 class BillingAdminLogin(db.Model):
-    __tablename__ = "payroll_admin_login_tbl"
+    __tablename__ = "billing_admin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -178,7 +178,7 @@ class BillingAdminLogin(db.Model):
 
 
 class PayrollAdminLogin(db.Model):
-    __tablename__ = "billing_admin_login_tbl"
+    __tablename__ = "payroll_admin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(100), unique=True, nullable=False)

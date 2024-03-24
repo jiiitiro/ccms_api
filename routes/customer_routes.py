@@ -7,7 +7,7 @@ from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
-from models import db, Customer
+from models import db, Customer, CustomerAddress
 from itsdangerous import URLSafeTimedSerializer
 from forms import ChangePasswordForm
 from flask_bootstrap import Bootstrap5
@@ -22,10 +22,7 @@ MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
 BASE_URL = os.environ.get("BASE_URL")
 
-
-
 s = URLSafeTimedSerializer('Thisisasecret!')
-
 
 
 # customer
@@ -34,19 +31,32 @@ s = URLSafeTimedSerializer('Thisisasecret!')
 def get_all_customer_data():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        user_data = db.session.execute(db.select(Customer)).scalars().all()
-        customer_dict = [
-            {
-                "customer_id": data.customer_id,
-                "first_name": data.first_name,
-                "middle_name": data.middle_name,
-                "last_name": data.last_name,
-                "address": data.address,
-                "email": data.email,
-                "phone": data.phone,
-                "is_active": data.is_active,
-                "email_confirm": data.email_confirm,
-            } for data in user_data]
+        # Join Customer with CustomerAddress
+        query = db.session.query(Customer, CustomerAddress).filter(Customer.customer_id == CustomerAddress.customer_id)
+        user_data = query.all()
+
+        customer_dict = []
+        for customer, address in user_data:
+            customer_data = {
+                "customer_id": customer.customer_id,
+                "first_name": customer.first_name,
+                "middle_name": customer.middle_name,
+                "last_name": customer.last_name,
+                "email": customer.email,
+                "phone": customer.phone,
+                "is_active": customer.is_active,
+                "email_confirm": customer.email_confirm,
+                # Include address fields
+                "address": {
+                    "houseno_street": address.houseno_street,
+                    "barangay": address.barangay,
+                    "city": address.city,
+                    "region": address.region,
+                    "zipcode": address.zipcode
+                }
+            }
+            customer_dict.append(customer_data)
+
         response = jsonify({"customers": customer_dict})
         return response, 200
     else:
@@ -94,6 +104,48 @@ def register_customer():
             if existing_customer:
                 return jsonify(error={"message": "Email already exists. Please use a different email address."}), 400
 
+            # Create a new customer
+            new_customer = Customer(
+                first_name=request.form.get("first_name"),
+                middle_name=request.form.get("middle_name"),
+                last_name=request.form.get("last_name"),
+                email=request.form.get("email"),
+                password=pbkdf2_sha256.hash(request.form.get("password")),
+                phone=request.form.get("phone"),
+            )
+
+            # Create a new customer address
+            new_address = CustomerAddress(
+                customer=new_customer,  # Associate the address with the new customer
+                houseno=request.form.get("houseno"),
+                barangay=request.form.get("barangay"),
+                city=request.form.get("city"),
+                region=request.form.get("region"),
+                zipcode=request.form.get("zipcode")
+            )
+
+            db.session.add(new_customer)
+            db.session.add(new_address)
+            db.session.commit()
+
+            new_customer_dict = {
+                "customer_id": new_customer.customer_id,
+                "first_name": new_customer.first_name,
+                "middle_name": new_customer.middle_name,
+                "last_name": new_customer.last_name,
+                "email": new_customer.email,
+                "phone": new_customer.phone,
+                "is_active": new_customer.is_active,
+                "email_confirm": new_customer.email_confirm,
+                "address": {  # Include the address details in the response
+                    "houseno": new_address.houseno,
+                    "barangay": new_address.barangay,
+                    "city": new_address.city,
+                    "region": new_address.region,
+                    "zipcode": new_address.zipcode
+                }
+            }
+
             recipient_email = request.form.get("email")
             token = s.dumps(recipient_email, salt='email-confirm')
 
@@ -115,32 +167,6 @@ def register_customer():
                 print("Email notification sent successfully")
             except Exception as e:
                 print(f"Failed to send email notification. Error: {str(e)}")
-
-            new_customer = Customer(
-                first_name=request.form.get("first_name"),
-                middle_name=request.form.get("middle_name"),
-                last_name=request.form.get("last_name"),
-                address=request.form.get("address"),
-                email=request.form.get("email"),
-                password=pbkdf2_sha256.hash(request.form.get("password")),
-                phone=request.form.get("phone"),
-            )
-            db.session.add(new_customer)
-            db.session.commit()
-
-            new_customer_dict = [
-                {
-                    "customer_id": new_customer.customer_id,
-                    "first_name": new_customer.first_name,
-                    "middle_name": new_customer.middle_name,
-                    "last_name": new_customer.last_name,
-                    "address": new_customer.address,
-                    "email": new_customer.email,
-                    "phone": new_customer.phone,
-                    "is_active": new_customer.is_active,
-                    "email_confirm": new_customer.email_confirm,
-                }
-            ]
 
             return jsonify(
                 success={"message": "Customer need to confirm the email.", "customer": new_customer_dict}), 201
@@ -197,13 +223,23 @@ def login_customer():
             if customer and pbkdf2_sha256.verify(request.form.get("password"), customer.password):
                 # access_token = create_access_token(identity=customer.customer_id)
                 # return {"access_token": access_token}
+                customer_address = CustomerAddress.query.filter_by(customer_id=customer.customer_id).first()
+
                 login_data_dict = {
-                    "login_id": customer.login_id,
-                    "name": customer.name,
+                    "customer_id": customer.customer_id,
+                    "first_name": customer.first_name,
+                    "middle_name": customer.middle_name,
+                    "last_name": customer.last_name,
                     "email": customer.email,
-                    "role": customer.role,
                     "is_active": customer.is_active,
                     "email_confirm": customer.email_confirm,
+                    "address": {
+                        "houseno": customer_address.houseno,
+                        "barangay": customer_address.barangay,
+                        "city": customer_address.city,
+                        "region": customer_address.region,
+                        "zipcode": customer_address.zipcode
+                    } if customer_address else None  # Return None if no address found
                 }
 
                 return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
@@ -333,19 +369,43 @@ def update_customer(customer_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
-            customer_to_update = Customer.query.filter_by(customer_id=customer_id).first()
+            # Perform a join query to retrieve customer and address data
+            query = db.session.query(Customer, CustomerAddress).filter(Customer.customer_id == CustomerAddress.customer_id)
 
-            if customer_to_update:
+            # Filter the query based on the provided customer_id
+            query = query.filter(Customer.customer_id == customer_id)
+
+            # Execute the query to get the result
+            customer_data = query.first()
+
+            if customer_data:
+                # Unpack the customer and address data from the result
+                customer_to_update, customer_address = customer_data
+
                 # Get the fields to update from the form data
-                update_data = {'first_name': request.form.get('first_name', customer_to_update.first_name),
-                               'middle_name': request.form.get('middle_name', customer_to_update.middle_name),
-                               'last_name': request.form.get('last_name', customer_to_update.last_name),
-                               'address': request.form.get('address', customer_to_update.address),
-                               'phone': request.form.get('phone', customer_to_update.phone)}
+                update_data = {
+                    'first_name': request.form.get('first_name', customer_to_update.first_name),
+                    'middle_name': request.form.get('middle_name', customer_to_update.middle_name),
+                    'last_name': request.form.get('last_name', customer_to_update.last_name),
+                    'phone': request.form.get('phone', customer_to_update.phone)
+                }
 
                 # Update the customer fields
                 for key, value in update_data.items():
                     setattr(customer_to_update, key, value)
+
+                # Check if address fields are provided and update if necessary
+                if any(field in request.form for field in ['houseno_street', 'barangay', 'city', 'region', 'zipcode']):
+                    if customer_address:
+                        address_update_data = {
+                            'houseno_street': request.form.get('houseno_street', customer_address.houseno_street),
+                            'barangay': request.form.get('barangay', customer_address.barangay),
+                            'city': request.form.get('city', customer_address.city),
+                            'region': request.form.get('region', customer_address.region),
+                            'zipcode': request.form.get('zipcode', customer_address.zipcode)
+                        }
+                        for key, value in address_update_data.items():
+                            setattr(customer_address, key, value)
 
                 db.session.commit()
 
@@ -354,11 +414,17 @@ def update_customer(customer_id):
                     "first_name": customer_to_update.first_name,
                     "middle_name": customer_to_update.middle_name,
                     "last_name": customer_to_update.last_name,
-                    "address": customer_to_update.address,
                     "email": customer_to_update.email,
                     "phone": customer_to_update.phone,
                     "is_active": customer_to_update.is_active,
                     "email_confirm": customer_to_update.email_confirm,
+                    "address": {
+                        "houseno_street": customer_address.houseno_street,
+                        "barangay": customer_address.barangay,
+                        "city": customer_address.city,
+                        "region": customer_address.region,
+                        "zipcode": customer_address.zipcode
+                    } if customer_address else None
                 }
 
                 return jsonify(success={"message": "Customer data updated successfully",
