@@ -17,3 +17,4 @@ Flask_CKEditor==0.5.1
 Bootstrap_Flask==2.3.3
 email_validator==2.1.0.post1
 plotly
+Flask_Login==0.6.3

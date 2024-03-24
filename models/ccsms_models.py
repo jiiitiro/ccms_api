@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
 db = SQLAlchemy()
 
 
@@ -204,7 +205,7 @@ class InventoryAdminLogin(db.Model):
     email_confirm = db.Column(db.Boolean, default=False)
 
 
-class SuperadminLogin(db.Model):
+class SuperadminLogin(UserMixin, db.Model):
     __tablename__ = "superadmin_login_tbl"
     login_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=True)
@@ -213,4 +214,8 @@ class SuperadminLogin(db.Model):
     role = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
+
+    # Implement the get_id() method to return the user's id
+    def get_id(self):
+        return str(self.login_id)
 

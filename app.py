@@ -13,16 +13,16 @@ from routes.employee_admin_routes import employee_admin_api
 from routes.inventory_admin_routes import inventory_admin_api
 from routes.service_routes import service_api
 from routes.employee_routes import employee_api
-from routes.superadmin_routes import superadmin_api
+from routes.superadmin_routes import superadmin_api, login_manager, custom_unauthorized_handler
 from models import db
 from flask_migrate import Migrate
-APP_BASE_URL = "https://csms-rest-api.onrender.com"
 from flask_bootstrap import Bootstrap5
+
+APP_BASE_URL = "https://csms-rest-api.onrender.com"
+
 # from mock_data import admin_data
 
-
 app = Flask(__name__)
-
 
 app.config.from_pyfile('config.cfg')
 app.config['SECRET_KEY'] = os.environ.get("FLASK_KEY")
@@ -37,7 +37,6 @@ app.register_blueprint(service_api)
 app.register_blueprint(employee_api)
 app.register_blueprint(superadmin_api)
 
-
 # os environment here
 load_dotenv(find_dotenv())
 
@@ -50,6 +49,9 @@ MY_PASSWORD = os.environ.get("MY_PASSWORD")
 
 mail = Mail(app)
 Bootstrap5(app)
+login_manager.init_app(app)
+# Register custom unauthorized handler
+app.register_error_handler(401, custom_unauthorized_handler)
 
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///csms.db")

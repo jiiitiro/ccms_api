@@ -10,10 +10,11 @@ from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
 import plotly.graph_objs as go
-
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 
 superadmin_api = Blueprint('superadmin_api', __name__)
+login_manager = LoginManager()
 
 # superadmin api-key
 API_KEY = os.environ.get('SUPERADMIN_API_KEY')
@@ -27,8 +28,29 @@ s = URLSafeTimedSerializer('Thisisasecret!')
 # def login_superadmin():
 #     return render_template("superadmin_login.html")
 
+from functools import wraps
+
+
+def custom_unauthorized_handler(e):
+    return render_template('401.html'), 401  # Render custom HTML for unauthorized access, return HTTP status code 401
+
+
+def login_required_with_custom_error(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return render_template('401.html'), 401  # Render custom HTML for unauthorized access, return HTTP status code 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@login_manager.user_loader
+def load_user(login_id):
+    return db.get_or_404(SuperadminLogin, login_id)
+
 
 @superadmin_api.get("/superadmin/dashboard")
+@login_required_with_custom_error
 def dashboard_superadmin():
     # Query the database to get the necessary data for the bar chart
     active_customers = db.session.query(CustomerAdminLogin).filter_by(is_active=True).count()
@@ -136,6 +158,7 @@ def dashboard_superadmin():
 
 
 @superadmin_api.get("/superadmin/billing")
+@login_required
 def billing_superadmin():
     billing_admin_logins = BillingAdminLogin.query.all()
 
@@ -157,6 +180,7 @@ def billing_superadmin():
 
 
 @superadmin_api.post("/superadmin/billing/activate/<int:login_id>")
+@login_required
 def activate_billing_account(login_id):
     admin_user = BillingAdminLogin.query.get(login_id)
 
@@ -168,6 +192,7 @@ def activate_billing_account(login_id):
 
 
 @superadmin_api.post("/superadmin/billing/deactivate/<int:login_id>")
+@login_required
 def deactivate_billing_account(login_id):
     admin_user = BillingAdminLogin.query.get(login_id)
 
@@ -179,6 +204,7 @@ def deactivate_billing_account(login_id):
 
 
 @superadmin_api.get("/superadmin/customer")
+@login_required
 def customer_superadmin():
     customer_admin_logins = CustomerAdminLogin.query.all()
 
@@ -199,6 +225,7 @@ def customer_superadmin():
 
 
 @superadmin_api.post("/superadmin/customer/activate/<int:login_id>")
+@login_required
 def activate_customer_account(login_id):
     admin_user = CustomerAdminLogin.query.get(login_id)
 
@@ -210,6 +237,7 @@ def activate_customer_account(login_id):
 
 
 @superadmin_api.post("/superadmin/customer/deactivate/<int:login_id>")
+@login_required
 def deactivate_customer_account(login_id):
     admin_user = CustomerAdminLogin.query.get(login_id)
 
@@ -221,6 +249,7 @@ def deactivate_customer_account(login_id):
 
 
 @superadmin_api.get("/superadmin/employee")
+@login_required
 def employee_superadmin():
     employee_admin_logins = EmployeeAdminLogin.query.all()
 
@@ -241,6 +270,7 @@ def employee_superadmin():
 
 
 @superadmin_api.post("/superadmin/employee/activate/<int:login_id>")
+@login_required
 def activate_employee_account(login_id):
     admin_user = EmployeeAdminLogin.query.get(login_id)
 
@@ -252,6 +282,7 @@ def activate_employee_account(login_id):
 
 
 @superadmin_api.post("/superadmin/employee/deactivate/<int:login_id>")
+@login_required
 def deactivate_employee_account(login_id):
     admin_user = EmployeeAdminLogin.query.get(login_id)
 
@@ -263,6 +294,7 @@ def deactivate_employee_account(login_id):
 
 
 @superadmin_api.get("/superadmin/inventory")
+@login_required
 def inventory_superadmin():
     inventory_admin_logins = InventoryAdminLogin.query.all()
 
@@ -283,6 +315,7 @@ def inventory_superadmin():
 
 
 @superadmin_api.post("/superadmin/inventory/activate/<int:login_id>")
+@login_required
 def activate_inventory_account(login_id):
     admin_user = InventoryAdminLogin.query.get(login_id)
 
@@ -294,6 +327,7 @@ def activate_inventory_account(login_id):
 
 
 @superadmin_api.post("/superadmin/inventory/deactivate/<int:login_id>")
+@login_required
 def deactivate_inventory_account(login_id):
     admin_user = InventoryAdminLogin.query.get(login_id)
 
@@ -305,6 +339,7 @@ def deactivate_inventory_account(login_id):
 
 
 @superadmin_api.get("/superadmin/payroll")
+@login_required
 def payroll_superadmin():
     payroll_admin_logins = PayrollAdminLogin.query.all()
 
@@ -326,6 +361,7 @@ def payroll_superadmin():
 
 
 @superadmin_api.post("/superadmin/payroll/activate/<int:login_id>")
+@login_required
 def activate_payroll_account(login_id):
     admin_user = PayrollAdminLogin.query.get(login_id)
 
@@ -337,6 +373,7 @@ def activate_payroll_account(login_id):
 
 
 @superadmin_api.post("/superadmin/payroll/deactivate/<int:login_id>")
+@login_required
 def deactivate_payroll_account(login_id):
     admin_user = PayrollAdminLogin.query.get(login_id)
 
@@ -348,6 +385,7 @@ def deactivate_payroll_account(login_id):
 
 
 @superadmin_api.post("/superadmin/customer-admin/activate/<int:login_id>")
+@login_required
 def activate_customer_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -367,6 +405,7 @@ def activate_customer_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/customer-admin/deactivate/<int:login_id>")
+@login_required
 def deactivate_customer_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -386,6 +425,7 @@ def deactivate_customer_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/billing-admin/activate/<int:login_id>")
+@login_required
 def activate_billing_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -405,6 +445,7 @@ def activate_billing_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/billing-admin/deactivate/<int:login_id>")
+@login_required
 def deactivate_billing_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -424,6 +465,7 @@ def deactivate_billing_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/employee-admin/activate/<int:login_id>")
+@login_required
 def activate_employee_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -443,6 +485,7 @@ def activate_employee_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/inventory-admin/activate/<int:login_id>")
+@login_required
 def activate_inventory_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -462,6 +505,7 @@ def activate_inventory_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/inventory-admin/deactivate/<int:login_id>")
+@login_required
 def deactivate_inventory_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -481,6 +525,7 @@ def deactivate_inventory_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/payroll-admin/activate/<int:login_id>")
+@login_required
 def activate_payroll_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -500,6 +545,7 @@ def activate_payroll_admin(login_id):
 
 
 @superadmin_api.post("/superadmin/payroll-admin/deactivate/<int:login_id>")
+@login_required
 def deactivate_payroll_admin(login_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
@@ -545,6 +591,7 @@ def superadmin_get():
 def register_superadmin():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
+
         try:
             new_login = SuperadminLogin(
                 name=request.form.get("name"),
@@ -588,17 +635,22 @@ def superadmin_login():
         return render_template("superadmin_login.html", form=form)
 
     if form.validate_on_submit():
+        email = form.email.data
         password = form.password.data
-        result = db.session.execute(db.select(SuperadminLogin).where(SuperadminLogin.email == form.email.data))
-        user = result.scalar()
+
+        # Query the database to find the user by email
+        user = SuperadminLogin.query.filter_by(email=email).first()
 
         if not user:
             return jsonify(success=False, message="That email does not exist, please try again.")
-        elif not pbkdf2_sha256.verify(password, user.password):
+
+        if not pbkdf2_sha256.verify(password, user.password):
             return jsonify(success=False, message="Password incorrect, please try again.")
-        else:
-            # Return a JSON response indicating successful login
-            return jsonify(success=True)
+
+        # Login the user
+        login_user(user)
+        # Return a JSON response indicating successful login
+        return jsonify(success=True)
 
     return render_template("superadmin_login.html", form=form)
 
@@ -668,6 +720,7 @@ def superadmin_link_forgot_password(token):
 
 @superadmin_api.get("/superadmin/logout")
 def superadmin_logout():
+    logout_user()
     return redirect(url_for("superadmin_api.superadmin_login"))
 
 
@@ -690,5 +743,7 @@ def account_activation(token):
 
     except SignatureExpired:
         return '<h1>Token is expired.</h1>'
+
+
 
 
