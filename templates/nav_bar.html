@@ -1,16 +1,20 @@
 <body class="sb-nav-fixed">
         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
             <!-- Navbar Brand-->
-            <a class="navbar-brand ps-3" href="index.html">SUPERADMIN</a>
+            <a class="navbar-brand ps-3" href="{{ url_for('superadmin_api.dashboard_superadmin') }}">SUPERADMIN</a>
             <!-- Sidebar Toggle-->
             <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
+
             <!-- Navbar Search-->
-            <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+                <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
                 <div class="input-group">
                     <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
                     <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
                 </div>
             </form>
+            <button class="btn btn-dark" id="themeToggleBtn" onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>
+
+
             <!-- Navbar-->
             <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
                 <li class="nav-item dropdown">
@@ -19,36 +23,70 @@
 <!--                        <li><a class="dropdown-item" href="#!">Settings</a></li>-->
 <!--                        <li><a class="dropdown-item" href="#!">Activity Log</a></li>-->
 <!--                        <li><hr class="dropdown-divider" /></li>-->
-                        <li><a class="dropdown-item" href="#" onclick="confirmLogout()">Logout</a></li>
-                        <script>
-    function confirmLogout() {
-        Swal.fire({
-            title: 'Logout',
-            text: 'Are you sure you want to logout?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, logout'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show SweetAlert popup for logout confirmation
-                Swal.fire({
-                    icon: 'success',
-                    title: "You've been logout.",
-                    text: 'Redirecting to login page...',
-                    timer: 4000, // Popup will close automatically after 3 seconds
-                    timerProgressBar: true,
-                    showConfirmButton: false
-                }).then(() => {
-                    // Redirect to the login page after the popup closes
-                    window.location.href = '{{ url_for("superadmin_api.superadmin_login") }}';
-                });
-            }
-        });
-    }
-</script>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="confirmLogout()">Logout</a>
+                        </li>
+                        <!-- Theme Toggle Button -->
 
+                        <script>
+
+                           function toggleTheme() {
+                                const navbar = document.querySelector('.navbar');
+                                const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+                                var sidenav = document.getElementById('sidenavAccordion');
+                                sidenav.classList.toggle('bg-primary');
+                                sidenav.classList.toggle('bg-dark');
+
+                                // Toggle navbar background color
+                                navbar.classList.toggle('bg-primary');
+                                navbar.classList.toggle('bg-dark');
+
+                                // Toggle button color
+                                themeToggleBtn.classList.toggle('btn-primary');
+                                themeToggleBtn.classList.toggle('btn-dark');
+
+                                // Store theme preference in local storage
+                                const theme = themeToggleBtn.classList.contains('btn-primary') ? 'primary' : 'dark';
+                                localStorage.setItem('theme', theme);
+                            }
+
+
+                            // Apply theme preference on page load
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const theme = localStorage.getItem('theme');
+                                if (theme === 'primary') {
+                                    toggleTheme();
+                                }
+                            });
+
+                            function confirmLogout() {
+                                Swal.fire({
+                                    title: 'Logout',
+                                    text: 'Are you sure you want to logout?',
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#3085d6',
+                                    cancelButtonColor: '#d33',
+                                    confirmButtonText: 'Yes, logout'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        // Show SweetAlert popup for logout confirmation
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: "You've been logout.",
+                                            text: 'Redirecting to login page...',
+                                            timer: 4000, // Popup will close automatically after 3 seconds
+                                            timerProgressBar: true,
+                                            showConfirmButton: false
+                                        }).then(() => {
+                                            // Redirect to the login page after the popup closes
+                                            window.location.href = '{{ url_for("superadmin_api.superadmin_login") }}';
+                                        });
+                                    }
+                                });
+                            }
+                        </script>
                     </ul>
                 </li>
             </ul>

@@ -9,6 +9,7 @@ import smtplib
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
+import plotly.graph_objs as go
 
 
 
@@ -29,7 +30,109 @@ s = URLSafeTimedSerializer('Thisisasecret!')
 
 @superadmin_api.get("/superadmin/dashboard")
 def dashboard_superadmin():
-    return render_template("superadmin_dashboard.html")
+    # Query the database to get the necessary data for the bar chart
+    active_customers = db.session.query(CustomerAdminLogin).filter_by(is_active=True).count()
+    inactive_customers = db.session.query(CustomerAdminLogin).filter_by(is_active=False).count()
+
+    active_billing_admins = db.session.query(BillingAdminLogin).filter_by(is_active=True).count()
+    inactive_billing_admins = db.session.query(BillingAdminLogin).filter_by(is_active=False).count()
+
+    active_inventory_admins = db.session.query(InventoryAdminLogin).filter_by(is_active=True).count()
+    inactive_inventory_admins = db.session.query(InventoryAdminLogin).filter_by(is_active=False).count()
+
+    active_employees = db.session.query(EmployeeAdminLogin).filter_by(is_active=True).count()
+    inactive_employees = db.session.query(EmployeeAdminLogin).filter_by(is_active=False).count()
+
+    active_payroll = db.session.query(PayrollAdminLogin).filter_by(is_active=True).count()
+    inactive_payroll = db.session.query(PayrollAdminLogin).filter_by(is_active=False).count()
+
+    # Create the bar chart data
+    data_num_user = [
+        go.Bar(
+            x=['Customers', 'Billing', 'Inventory', 'Employees', 'Payroll'],
+            y=[active_customers, active_billing_admins, active_inventory_admins, active_employees, active_payroll],
+            name='Active'
+        ),
+        go.Bar(
+            x=['Customers', 'Billing', 'Inventory', 'Employees', 'Payroll'],
+            y=[inactive_customers, inactive_billing_admins, inactive_inventory_admins, inactive_employees, inactive_payroll],
+            name='Inactive'
+        )
+    ]
+
+    # Calculate maximum counts for active and inactive users
+    max_active_count = max(active_customers, active_billing_admins, active_inventory_admins, active_employees,
+                           active_payroll)
+    max_inactive_count = max(inactive_customers, inactive_billing_admins, inactive_inventory_admins, inactive_employees,
+                             inactive_payroll)
+
+    # Determine the maximum overall count
+    max_count = max(max_active_count, max_inactive_count)
+
+    # Calculate a suitable increment for the ticks
+    tick_increment = max_count // 10 + 1
+
+    # Create layout with dynamic tick values
+    layout_num_user = go.Layout(
+        barmode='group',
+        xaxis=dict(title='Subsystem'),
+        yaxis=dict(
+            title='Number of Users',
+            tickmode='linear',  # Use linear mode for automatic tick calculation
+            dtick=tick_increment,  # Set tick increment dynamically
+        ),
+        showlegend=True,
+        autosize=True,  # Automatically adjust the size
+        margin=dict(l=50, r=50, t=50, b=50),  # Adjust margins for better fit
+    )
+
+    chart_num_user = go.Figure(data=data_num_user, layout=layout_num_user)
+
+    # Convert the Plotly chart to JSON
+    chart_num_user_json = chart_num_user.to_json()
+
+    # Query the database to get the necessary data for the bar chart
+    user_types = ['Customer', 'Billing', 'Inventory', 'Employee', 'Payroll']
+    roles = ['Admin', 'Staff']
+
+    admin_counts = {role: [] for role in roles}
+
+    for user_type in user_types:
+        for role in roles:
+            admin_count = db.session.query(globals()[f"{user_type}AdminLogin"]).filter_by(role=role).count()
+            admin_counts[role].append(admin_count)
+
+    # Create the bar chart data
+    data_roles = [
+        go.Bar(
+            x=user_types,
+            y=admin_counts['Admin'],
+            name='Admin',
+            marker=dict(color='#2ca02c')  # Blue color for Admin
+        ),
+        go.Bar(
+            x=user_types,
+            y=admin_counts['Staff'],
+            name='Staff',
+            marker=dict(color='#9467bd')  # Blue color for Admin
+        )
+    ]
+
+    layout_roles = go.Layout(
+        barmode='stack',
+        xaxis=dict(title='Subsystem'),
+        yaxis=dict(title='Number of Users'),
+        showlegend=True,
+        autosize=True,  # Automatically adjust the size
+        margin=dict(l=50, r=50, t=50, b=50),  # Adjust margins for better fit
+    )
+
+    chart1 = go.Figure(data=data_roles, layout=layout_roles)
+
+    # Convert the Plotly chart to JSON
+    chart_roles_json = chart1.to_json()
+
+    return render_template("superadmin_dashboard.html", chart_num_user_json=chart_num_user_json, chart_roles_json=chart_roles_json)
 
 
 @superadmin_api.get("/superadmin/billing")

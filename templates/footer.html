@@ -3,9 +3,9 @@
                         <div class="d-flex align-items-center justify-content-between small">
                             <div class="text-muted">Copyright &copy; CSMS-REST-API SBIT-3A 2024</div>
                             <div>
-                                <a href="#">Privacy Policy</a>
+                                <a href="" id="privacy-policy-link">Privacy Policy</a>
                                 &middot;
-                                <a href="#">Terms &amp; Conditions</a>
+                                <a href="#" id="terms-conditions-link">Terms &amp; Conditions</a>
                             </div>
                         </div>
                     </div>
@@ -13,11 +13,45 @@
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
         <script src="{{ url_for('static', filename='assets/demo/chart-area-demo.js') }}"></script>
         <script src="{{ url_for('static', filename='assets/demo/chart-bar-demo.js') }}"></script>
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
         <script src="{{ url_for('static', filename='js/datatables-simple-demo.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+        <script>
+            // Parse the JSON data for the chart
+            var chartData = {{ chart_num_user_json|safe }};
+            var chartData1 = {{ chart_roles_json|safe }};
+
+           // Function to initialize the Plotly charts
+            function initializeCharts() {
+                // Initialize first chart
+                Plotly.newPlot('chart', chartData.data, chartData.layout);
+                // Initialize second chart
+                Plotly.newPlot('chart1', chartData1.data, chartData1.layout);
+
+                // Function to handle window resize event
+                function resizeCharts() {
+                    Plotly.relayout('chart', {
+                        'xaxis.autorange': true,
+                        'yaxis.autorange': true
+                    });
+                    Plotly.relayout('chart1', {
+                        'xaxis.autorange': true,
+                        'yaxis.autorange': true
+                    });
+                }
+
+                // Attach resize event listener
+                window.addEventListener('resize', resizeCharts);
+            }
+
+            // Set hovermode to compare data on hover by default
+            chartData1.layout.hovermode = 'x';
+
+            // Call initializeCharts function after content is loaded
+            window.addEventListener('DOMContentLoaded', initializeCharts);
+        </script>
     </body>
 </html>
