@@ -9,15 +9,31 @@ class Customer(db.Model):
     first_name = db.Column(db.String(250), nullable=False)
     middle_name = db.Column(db.String(250), nullable=True)
     last_name = db.Column(db.String(250), nullable=False)
-    address = db.Column(db.String(250), nullable=False)
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(200), nullable=False)
     phone = db.Column(db.String(11), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     email_confirm = db.Column(db.Boolean, default=False)
 
+    # Define relationship to the CustomerAddress class
+    address = db.relationship('CustomerAddress', back_populates='customer', uselist=False)
+
     # Define relationship to the Booking class
     bookings = db.relationship('Booking', back_populates='customer', lazy=True)
+
+
+class CustomerAddress(db.Model):
+    __tablename__ = 'customer_address'
+    address_id = db.Column(db.Integer, primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), unique=True, nullable=False)
+    houseno = db.Column(db.String(100), nullable=False)
+    barangay = db.Column(db.String(100), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    region = db.Column(db.String(100), nullable=False)
+    zipcode = db.Column(db.String(10), nullable=False)
+
+    # Define relationship to the Customer class
+    customer = db.relationship('Customer', back_populates='address', uselist=False)
 
 
 # Define the Booking class
