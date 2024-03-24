@@ -20,7 +20,7 @@ from flask_bootstrap import Bootstrap5
 
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
 
-# from mock_data import admin_data
+# from mock_data_func import payroll_admin_data, inventory_admin_data, superadmin_data
 
 app = Flask(__name__)
 
@@ -64,7 +64,9 @@ jwt = JWTManager(app)
 with app.app_context():
     db.create_all()
 
-    # admin_data("mock_data/payroll_admin_data.csv")
+    # payroll_admin_data("mock_data/payroll_admin_data.csv")
+    # inventory_admin_data("mock_data/inventory_admin_data.csv")
+    # superadmin_data("mock_data/superadmin_data.csv")
 
 
 @app.route('/')
