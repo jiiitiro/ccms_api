@@ -11,6 +11,7 @@ from routes.payroll_admin_routes import payroll_admin_api
 from routes.billing_admin_routes import billing_admin_api
 from routes.employee_admin_routes import employee_admin_api
 from routes.inventory_admin_routes import inventory_admin_api
+from routes.attendance_routes import attendance_api
 from routes.service_routes import service_api
 from routes.employee_routes import employee_api
 from routes.superadmin_routes import superadmin_api, login_manager, custom_unauthorized_handler
@@ -20,7 +21,7 @@ from flask_bootstrap import Bootstrap5
 
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
 
-# from mock_data_func import payroll_admin_data, inventory_admin_data, superadmin_data
+# from mock_data_func import payroll_admin_data, inventory_admin_data, superadmin_data, employee_data
 
 app = Flask(__name__)
 
@@ -36,6 +37,7 @@ app.register_blueprint(inventory_admin_api)
 app.register_blueprint(service_api)
 app.register_blueprint(employee_api)
 app.register_blueprint(superadmin_api)
+app.register_blueprint(attendance_api)
 
 # os environment here
 load_dotenv(find_dotenv())
@@ -67,6 +69,7 @@ with app.app_context():
     # payroll_admin_data("mock_data/payroll_admin_data.csv")
     # inventory_admin_data("mock_data/inventory_admin_data.csv")
     # superadmin_data("mock_data/superadmin_data.csv")
+    # employee_data("mock_data/employee_data.csv")
 
 
 @app.route('/')

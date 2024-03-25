@@ -65,6 +65,7 @@ class Employee(db.Model):
     phone = db.Column(db.String(11), nullable=False)
     position = db.Column(db.String(100), nullable=False)
     hire_date = db.Column(db.Date, nullable=True)
+    base_salary = db.Column(db.Numeric(10, 2), nullable=True)
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
 
@@ -73,14 +74,27 @@ class Employee(db.Model):
     payrolls = db.relationship('Payroll', back_populates='employee', lazy=True)
 
 
+# Define the Schedule class
+class Schedule(db.Model):
+    __tablename__ = 'schedule_tbl'
+    schedule_id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
+    start_time = db.Column(db.String(10), nullable=False)
+    end_time = db.Column(db.String(10), nullable=False)
+
+    # Relationship to Employee
+    employee = db.relationship('Employee', back_populates='schedules', lazy=True)
+
+
 class Attendance(db.Model):
     __tablename__ = 'attendance_tbl'
     attendance_id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
     work_date = db.Column(db.Date, nullable=False)
-    start_time = db.Column(db.DateTime, nullable=True)
-    end_time = db.Column(db.DateTime, nullable=True)
-    status = db.Column(db.String(50), nullable=False)
+    login_time = db.Column(db.DateTime, nullable=True)
+    logout_time = db.Column(db.DateTime, nullable=True)
+    login_status = db.Column(db.String(50), nullable=True)
+    logout_status = db.Column(db.String(50), nullable=True)
 
     # Relationship to Employee
     employee = db.relationship('Employee', back_populates='attendances', lazy=True)
@@ -92,7 +106,6 @@ class Payroll(db.Model):
     employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
     period_start = db.Column(db.Date, nullable=False)
     period_end = db.Column(db.Date, nullable=False)
-    basic_pay = db.Column(db.Float, nullable=False)
     overtime_hours = db.Column(db.Float, nullable=False, default=0)
     overtime_pay = db.Column(db.Float, nullable=False, default=0)
     allowances = db.Column(db.Float, nullable=False, default=0)
@@ -132,19 +145,6 @@ class Service(db.Model):
     price = db.Column(db.Float, nullable=False)
 
     bookings = db.relationship('Booking', back_populates='services', lazy=True)
-
-
-# Define the Schedule class
-class Schedule(db.Model):
-    __tablename__ = 'schedule_tbl'
-    schedule_id = db.Column(db.Integer, primary_key=True)
-    employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
-    work_date = db.Column(db.Date, nullable=False)
-    start_time = db.Column(db.DateTime, nullable=False)
-    end_time = db.Column(db.DateTime, nullable=False)
-
-    # Relationship to Employee
-    employee = db.relationship('Employee', back_populates='schedules', lazy=True)
 
 
 # Define the Inventory class
