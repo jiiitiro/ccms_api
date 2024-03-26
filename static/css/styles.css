@@ -10965,12 +10965,16 @@ body {
   width: 225px;
   margin: 0;
 }
+/* Sidebar toggle icon color for dark theme */
 .sb-topnav.navbar-dark #sidebarToggle {
-  color: rgba(255, 255, 255, 0.5);
+  color: #565656; /* Adjust the color for dark theme */
 }
+
+/* Sidebar toggle icon color for light theme */
 .sb-topnav.navbar-light #sidebarToggle {
-  color: #212529;
+  color: #212529; /* Adjust the color for light theme */
 }
+
 
 .sb-sidenav {
   display: flex;
@@ -11256,3 +11260,72 @@ body {
 .navbar, .btn-toggle-theme, .btn-navbar-search {
     transition: background-color 0.3s ease;
 }
+
+.bg-custom .navbar{
+    background-color: #94CBC7;
+    color: #000000;
+}
+
+.btn-custom {
+    background-color: #94CBC7 !important;
+}
+
+.btn-custom {
+    color: #565656 !important;
+}
+
+sb-nav-fixed {
+   background-color: #94CBC7;
+   color: #000000;
+}
+
+/* Navbar styles */
+.navbar {
+    background-color: #94CBC7; /* Change background color to custom */
+    color: #000000; /* Change font color to black */
+}
+
+/* Additional style to set font color to dark for navbar brand when bg-custom */
+.bg-custom .navbar-brand {
+    color: #000000 !important; /* Change font color to black */
+}
+
+/* Apply bg-custom background color to sidebar when in custom theme */
+.bg-custom {
+    background-color: #94CBC7 !important;
+}
+
+/* Change font color to dark when in custom theme */
+.bg-custom .nav-link {
+    color: #565656 !important;
+}
+
+/* Additional style to set font color to dark for nav link icons when bg-custom */
+.bg-custom .sb-nav-link-icon {
+    color: #565656 !important; /* Change font color to black */
+}
+
+/* Hover styles for navbar links and icons */
+.nav-link:hover,
+.sb-nav-link-icon:hover {
+    color: #ffffff !important; /* Change font color to white on hover */
+}
+
+/* Change bars icon color when theme is custom */
+.custom-theme-bars {
+    color: #00000; /* Set color to black */
+}
+
+/* Change text color of "User Management" heading when theme is custom */
+.bg-custom .sb-sidenav-menu-heading {
+    color: #000 !important; /* Set color to black */
+}
+
+
+
+
+
+
+
+
+

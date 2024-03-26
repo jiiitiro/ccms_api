@@ -122,7 +122,7 @@ def register():
                 }]
 
             return jsonify(
-                success={"message": f"User need to confirm the email.", "user_data": new_login_dict}), 201
+                success={"message": f"Register Successfully, User need to confirm the email.", "user_data": new_login_dict}), 200
         except Exception as e:
             db.session.rollback()
             return jsonify(error={"Message": f"Failed to register. Error: {str(e)}"}), 500

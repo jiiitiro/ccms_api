@@ -46,6 +46,7 @@ def get_all_employee_data():
                 "hire_date": data.hire_date,
                 "is_active": data.is_active,
                 "email_confirm": data.email_confirm,
+                "position": data.position
             } for data in user_data]
         response = jsonify({"employees": employee_dict})
         return response, 200
@@ -142,13 +143,14 @@ def register_employee():
                     "email": new_employee.email,
                     "phone": new_employee.phone,
                     "hire_date": new_employee.hire_date,
+                    "position": new_employee.position,
                     "is_active": new_employee.is_active,
                     "email_confirm": new_employee.email_confirm,
                 }
             ]
 
             return jsonify(
-                success={"message": "Employee need to confirm the email.", "employee": new_employee_dict}), 201
+                success={"message": "Register Successfully, employee need to confirm the email.", "employee": new_employee_dict}), 200
         except Exception as e:
             db.session.rollback()
             return jsonify(error={"Message": f"Failed to register a new employee. Error: {str(e)}"}), 500

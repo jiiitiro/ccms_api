@@ -1,5 +1,5 @@
 <body class="sb-nav-fixed">
-        <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <nav class="sb-topnav navbar navbar-expand navbar-dark bg-custom">
             <!-- Navbar Brand-->
             <a class="navbar-brand ps-3" href="{{ url_for('superadmin_api.dashboard_superadmin') }}">SUPERADMIN</a>
             <!-- Sidebar Toggle-->
@@ -9,10 +9,10 @@
                 <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
                 <div class="input-group">
                     <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
-                    <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
+                    <button class="btn btn-custom" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
                 </div>
             </form>
-            <button class="btn btn-dark" id="themeToggleBtn" onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>
+            <button class="btn btn-custom" id="themeToggleBtn" onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>
 
 
             <!-- Navbar-->
@@ -33,29 +33,32 @@
                            function toggleTheme() {
                                 const navbar = document.querySelector('.navbar');
                                 const themeToggleBtn = document.getElementById('themeToggleBtn');
+                               const sidebarToggleIcon = document.querySelector('#sidebarToggle i.fa-bars');
 
                                 var sidenav = document.getElementById('sidenavAccordion');
-                                sidenav.classList.toggle('bg-primary');
+                                sidenav.classList.toggle('bg-custom');
                                 sidenav.classList.toggle('bg-dark');
 
                                 // Toggle navbar background color
-                                navbar.classList.toggle('bg-primary');
+                                navbar.classList.toggle('bg-custom');
                                 navbar.classList.toggle('bg-dark');
 
                                 // Toggle button color
-                                themeToggleBtn.classList.toggle('btn-primary');
+                                themeToggleBtn.classList.toggle('btn-custom');
                                 themeToggleBtn.classList.toggle('btn-dark');
 
+                                // Toggle bars icon color
+                                sidebarToggleIcon.classList.toggle('custom-theme-bars'); // Add a custom class for the bars icon
+
                                 // Store theme preference in local storage
-                                const theme = themeToggleBtn.classList.contains('btn-primary') ? 'primary' : 'dark';
+                                const theme = themeToggleBtn.classList.contains('btn-custom') ? 'custom' : 'dark';
                                 localStorage.setItem('theme', theme);
                             }
 
-
-                            // Apply theme preference on page load
+                             // Apply theme preference on page load
                             document.addEventListener('DOMContentLoaded', function() {
                                 const theme = localStorage.getItem('theme');
-                                if (theme === 'primary') {
+                                if (theme === 'dark') {
                                     toggleTheme();
                                 }
                             });
