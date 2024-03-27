@@ -4,13 +4,15 @@ from passlib.handlers.pbkdf2 import pbkdf2_sha256
 from flask import flash, Flask, request
 from models import db, CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
 from models.ccsms_models import SuperadminLogin
-from forms import SuperadminLoginForm, ForgotPasswordForm, ChangePasswordForm
+from forms import SuperadminLoginForm, ForgotPasswordForm, ChangePasswordForm, RegistrationForm
 import smtplib
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
 import plotly.graph_objs as go
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import random
+import string
 
 
 superadmin_api = Blueprint('superadmin_api', __name__)
@@ -21,6 +23,8 @@ API_KEY = os.environ.get('SUPERADMIN_API_KEY')
 MY_EMAIL = os.environ.get('MY_EMAIL')
 MY_PASSWORD = os.environ.get("MY_PASSWORD")
 BASE_URL = os.environ.get("BASE_URL")
+SUPERADMIN_EMAIL = os.environ.get("SUPERADMIN_EMAIL")
+SUPERADMIN_PASSWORD = os.environ.get("SUPERADMIN_PASSWORD")
 
 s = URLSafeTimedSerializer('Thisisasecret!')
 
@@ -744,6 +748,161 @@ def account_activation(token):
     except SignatureExpired:
         return '<h1>Token is expired.</h1>'
 
+
+# Function to generate a random password
+def generate_random_password(length=12):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(random.choice(characters) for i in range(length))
+
+
+@superadmin_api.route("/superadmin/user-registration", methods=['GET', 'POST'])
+@login_required
+def user_registration():
+    form = RegistrationForm()
+
+    if form.validate_on_submit():
+        name = form.name.data
+        email = form.email.data
+        role = form.role.data
+        subsystem = form.subsystem.data
+
+        # Query the database to find the user by email and subsystem
+        if subsystem == 'billing':
+            user = BillingAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'customer':
+            user = CustomerAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'employee':
+            user = EmployeeAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'inventory':
+            user = InventoryAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'payroll':
+            user = PayrollAdminLogin.query.filter_by(email=email).first()
+        else:
+            # Handle if subsystem value is invalid
+            return jsonify(success=False, message="Invalid subsystem value.")
+
+        if user:
+            return jsonify(success=False, message="Email already exists. Please use a different email address.")
+
+        # Generate a random password
+        random_password = generate_random_password()
+
+        # Create new user based on the subsystem
+        new_login = None
+        if subsystem == 'billing':
+            new_login = BillingAdminLogin(
+                name=name,
+                email=email,
+                password=pbkdf2_sha256.hash(random_password),
+                role=role,
+                is_active=True,
+            )
+        elif subsystem == 'customer':
+            new_login = CustomerAdminLogin(
+                name=name,
+                email=email,
+                password=pbkdf2_sha256.hash(random_password),
+                role=role,
+                is_active=True,
+            )
+        elif subsystem == 'employee':
+            new_login = EmployeeAdminLogin(
+                name=name,
+                email=email,
+                password=pbkdf2_sha256.hash(random_password),
+                role=role,
+                is_active=True,
+            )
+        elif subsystem == 'inventory':
+            new_login = InventoryAdminLogin(
+                name=name,
+                email=email,
+                password=pbkdf2_sha256.hash(random_password),
+                role=role,
+                is_active=True,
+            )
+        elif subsystem == 'payroll':
+            new_login = PayrollAdminLogin(
+                name=name,
+                email=email,
+                password=pbkdf2_sha256.hash(random_password),
+                role=role,
+                is_active=True,
+            )
+
+        # Add the new user to the database
+        db.session.add(new_login)
+        db.session.commit()
+
+        recipient_email = form.email.data
+
+        # Create a confirmation token including subsystem information
+        token_data = {'email': email, 'subsystem': subsystem}
+        token = s.dumps(token_data, salt='email-confirm')
+
+        subject = 'Confirm Email'
+        subject = 'Confirm Email'
+        body = (f"Click the following link to confirm your email:\n\n"
+                f"{BASE_URL}/superadmin/user-registration/confirm-email/{token}\n\n"
+                f"This is your randomly generated password: <strong>{random_password}</strong>\n\n"
+                f"You can change your password once you are logged in.</p>")
+
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = SUPERADMIN_EMAIL
+        msg['To'] = recipient_email
+
+        # Connect to the SMTP server and send the email
+        try:
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                server.starttls()
+                server.login(SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
+                server.sendmail(SUPERADMIN_EMAIL, [recipient_email], msg.as_string())
+
+            print("Email notification sent successfully")
+        except Exception as e:
+            print(f"Failed to send email notification. Error: {str(e)}")
+
+        # Return success message with generated password
+        return jsonify(success=True, message="User registered successfully. "
+                                             "Please inform the user to check their email for confirmation.")
+
+    return render_template("registration.html", form=form)
+
+
+@superadmin_api.get("/superadmin/user-registration/confirm-email/<token>")
+def confirm_email(token):
+    try:
+        # Deserialize the token to retrieve email and subsystem
+        token_data = s.loads(token, salt='email-confirm', max_age=1800)
+
+        email = token_data['email']
+        subsystem = token_data['subsystem']
+
+        # Find the user with the confirmed email based on the subsystem
+        user = None
+        if subsystem == 'billing':
+            user = BillingAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'customer':
+            user = CustomerAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'employee':
+            user = EmployeeAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'inventory':
+            user = InventoryAdminLogin.query.filter_by(email=email).first()
+        elif subsystem == 'payroll':
+            user = PayrollAdminLogin.query.filter_by(email=email).first()
+
+        if user:
+            # Update the email_confirm status to True
+            user.email_confirm = True
+            db.session.commit()
+
+            return '<h1>Email Confirm Successfully!</h1>'
+        else:
+            return jsonify(error={"Message": "User not found."}), 404
+
+    except SignatureExpired:
+        return '<h1>Token is expired.</h1>'
 
 
 

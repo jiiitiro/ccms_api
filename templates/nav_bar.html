@@ -4,7 +4,6 @@
             <a class="navbar-brand ps-3" href="{{ url_for('superadmin_api.dashboard_superadmin') }}">SUPERADMIN</a>
             <!-- Sidebar Toggle-->
             <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
-
             <!-- Navbar Search-->
                 <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
                 <div class="input-group">
@@ -12,7 +11,8 @@
                     <button class="btn btn-custom" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
                 </div>
             </form>
-            <button class="btn btn-custom" id="themeToggleBtn" onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>
+<!--            <button class="btn btn-custom" id="themeToggleBtn" onclick="toggleTheme()"><i class="fas fa-adjust"></i></button>-->
+
 
 
             <!-- Navbar-->
@@ -58,10 +58,23 @@
                              // Apply theme preference on page load
                             document.addEventListener('DOMContentLoaded', function() {
                                 const theme = localStorage.getItem('theme');
-                                if (theme === 'dark') {
+                                if (theme === 'custom') {
                                     toggleTheme();
                                 }
                             });
+
+                            // Get all elements with the class sb-nav-link-icon
+                            const linkIcons = document.querySelectorAll('.sb-nav-link-icon');
+
+                            // Loop through each icon and add a click event listener
+                            linkIcons.forEach(icon => {
+                                icon.addEventListener('click', function(event) {
+                                    event.preventDefault(); // Prevent the default link behavior
+                                    toggleTheme(); // Toggle the theme (custom to dark or dark to custom)
+                                    this.classList.add('custom-font-color'); // Add class to ensure font color remains black
+                                });
+                            });
+
 
                             function confirmLogout() {
                                 Swal.fire({

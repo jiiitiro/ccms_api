@@ -1,0 +1,140 @@
+{% from "bootstrap5/form.html" import render_form %}
+{% include "header.html" %}
+{% include "nav_bar.html" %}
+{% include "side_nav_bar.html" %}
+<div id="layoutSidenav_content">
+    <main>
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">User Registration</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="{{ url_for('superadmin_api.dashboard_superadmin') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Registration</li>
+            </ol>
+            <hr>
+        </div>
+        <br>
+        <br>
+        <div class="col-lg-6 col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form id="registrationForm" method="POST" action="{{ url_for('superadmin_api.user_registration') }}" novalidate>
+                        {{ form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ form.name.label }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            {{ form.email.label }}
+                            {{ form.email(class="form-control") }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.email.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <div class="input-group">
+                                {{ form.role(class="form-select") }}
+                            </div>
+                            {% if form.role.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.role.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <br>
+                        <div class="form-group">
+                            <div class="input-group">
+                                {{ form.subsystem(class="form-select") }}
+                            </div>
+                            {% if form.subsystem.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.subsystem.errors %}
+                                        <span>{{ error }}</span><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <br>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Register</button>
+                        </div>
+                            <script>
+                                // SweetAlert integration
+                                document.getElementById('registrationForm').addEventListener('submit', function(event) {
+                                    event.preventDefault(); // Prevent the default form submission
+
+                                    // Perform form validation or any other checks before submitting
+
+                                    Swal.fire({
+                                        title: 'Are you sure?',
+                                        text: 'Do you want to submit this registration form?',
+                                        icon: 'question',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Yes, submit it!',
+                                        cancelButtonText: 'Cancel'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            // If confirmed, submit the form
+                                            fetch('{{ url_for("superadmin_api.user_registration") }}', {
+                                                method: 'POST',
+                                                body: new FormData(this)
+                                            })
+                                            .then(response => {
+                                                return response.json(); // Parse the JSON response
+                                            })
+                                            .then(data => {
+                                                if (data.success) {
+                                                    // Show SweetAlert popup for successful registration
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'Registered Successfully',
+                                                        text: 'Refreshing Superadmin Dashboard..',
+                                                        timer: 2000, // Popup will close automatically after 2 seconds
+                                                        timerProgressBar: true,
+                                                        showConfirmButton: false
+                                                    }).then(() => {
+                                                        // Redirect to the Superadmin Dashboard after the popup closes
+                                                        window.location.href = '{{ url_for("superadmin_api.user_registration") }}';
+                                                    });
+                                                } else {
+                                                    // Display custom error message for registration failure
+                                                    Swal.fire({
+                                                        icon: 'error',
+                                                        title: 'Registration Failed',
+                                                        text: data.message // Display the error message from the server
+                                                    });
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error('Registration failed:', error);
+                                                Swal.fire({
+                                                    icon: 'error',
+                                                    title: 'Oops...',
+                                                    text: 'Failed to register user. Please try again later.'
+                                                });
+                                            });
+                                        }
+                                    });
+                                });
+                            </script>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+{% include "footer.html" %}
+
