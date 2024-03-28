@@ -88,6 +88,16 @@
                                         cancelButtonText: 'Cancel'
                                     }).then((result) => {
                                         if (result.isConfirmed) {
+                                            // Show loading screen
+                                            Swal.fire({
+                                                title: 'Loading...',
+                                                allowOutsideClick: false,
+                                                showConfirmButton: false,
+                                                onBeforeOpen: () => {
+                                                    Swal.showLoading();
+                                                }
+                                            });
+
                                             // If confirmed, submit the form
                                             fetch('{{ url_for("superadmin_api.user_registration") }}', {
                                                 method: 'POST',
@@ -111,6 +121,9 @@
                                                         window.location.href = '{{ url_for("superadmin_api.user_registration") }}';
                                                     });
                                                 } else {
+                                                    // Close loading screen if there was an error
+                                                    Swal.close();
+
                                                     // Display custom error message for registration failure
                                                     Swal.fire({
                                                         icon: 'error',
@@ -121,6 +134,10 @@
                                             })
                                             .catch(error => {
                                                 console.error('Registration failed:', error);
+                                                // Close loading screen if there was an error
+                                                Swal.close();
+
+                                                // Display error message if fetch request fails
                                                 Swal.fire({
                                                     icon: 'error',
                                                     title: 'Oops...',
@@ -130,6 +147,7 @@
                                         }
                                     });
                                 });
+
                             </script>
                     </form>
                 </div>

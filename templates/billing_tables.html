@@ -52,11 +52,15 @@
                                                 <td>{{ entry.email_confirm }}</td>
                                                 <td>{{ entry.is_active }}</td>
                                                 <td>
+
                                                     {% if entry.is_active %}
                                                         <button onclick="confirmDeactivate('{{ entry.login_id }}')" class="btn btn-danger">Deactivate</button>
                                                     {% else %}
                                                         <button onclick="confirmActivate('{{ entry.login_id }}')" class="btn btn-success">Activate</button>
                                                     {% endif %}
+                                                    <button onclick="confirmDelete('{{ entry.login_id }}')" class="btn btn-danger">Delete</button>
+
+
                                                 </td>
                                             </tr>
                                             <script>
@@ -71,25 +75,39 @@
                                                         confirmButtonText: 'Yes, deactivate it!'
                                                     }).then((result) => {
                                                         if (result.isConfirmed) {
-                                                            // Create a form element
-                                                            var form = document.createElement('form');
-
-                                                            // Set form attributes
-                                                            form.method = 'POST';
-                                                            form.action = "/superadmin/billing/deactivate/" + login_id;
-
-                                                            // Append a hidden input for login_id
-                                                            var loginIdInput = document.createElement('input');
-                                                            loginIdInput.type = 'hidden';
-                                                            loginIdInput.name = 'login_id';
-                                                            loginIdInput.value = login_id;
-                                                            form.appendChild(loginIdInput);
-
-                                                            // Append the form to the document body
-                                                            document.body.appendChild(form);
-
-                                                            // Submit the form
-                                                            form.submit();
+                                                            // Send a request to deactivate the account
+                                                            fetch(`/superadmin/billing/deactivate/${login_id}`, {
+                                                                method: 'POST'
+                                                            })
+                                                            .then(response => {
+                                                                if (response.ok) {
+                                                                    return response.json(); // Parse the JSON response
+                                                                }
+                                                                throw new Error('Failed to deactivate the account.');
+                                                            })
+                                                            .then(data => {
+                                                                // Show success message
+                                                                Swal.fire({
+                                                                    icon: 'success',
+                                                                    title: 'Account Deactivated',
+                                                                    text: data.message,
+                                                                    timer: 4000, // 4 seconds
+                                                                    timerProgressBar: true,
+                                                                    showConfirmButton: false
+                                                                }).then(() => {
+                                                                    // Redirect or refresh the page if needed
+                                                                    // window.location.href = '{{ url_for("superadmin_api.payroll_superadmin") }}';
+                                                                    window.location.reload(); // Reload the current page
+                                                                });
+                                                            })
+                                                            .catch(error => {
+                                                                console.error('Failed to deactivate account:', error);
+                                                                Swal.fire({
+                                                                    icon: 'error',
+                                                                    title: 'Oops...',
+                                                                    text: 'Failed to deactivate account. Please try again later.'
+                                                                });
+                                                            });
                                                         }
                                                     });
                                                 }
@@ -105,25 +123,87 @@
                                                         confirmButtonText: 'Yes, activate it!'
                                                     }).then((result) => {
                                                         if (result.isConfirmed) {
-                                                            // Create a form element
-                                                            var form = document.createElement('form');
+                                                            // Send a request to activate the account
+                                                            fetch(`/superadmin/billing/activate/${login_id}`, {
+                                                                method: 'POST'
+                                                            })
+                                                            .then(response => {
+                                                                if (response.ok) {
+                                                                    return response.json(); // Parse the JSON response
+                                                                }
+                                                                throw new Error('Failed to activate the account.');
+                                                            })
+                                                            .then(data => {
+                                                                // Show success message
+                                                                Swal.fire({
+                                                                    icon: 'success',
+                                                                    title: 'Account Activated',
+                                                                    text: data.message,
+                                                                    timer: 4000, // 4 seconds
+                                                                    timerProgressBar: true,
+                                                                    showConfirmButton: false
+                                                                }).then(() => {
+                                                                    // Redirect or refresh the page if needed
+                                                                    // window.location.href = '{{ url_for("superadmin_api.payroll_superadmin") }}';
+                                                                    window.location.reload(); // Reload the current page
+                                                                });
+                                                            })
+                                                            .catch(error => {
+                                                                console.error('Failed to activate account:', error);
+                                                                Swal.fire({
+                                                                    icon: 'error',
+                                                                    title: 'Oops...',
+                                                                    text: 'Failed to activate account. Please try again later.'
+                                                                });
+                                                            });
+                                                        }
+                                                    });
+                                                }
 
-                                                            // Set form attributes
-                                                            form.method = 'POST';
-                                                            form.action = "/superadmin/billing/activate/" + login_id;
-
-                                                            // Append a hidden input for login_id
-                                                            var loginIdInput = document.createElement('input');
-                                                            loginIdInput.type = 'hidden';
-                                                            loginIdInput.name = 'login_id';
-                                                            loginIdInput.value = login_id;
-                                                            form.appendChild(loginIdInput);
-
-                                                            // Append the form to the document body
-                                                            document.body.appendChild(form);
-
-                                                            // Submit the form
-                                                            form.submit();
+                                                function confirmDelete(login_id) {
+                                                    Swal.fire({
+                                                        title: 'Are you sure?',
+                                                        text: "You are about to delete this account.",
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        confirmButtonColor: '#d33',
+                                                        cancelButtonColor: '#3085d6',
+                                                        confirmButtonText: 'Yes, delete it!'
+                                                    }).then((result) => {
+                                                        if (result.isConfirmed) {
+                                                            // Send a request to delete the account
+                                                            fetch(`/superadmin/billing/delete/${login_id}`, {
+                                                                method: 'POST'
+                                                            })
+                                                            .then(response => {
+                                                                if (response.ok) {
+                                                                    return response.json(); // Parse the JSON response
+                                                                }
+                                                                throw new Error('Failed to delete the account.');
+                                                            })
+                                                            .then(data => {
+                                                                // Show success message
+                                                                Swal.fire({
+                                                                    icon: 'success',
+                                                                    title: 'Successfully deleted',
+                                                                    text: data.message,
+                                                                    timer: 2000, // 4 seconds
+                                                                    timerProgressBar: true,
+                                                                    showConfirmButton: false
+                                                                }).then(() => {
+                                                                    // Redirect to the Superadmin Dashboard after the popup closes
+                                                                    // window.location.href = '{{ url_for("superadmin_api.customer_superadmin") }}';
+                                                                    window.location.reload();
+                                                                });
+                                                            })
+                                                            .catch(error => {
+                                                                console.error('Failed to delete account:', error);
+                                                                Swal.fire({
+                                                                    icon: 'error',
+                                                                    title: 'Oops...',
+                                                                    text: 'Failed to delete account. Please try again later.'
+                                                                });
+                                                            });
                                                         }
                                                     });
                                                 }

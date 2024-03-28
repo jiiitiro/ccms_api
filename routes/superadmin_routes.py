@@ -1,4 +1,6 @@
 import os
+from email.mime.multipart import MIMEMultipart
+
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from passlib.handlers.pbkdf2 import pbkdf2_sha256
 from flask import flash, Flask, request
@@ -183,30 +185,6 @@ def billing_superadmin():
     return render_template("billing_tables.html", result=result)
 
 
-@superadmin_api.post("/superadmin/billing/activate/<int:login_id>")
-@login_required
-def activate_billing_account(login_id):
-    admin_user = BillingAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = True
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.billing_superadmin"))
-
-
-@superadmin_api.post("/superadmin/billing/deactivate/<int:login_id>")
-@login_required
-def deactivate_billing_account(login_id):
-    admin_user = BillingAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = False
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.billing_superadmin"))
-
-
 @superadmin_api.get("/superadmin/customer")
 @login_required
 def customer_superadmin():
@@ -273,30 +251,6 @@ def employee_superadmin():
     return render_template("employee_tables.html", result=result)
 
 
-@superadmin_api.post("/superadmin/employee/activate/<int:login_id>")
-@login_required
-def activate_employee_account(login_id):
-    admin_user = EmployeeAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = True
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.employee_superadmin"))
-
-
-@superadmin_api.post("/superadmin/employee/deactivate/<int:login_id>")
-@login_required
-def deactivate_employee_account(login_id):
-    admin_user = EmployeeAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = False
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.employee_superadmin"))
-
-
 @superadmin_api.get("/superadmin/inventory")
 @login_required
 def inventory_superadmin():
@@ -316,30 +270,6 @@ def inventory_superadmin():
         for entry in inventory_admin_logins
     ]
     return render_template("inventory_tables.html", result=result)
-
-
-@superadmin_api.post("/superadmin/inventory/activate/<int:login_id>")
-@login_required
-def activate_inventory_account(login_id):
-    admin_user = InventoryAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = True
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.inventory_superadmin"))
-
-
-@superadmin_api.post("/superadmin/inventory/deactivate/<int:login_id>")
-@login_required
-def deactivate_inventory_account(login_id):
-    admin_user = InventoryAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = False
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.inventory_superadmin"))
 
 
 @superadmin_api.get("/superadmin/payroll")
@@ -362,70 +292,6 @@ def payroll_superadmin():
     ]
 
     return render_template("payroll_tables.html", result=result)
-
-
-@superadmin_api.post("/superadmin/payroll/activate/<int:login_id>")
-@login_required
-def activate_payroll_account(login_id):
-    admin_user = PayrollAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = True
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.payroll_superadmin"))
-
-
-@superadmin_api.post("/superadmin/payroll/deactivate/<int:login_id>")
-@login_required
-def deactivate_payroll_account(login_id):
-    admin_user = PayrollAdminLogin.query.get(login_id)
-
-    if admin_user:
-        admin_user.is_active = False
-        db.session.commit()
-
-    return redirect(url_for("superadmin_api.payroll_superadmin"))
-
-
-@superadmin_api.post("/superadmin/customer-admin/activate/<int:login_id>")
-@login_required
-def activate_customer_admin(login_id):
-    api_key_header = request.headers.get("x-api-key")
-    if api_key_header == API_KEY:
-        # Find the customer with the confirmed email
-        user_ = CustomerAdminLogin.query.filter_by(login_id=login_id).first()
-
-        if user_:
-            # Update the email_confirm status to True
-            user_.is_active = True
-            db.session.commit()
-
-            return jsonify(success={"Message": f" The email {user_.email} is activated successfully."})
-        else:
-            return jsonify(error={"Message": "User not found."}), 404
-    else:
-        return jsonify(error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
-
-
-@superadmin_api.post("/superadmin/customer-admin/deactivate/<int:login_id>")
-@login_required
-def deactivate_customer_admin(login_id):
-    api_key_header = request.headers.get("x-api-key")
-    if api_key_header == API_KEY:
-        # Find the customer with the confirmed email
-        user_ = CustomerAdminLogin.query.filter_by(login_id=login_id).first()
-
-        if user_:
-            # Update the email_confirm status to True
-            user_.is_active = False
-            db.session.commit()
-
-            return jsonify(success={"Message": f" The email {user_.email} is deactivated successfully."})
-        else:
-            return jsonify(error={"Message": "User not found."}), 404
-    else:
-        return jsonify(error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
 @superadmin_api.post("/superadmin/billing-admin/activate/<int:login_id>")
@@ -841,13 +707,20 @@ def user_registration():
         token = s.dumps(token_data, salt='email-confirm')
 
         subject = 'Confirm Email'
-        subject = 'Confirm Email'
-        body = (f"Click the following link to confirm your email:\n\n"
-                f"{BASE_URL}/superadmin/user-registration/confirm-email/{token}\n\n"
-                f"This is your randomly generated password: <strong>{random_password}</strong>\n\n"
-                f"You can change your password once you are logged in.</p>")
+        # Construct the HTML body with appropriate formatting
+        body = f"""
+        <html>
+        <head></head>
+        <body>
+        <p style="font-size:16px;">Click the following link to confirm your email: <a href="{BASE_URL}/superadmin/user-registration/confirm-email/{token}">Confirm Email</a></p>
+        <p style="font-size:16px;">This is your randomly generated password:</p>
+        <p style="font-size:20px;">{random_password}</p>
+        </body>
+        </html>
+        """
 
-        msg = MIMEText(body)
+        msg = MIMEMultipart()
+        msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
         msg['Subject'] = subject
         msg['From'] = SUPERADMIN_EMAIL
         msg['To'] = recipient_email
@@ -905,4 +778,207 @@ def confirm_email(token):
         return '<h1>Token is expired.</h1>'
 
 
+@superadmin_api.post("/superadmin/payroll/activate/<int:login_id>")
+@login_required
+def activate_payroll_account(login_id):
+    admin_user = PayrollAdminLogin.query.get(login_id)
 
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+        return jsonify(success=True, message="Successfully activated the payroll admin account.")
+    else:
+        return jsonify(success=False, message="Payroll admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/payroll/deactivate/<int:login_id>")
+@login_required
+def deactivate_payroll_account(login_id):
+    admin_user = PayrollAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+        return jsonify(success=True, message="Successfully deactivated the payroll admin account.")
+    else:
+        return jsonify(success=False, message="Payroll admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/payroll/delete/<int:login_id>")
+@login_required
+def delete_payroll_admin_account(login_id):
+    admin_user = PayrollAdminLogin.query.get(login_id)
+
+    if admin_user:
+        db.session.delete(admin_user)
+        db.session.commit()
+        return jsonify(success=True, message="Successfully deleted the payroll admin account.")
+    else:
+        return jsonify(success=False, message="Payroll admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/customer-admin/activate/<int:login_id>")
+@login_required
+def activate_customer_admin(login_id):
+    # Find the customer with the confirmed email
+    user_ = CustomerAdminLogin.query.filter_by(login_id=login_id).first()
+
+    if user_:
+        # Update the email_confirm status to True
+        user_.is_active = True
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully activated the customer admin account.")
+    else:
+        return jsonify(success=False, message="Customer admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/customer-admin/deactivate/<int:login_id>")
+@login_required
+def deactivate_customer_admin(login_id):
+    # Find the customer with the confirmed email
+    user_ = CustomerAdminLogin.query.filter_by(login_id=login_id).first()
+
+    if user_:
+        # Update the email_confirm status to True
+        user_.is_active = False
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully deactivated the customer admin account.")
+    else:
+        return jsonify(success=False, message="Customer admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/customer-admin/delete/<int:login_id>")
+@login_required
+def delete_customer_admin_account(login_id):
+    admin_user = CustomerAdminLogin.query.get(login_id)
+
+    if admin_user:
+        db.session.delete(admin_user)
+        db.session.commit()
+        return jsonify(success=True, message="Successfully deleted the customer admin account.")
+    else:
+        return jsonify(success=False, message="Customer admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/employee/activate/<int:login_id>")
+@login_required
+def activate_employee_account(login_id):
+    admin_user = EmployeeAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+        return jsonify(success=True, message="Successfully activated the employee admin account.")
+    else:
+        return jsonify(success=False, message="Employee admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/employee/deactivate/<int:login_id>")
+@login_required
+def deactivate_employee_account(login_id):
+    admin_user = EmployeeAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully deactivated the customer admin account.")
+    else:
+        return jsonify(success=False, message="Employee admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/employee/delete/<int:login_id>")
+@login_required
+def delete_employee_admin_account(login_id):
+    admin_user = EmployeeAdminLogin.query.get(login_id)
+
+    if admin_user:
+        db.session.delete(admin_user)
+        db.session.commit()
+        return jsonify(success=True, message="Successfully deleted the employee admin account.")
+    else:
+        return jsonify(success=False, message="Employee admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/inventory/activate/<int:login_id>")
+@login_required
+def activate_inventory_account(login_id):
+    admin_user = InventoryAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully activated the inventory admin account.")
+    else:
+        return jsonify(success=False, message="Inventory admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/inventory/deactivate/<int:login_id>")
+@login_required
+def deactivate_inventory_account(login_id):
+    admin_user = InventoryAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully deactivated the inventory admin account.")
+    else:
+        return jsonify(success=False, message="Inventory admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/inventory/delete/<int:login_id>")
+@login_required
+def delete_inventory_admin_account(login_id):
+    admin_user = InventoryAdminLogin    .query.get(login_id)
+
+    if admin_user:
+        db.session.delete(admin_user)
+        db.session.commit()
+        return jsonify(success=True, message="Successfully deleted the inventory admin account.")
+    else:
+        return jsonify(success=False, message="Inventory admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/billing/activate/<int:login_id>")
+@login_required
+def activate_billing_account(login_id):
+    admin_user = BillingAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = True
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully activated the billing admin account.")
+    else:
+        return jsonify(success=False, message="Billing admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/billing/deactivate/<int:login_id>")
+@login_required
+def deactivate_billing_account(login_id):
+    admin_user = BillingAdminLogin.query.get(login_id)
+
+    if admin_user:
+        admin_user.is_active = False
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully deactivated the billing admin account.")
+    else:
+        return jsonify(success=False, message="Billing admin account not found."), 404
+
+
+@superadmin_api.post("/superadmin/billing/delete/<int:login_id>")
+@login_required
+def delete_billing_admin_account(login_id):
+    admin_user = BillingAdminLogin.query.get(login_id)
+
+    if admin_user:
+        db.session.delete(admin_user)
+        db.session.commit()
+        return jsonify(success=True, message="Successfully deleted the billing admin account.")
+    else:
+        return jsonify(success=False, message="billing admin account not found."), 404

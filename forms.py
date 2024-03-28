@@ -1,4 +1,3 @@
-
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, PasswordField, BooleanField
 from wtforms.fields.choices import SelectField
@@ -28,6 +27,7 @@ class CustomSelectWidget(Select):
         html = super().__call__(field, **kwargs)
         return html
 
+
 class RegistrationForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -50,6 +50,10 @@ class ActivateAccount(FlaskForm):
 
 
 class DeactivateAccount(FlaskForm):
+    submit = SubmitField("Deactivate")
+
+
+class DeleteAccountForm(FlaskForm):
     submit = SubmitField("Deactivate")
 
 
