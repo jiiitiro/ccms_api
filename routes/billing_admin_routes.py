@@ -1,6 +1,7 @@
 import os
-from flask import Blueprint, request, jsonify, render_template
+from email.mime.multipart import MIMEMultipart
 
+from flask import Blueprint, request, jsonify, render_template
 from forms import ChangePasswordForm
 from models import db, BillingAdminLogin
 from email.mime.text import MIMEText
@@ -252,12 +253,70 @@ def delete_data(login_id):
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
-def send_reset_email(email, reset_token):
+def send_reset_email(email, reset_token, name):
     subject = 'Password Reset'
-    body = (f"Click the following link to reset your password: "
-            f"{BASE_URL}/billing/admin/reset-password/{reset_token}")
+    body = f"""
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    background-color: #f7f7f7;
+                    padding: 20px;
+                    margin: 0;
+                }}
+                .container {{
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    padding: 40px;
+                }}
+                h1 {{
+                    font-size: 24px;
+                    color: #333;
+                }}
+                p {{
+                    font-size: 16px;
+                    color: #666;
+                    margin-bottom: 20px;
+                }}
+                a {{
+                    color: #007bff;
+                    text-decoration: none;
+                }}
+                a:hover {{
+                    text-decoration: underline;
+                }}
+                .password {{
+                    font-size: 20px;
+                    color: #333;
+                    margin-top: 20px;
+                }}
+                .footer {{
+                    text-align: center;
+                    margin-top: 40px;
+                    font-size: 14px;
+                    color: #999;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Dear {name},</h1>
+                <p>Click the following link to reset your password:  <a href="{BASE_URL}/billing/admin/reset-password/{reset_token}">Reset Password</a></p>
 
-    msg = MIMEText(body)
+            </div>
+            <div class="footer">
+                BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+            </div>
+        </body>
+        </html>
+        """
+
+    msg = MIMEMultipart()
+    msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
     msg['Subject'] = subject
     msg['From'] = MY_EMAIL
     msg['To'] = email
@@ -290,7 +349,7 @@ def user_forgot_password():
             reset_token = s.dumps(email, salt='password-reset')
 
             # Send the reset email
-            send_reset_email(email, reset_token)
+            send_reset_email(email, reset_token, existing_user.name)
 
             return jsonify(success={"message": "Reset link sent to your email. Check your inbox."}), 200
 
@@ -314,7 +373,8 @@ def user_link_forgot_password(token):
                 user.password = pbkdf2_sha256.hash(form.new_password.data)
                 db.session.commit()
 
-                return '<h1>Change Password Successfully!</h1>'
+                return ('<h1 style="font-family: Arial, sans-serif; font-size: 24px; color: #333; text-align: center; '
+                        'margin-top: 50px;">Change Password Successfully!</h1>')
             else:
                 return render_template("reset_password.html", form=form)
         else:

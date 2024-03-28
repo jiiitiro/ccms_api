@@ -1,5 +1,4 @@
-from flask import Flask, jsonify, render_template, request
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template
 from dotenv import load_dotenv, find_dotenv
 import os
 from flask_jwt_extended import JWTManager

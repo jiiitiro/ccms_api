@@ -96,28 +96,6 @@ def register_employee():
             if existing_employee:
                 return jsonify(error={"message": "Email already exists. Please use a different email address."}), 400
 
-            recipient_email = request.form.get("email")
-            token = s.dumps(recipient_email, salt='email-confirm')
-
-            subject = 'Confirm Email'
-            body = f"Click the following link to confirm your email: {BASE_URL}/employee/confirm-email/{token}"
-
-            msg = MIMEText(body)
-            msg['Subject'] = subject
-            msg['From'] = MY_EMAIL
-            msg['To'] = recipient_email
-
-            # Connect to the SMTP server and send the email
-            try:
-                with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                    server.starttls()
-                    server.login(MY_EMAIL, MY_PASSWORD)
-                    server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
-
-                print("Email notification sent successfully")
-            except Exception as e:
-                print(f"Failed to send email notification. Error: {str(e)}")
-
             new_employee = Employee(
                 first_name=request.form.get("first_name"),
                 middle_name=request.form.get("middle_name"),
@@ -149,8 +127,90 @@ def register_employee():
                 }
             ]
 
+            recipient_email = request.form.get("email")
+            token = s.dumps(recipient_email, salt='email-confirm')
+
+            subject = 'Confirm Email'
+            body = f"""
+                                    <html>
+                                    <head>
+                                        <style>
+                                            body {{
+                                                font-family: Arial, sans-serif;
+                                                background-color: #f7f7f7;
+                                                padding: 20px;
+                                                margin: 0;
+                                            }}
+                                            .container {{
+                                                max-width: 600px;
+                                                margin: 0 auto;
+                                                background-color: #fff;
+                                                border-radius: 8px;
+                                                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                                                padding: 40px;
+                                            }}
+                                            h1 {{
+                                                font-size: 24px;
+                                                color: #333;
+                                            }}
+                                            p {{
+                                                font-size: 16px;
+                                                color: #666;
+                                                margin-bottom: 20px;
+                                            }}
+                                            a {{
+                                                color: #007bff;
+                                                text-decoration: none;
+                                            }}
+                                            a:hover {{
+                                                text-decoration: underline;
+                                            }}
+                                            .password {{
+                                                font-size: 20px;
+                                                color: #333;
+                                                margin-top: 20px;
+                                            }}
+                                            .footer {{
+                                                text-align: center;
+                                                margin-top: 40px;
+                                                font-size: 14px;
+                                                color: #999;
+                                            }}
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class="container">
+                                            <h1>Hello {new_employee.first_name},</h1>
+                                            <p>Confirm your email address by clicking the following link: <a href="{BASE_URL}/employee/confirm-email/{token}">Confirm Email</a></p>
+
+                                        </div>
+                                        <div class="footer">
+                                            BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+                                        </div>
+                                    </body>
+                                    </html>
+                                    """
+
+            msg = MIMEMultipart()
+            msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
+            msg['Subject'] = subject
+            msg['From'] = MY_EMAIL
+            msg['To'] = recipient_email
+
+            # Connect to the SMTP server and send the email
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.starttls()
+                    server.login(MY_EMAIL, MY_PASSWORD)
+                    server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
+
+                print("Email notification sent successfully")
+            except Exception as e:
+                print(f"Failed to send email notification. Error: {str(e)}")
+
             return jsonify(
-                success={"message": "Register Successfully, employee need to confirm the email.", "employee": new_employee_dict}), 200
+                success={"message": "Register Successfully, employee need to confirm the email.",
+                         "employee": new_employee_dict}), 200
         except Exception as e:
             db.session.rollback()
             return jsonify(error={"Message": f"Failed to register a new employee. Error: {str(e)}"}), 500
@@ -262,7 +322,7 @@ def employee_forgot_password():
             reset_token = s.dumps(email, salt='password-reset')
 
             # Send the reset email
-            send_reset_email(email, reset_token)
+            send_reset_email(email, reset_token, existing_employee.first_name)
 
             return jsonify(success={"message": "Reset link sent to your email. Check your inbox."}), 200
 
@@ -273,12 +333,70 @@ def employee_forgot_password():
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-def send_reset_email(email, reset_token):
+def send_reset_email(email, reset_token, first_name):
     subject = 'Password Reset'
-    body = (f"Click the following link to reset your password: "
-            f"{BASE_URL}/employee/reset-password/{reset_token}")
+    body = f"""
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    background-color: #f7f7f7;
+                    padding: 20px;
+                    margin: 0;
+                }}
+                .container {{
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                    padding: 40px;
+                }}
+                h1 {{
+                    font-size: 24px;
+                    color: #333;
+                }}
+                p {{
+                    font-size: 16px;
+                    color: #666;
+                    margin-bottom: 20px;
+                }}
+                a {{
+                    color: #007bff;
+                    text-decoration: none;
+                }}
+                a:hover {{
+                    text-decoration: underline;
+                }}
+                .password {{
+                    font-size: 20px;
+                    color: #333;
+                    margin-top: 20px;
+                }}
+                .footer {{
+                    text-align: center;
+                    margin-top: 40px;
+                    font-size: 14px;
+                    color: #999;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Dear {first_name},</h1>
+                <p>Click the following link to reset your password:  <a href="{BASE_URL}/employee/reset-password/{reset_token}">Reset Password</a></p>
 
-    msg = MIMEText(body)
+            </div>
+            <div class="footer">
+                BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+            </div>
+        </body>
+        </html>
+        """
+
+    msg = MIMEMultipart()
+    msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
     msg['Subject'] = subject
     msg['From'] = MY_EMAIL
     msg['To'] = email
@@ -308,7 +426,8 @@ def employee_link_forgot_password(token):
                 user.password = pbkdf2_sha256.hash(form.new_password.data)
                 db.session.commit()
 
-                return '<h1>Change Password Successfully!</h1>'
+                return ('<h1 style="font-family: Arial, sans-serif; font-size: 24px; color: #333; text-align: center; '
+                        'margin-top: 50px;">Change Password Successfully!</h1>')
             else:
                 return render_template("reset_password.html", form=form)
         else:

@@ -627,118 +627,176 @@ def user_registration():
     form = RegistrationForm()
 
     if form.validate_on_submit():
-        name = form.name.data
-        email = form.email.data
-        role = form.role.data
-        subsystem = form.subsystem.data
-
-        # Query the database to find the user by email and subsystem
-        if subsystem == 'billing':
-            user = BillingAdminLogin.query.filter_by(email=email).first()
-        elif subsystem == 'customer':
-            user = CustomerAdminLogin.query.filter_by(email=email).first()
-        elif subsystem == 'employee':
-            user = EmployeeAdminLogin.query.filter_by(email=email).first()
-        elif subsystem == 'inventory':
-            user = InventoryAdminLogin.query.filter_by(email=email).first()
-        elif subsystem == 'payroll':
-            user = PayrollAdminLogin.query.filter_by(email=email).first()
-        else:
-            # Handle if subsystem value is invalid
-            return jsonify(success=False, message="Invalid subsystem value.")
-
-        if user:
-            return jsonify(success=False, message="Email already exists. Please use a different email address.")
-
-        # Generate a random password
-        random_password = generate_random_password()
-
-        # Create new user based on the subsystem
-        new_login = None
-        if subsystem == 'billing':
-            new_login = BillingAdminLogin(
-                name=name,
-                email=email,
-                password=pbkdf2_sha256.hash(random_password),
-                role=role,
-                is_active=True,
-            )
-        elif subsystem == 'customer':
-            new_login = CustomerAdminLogin(
-                name=name,
-                email=email,
-                password=pbkdf2_sha256.hash(random_password),
-                role=role,
-                is_active=True,
-            )
-        elif subsystem == 'employee':
-            new_login = EmployeeAdminLogin(
-                name=name,
-                email=email,
-                password=pbkdf2_sha256.hash(random_password),
-                role=role,
-                is_active=True,
-            )
-        elif subsystem == 'inventory':
-            new_login = InventoryAdminLogin(
-                name=name,
-                email=email,
-                password=pbkdf2_sha256.hash(random_password),
-                role=role,
-                is_active=True,
-            )
-        elif subsystem == 'payroll':
-            new_login = PayrollAdminLogin(
-                name=name,
-                email=email,
-                password=pbkdf2_sha256.hash(random_password),
-                role=role,
-                is_active=True,
-            )
-
-        # Add the new user to the database
-        db.session.add(new_login)
-        db.session.commit()
-
-        recipient_email = form.email.data
-
-        # Create a confirmation token including subsystem information
-        token_data = {'email': email, 'subsystem': subsystem}
-        token = s.dumps(token_data, salt='email-confirm')
-
-        subject = 'Confirm Email'
-        # Construct the HTML body with appropriate formatting
-        body = f"""
-        <html>
-        <head></head>
-        <body>
-        <p style="font-size:16px;">Click the following link to confirm your email: <a href="{BASE_URL}/superadmin/user-registration/confirm-email/{token}">Confirm Email</a></p>
-        <p style="font-size:16px;">This is your randomly generated password:</p>
-        <p style="font-size:20px;">{random_password}</p>
-        </body>
-        </html>
-        """
-
-        msg = MIMEMultipart()
-        msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
-        msg['Subject'] = subject
-        msg['From'] = MY_EMAIL
-        msg['To'] = recipient_email
-
-        # Connect to the SMTP server and send the email
         try:
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()
-                server.login(MY_EMAIL, MY_PASSWORD)
-                server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
+            name = form.name.data
+            email = form.email.data
+            role = form.role.data
+            subsystem = form.subsystem.data
 
-            print("Email notification sent successfully")
+            # Query the database to find the user by email and subsystem
+            if subsystem == 'billing':
+                user = BillingAdminLogin.query.filter_by(email=email).first()
+            elif subsystem == 'customer':
+                user = CustomerAdminLogin.query.filter_by(email=email).first()
+            elif subsystem == 'employee':
+                user = EmployeeAdminLogin.query.filter_by(email=email).first()
+            elif subsystem == 'inventory':
+                user = InventoryAdminLogin.query.filter_by(email=email).first()
+            elif subsystem == 'payroll':
+                user = PayrollAdminLogin.query.filter_by(email=email).first()
+            else:
+                # Handle if subsystem value is invalid
+                return jsonify(success=False, message="Invalid subsystem value.")
+
+            if user:
+                return jsonify(success=False, message="Email already exists. Please use a different email address.")
+
+            # Generate a random password
+            random_password = generate_random_password()
+
+            # Create new user based on the subsystem
+            new_login = None
+            if subsystem == 'billing':
+                new_login = BillingAdminLogin(
+                    name=name,
+                    email=email,
+                    password=pbkdf2_sha256.hash(random_password),
+                    role=role,
+                    is_active=True,
+                )
+            elif subsystem == 'customer':
+                new_login = CustomerAdminLogin(
+                    name=name,
+                    email=email,
+                    password=pbkdf2_sha256.hash(random_password),
+                    role=role,
+                    is_active=True,
+                )
+            elif subsystem == 'employee':
+                new_login = EmployeeAdminLogin(
+                    name=name,
+                    email=email,
+                    password=pbkdf2_sha256.hash(random_password),
+                    role=role,
+                    is_active=True,
+                )
+            elif subsystem == 'inventory':
+                new_login = InventoryAdminLogin(
+                    name=name,
+                    email=email,
+                    password=pbkdf2_sha256.hash(random_password),
+                    role=role,
+                    is_active=True,
+                )
+            elif subsystem == 'payroll':
+                new_login = PayrollAdminLogin(
+                    name=name,
+                    email=email,
+                    password=pbkdf2_sha256.hash(random_password),
+                    role=role,
+                    is_active=True,
+                )
+
+            # Add the new user to the database
+            db.session.add(new_login)
+            db.session.commit()
+
+            recipient_email = form.email.data
+
+            # Create a confirmation token including subsystem information
+            token_data = {'email': email, 'subsystem': subsystem}
+            token = s.dumps(token_data, salt='email-confirm')
+
+            subject = 'Confirm Email'
+            # Construct the HTML body with appropriate formatting
+            body = f"""
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        background-color: #f7f7f7;
+                        padding: 20px;
+                        margin: 0;
+                    }}
+                    .container {{
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: #fff;
+                        border-radius: 8px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        padding: 40px;
+                    }}
+                    h1 {{
+                        font-size: 24px;
+                        color: #333;
+                    }}
+                    p {{
+                        font-size: 16px;
+                        color: #666;
+                        margin-bottom: 20px;
+                    }}
+                    a {{
+                        color: #007bff;
+                        text-decoration: none;
+                    }}
+                    a:hover {{
+                        text-decoration: underline;
+                    }}
+                    .password {{
+                        font-size: 20px;
+                        color: #333;
+                        margin-top: 20px;
+                    }}
+                    .footer {{
+                        text-align: center;
+                        margin-top: 40px;
+                        font-size: 14px;
+                        color: #999;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Hello {new_login.name},</h1>
+                    <p>Click the following link to confirm your email: <a href="{BASE_URL}/superadmin/user-registration/confirm-email/{token}">Confirm Email</a></p>
+                    <p>This is your randomly generated password:</p>
+                    <p class="password">{random_password}</p>
+                </div>
+                <div class="footer">
+                    BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+                </div>
+            </body>
+            </html>
+            """
+
+            msg = MIMEMultipart()
+            msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
+            msg['Subject'] = subject
+            msg['From'] = MY_EMAIL
+            msg['To'] = recipient_email
+
+            # Connect to the SMTP server and send the email
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.starttls()
+                    server.login(MY_EMAIL, MY_PASSWORD)
+                    server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
+
+                print("Email notification sent successfully")
+            except Exception as e:
+                # Rollback the session in case of an error sending email
+                db.session.rollback()
+                print(f"Failed to send email notification. Error: {str(e)}")
+
+            # Return success message with generated password
+            return jsonify(success=True, message="User registered successfully. "
+                                                 "Please inform the user to check their email for confirmation.")
+
         except Exception as e:
-            print(f"Failed to send email notification. Error: {str(e)}")
-
-        # Return success message with generated password
-        return jsonify(success=True, message="User registered successfully. "
-                                             "Please inform the user to check their email for confirmation.")
+            # Rollback the session in case of an error during registration
+            db.session.rollback()
+            return jsonify(error={"Message": f"Failed to register user. Error: {str(e)}"}), 500
 
     return render_template("registration.html", form=form)
 
@@ -770,12 +828,15 @@ def confirm_email(token):
             user.email_confirm = True
             db.session.commit()
 
-            return '<h1>Email Confirm Successfully!</h1>'
+            return ('<h1 style="font-family: Arial, sans-serif; font-size: 24px; color: #333; text-align: center; '
+                    'margin-top: 50px;">Email Confirm Successfully!</h1>')
+
         else:
             return jsonify(error={"Message": "User not found."}), 404
 
     except SignatureExpired:
-        return '<h1>Token is expired.</h1>'
+        return ('<h1 style="font-family: Arial, sans-serif; font-size: 24px; color: #333; text-align: center; '
+                'margin-top: 50px;">Token Expired!</h1>')
 
 
 @superadmin_api.post("/superadmin/payroll/activate/<int:login_id>")

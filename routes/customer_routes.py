@@ -1,16 +1,15 @@
-from flask import jsonify, render_template, request, url_for
+from email.mime.multipart import MIMEMultipart
+
+from flask import render_template
 import os
-import secrets
 from passlib.hash import pbkdf2_sha256
 import smtplib
 from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
 from models import db, Customer, CustomerAddress
 from itsdangerous import URLSafeTimedSerializer
 from forms import ChangePasswordForm
-from flask_bootstrap import Bootstrap5
 
 customer_api = Blueprint('customer_api', __name__)
 
@@ -117,7 +116,7 @@ def register_customer():
             # Create a new customer address
             new_address = CustomerAddress(
                 customer=new_customer,  # Associate the address with the new customer
-                houseno=request.form.get("houseno"),
+                houseno_street=request.form.get("houseno_street"),
                 barangay=request.form.get("barangay"),
                 city=request.form.get("city"),
                 region=request.form.get("region"),
@@ -138,7 +137,7 @@ def register_customer():
                 "is_active": new_customer.is_active,
                 "email_confirm": new_customer.email_confirm,
                 "address": {  # Include the address details in the response
-                    "houseno": new_address.houseno,
+                    "houseno_street": new_address.houseno_street,
                     "barangay": new_address.barangay,
                     "city": new_address.city,
                     "region": new_address.region,
@@ -150,9 +149,68 @@ def register_customer():
             token = s.dumps(recipient_email, salt='email-confirm')
 
             subject = 'Confirm Email'
-            body = f"Click the following link to confirm your email: {BASE_URL}/customer/confirm-email/{token}"
+            body = f"""
+            <html>
+            <head>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        background-color: #f7f7f7;
+                        padding: 20px;
+                        margin: 0;
+                    }}
+                    .container {{
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background-color: #fff;
+                        border-radius: 8px;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                        padding: 40px;
+                    }}
+                    h1 {{
+                        font-size: 24px;
+                        color: #333;
+                    }}
+                    p {{
+                        font-size: 16px;
+                        color: #666;
+                        margin-bottom: 20px;
+                    }}
+                    a {{
+                        color: #007bff;
+                        text-decoration: none;
+                    }}
+                    a:hover {{
+                        text-decoration: underline;
+                    }}
+                    .password {{
+                        font-size: 20px;
+                        color: #333;
+                        margin-top: 20px;
+                    }}
+                    .footer {{
+                        text-align: center;
+                        margin-top: 40px;
+                        font-size: 14px;
+                        color: #999;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Hello {new_customer.first_name},</h1>
+                    <p>Confirm your email address by clicking the following link: <a href="{BASE_URL}/customer/confirm-email/{token}">Confirm Email</a></p>
+                    
+                </div>
+                <div class="footer">
+                    BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+                </div>
+            </body>
+            </html>
+            """
 
-            msg = MIMEText(body)
+            msg = MIMEMultipart()
+            msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
             msg['Subject'] = subject
             msg['From'] = MY_EMAIL
             msg['To'] = recipient_email
@@ -290,8 +348,11 @@ def customer_forgot_password():
             # For simplicity, we're using a simple string as the reset token in this example
             reset_token = s.dumps(email, salt='password-reset')
 
+            # Retrieve the first_name from the existing_customer object
+            first_name = existing_customer.first_name
+
             # Send the reset email
-            send_reset_email(email, reset_token)
+            send_reset_email(email, reset_token, first_name)
 
             return jsonify(success={"message": "Reset link sent to your email. Check your inbox."}), 200
 
@@ -302,12 +363,70 @@ def customer_forgot_password():
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-def send_reset_email(email, reset_token):
+def send_reset_email(email, reset_token, first_name):
     subject = 'Password Reset'
-    body = (f"Click the following link to reset your password: "
-            f"{BASE_URL}/customer/reset-password/{reset_token}")
+    body = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: #f7f7f7;
+                padding: 20px;
+                margin: 0;
+            }}
+            .container {{
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #fff;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                padding: 40px;
+            }}
+            h1 {{
+                font-size: 24px;
+                color: #333;
+            }}
+            p {{
+                font-size: 16px;
+                color: #666;
+                margin-bottom: 20px;
+            }}
+            a {{
+                color: #007bff;
+                text-decoration: none;
+            }}
+            a:hover {{
+                text-decoration: underline;
+            }}
+            .password {{
+                font-size: 20px;
+                color: #333;
+                margin-top: 20px;
+            }}
+            .footer {{
+                text-align: center;
+                margin-top: 40px;
+                font-size: 14px;
+                color: #999;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Dear {first_name},</h1>
+            <p>Click the following link to reset your password:  <a href="{BASE_URL}/customer/reset-password/{reset_token}">Reset Password</a></p>
 
-    msg = MIMEText(body)
+        </div>
+        <div class="footer">
+            BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+        </div>
+    </body>
+    </html>
+    """
+
+    msg = MIMEMultipart()
+    msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
     msg['Subject'] = subject
     msg['From'] = MY_EMAIL
     msg['To'] = email
@@ -338,7 +457,8 @@ def customer_link_forgot_password(token):
                 user.password = pbkdf2_sha256.hash(form.new_password.data)
                 db.session.commit()
 
-                return '<h1>Change Password Successfully!</h1>'
+                return ('<h1 style="font-family: Arial, sans-serif; font-size: 24px; color: #333; text-align: center; '
+                        'margin-top: 50px;">Change Password Successfully!</h1>')
             else:
                 return render_template("reset_password.html", form=form)
         else:
@@ -352,16 +472,27 @@ def customer_link_forgot_password(token):
 def delete_customer_data(customer_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        customer_to_delete = db.session.execute(db.select(Customer).where(Customer.customer_id == customer_id)).scalar()
+        # Fetch the customer to delete
+        customer_to_delete = Customer.query.filter_by(customer_id=customer_id).first()
         if customer_to_delete:
-            db.session.delete(customer_to_delete)
-            db.session.commit()
-            return jsonify(success={"Success": "Successfully deleted the customer."}), 200
+            try:
+                # Delete associated addresses
+                addresses_to_delete = CustomerAddress.query.filter_by(customer_id=customer_id).all()
+                for address in addresses_to_delete:
+                    db.session.delete(address)
+                # Delete the customer
+                db.session.delete(customer_to_delete)
+                db.session.commit()
+                return jsonify(success={"Success": "Successfully deleted the customer and associated addresses."}), 200
+            except Exception as e:
+                # Rollback the session in case of an error
+                db.session.rollback()
+                return jsonify(error={"Error": "An error occurred while deleting the customer: " + str(e)}), 500
         else:
-            return jsonify(error={"Not Found": "Sorry a data with that id was not found in the database."}), 404
+            return jsonify(error={"Not Found": "Sorry, a customer with that ID was not found in the database."}), 404
     else:
         return jsonify(
-            error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+            error={"Not Authorized": "Sorry, that's not allowed. Make sure you have the correct API key."}), 403
 
 
 @customer_api.patch('/customer/<int:customer_id>')
