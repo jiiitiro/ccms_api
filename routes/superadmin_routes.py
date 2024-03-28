@@ -722,15 +722,15 @@ def user_registration():
         msg = MIMEMultipart()
         msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
         msg['Subject'] = subject
-        msg['From'] = SUPERADMIN_EMAIL
+        msg['From'] = MY_EMAIL
         msg['To'] = recipient_email
 
         # Connect to the SMTP server and send the email
         try:
             with smtplib.SMTP('smtp.gmail.com', 587) as server:
                 server.starttls()
-                server.login(SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD)
-                server.sendmail(SUPERADMIN_EMAIL, [recipient_email], msg.as_string())
+                server.login(MY_EMAIL, MY_PASSWORD)
+                server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
 
             print("Email notification sent successfully")
         except Exception as e:

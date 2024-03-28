@@ -32,8 +32,8 @@ class RegistrationForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     role = SelectField('Role', choices=[
-        ('admin', 'Admin'),
-        ('staff', 'Staff')
+        ('Admin', 'Admin'),
+        ('Staff', 'Staff')
     ], validators=[DataRequired()], widget=CustomSelectWidget())
     subsystem = SelectField('Subsystem', choices=[
         ('billing', 'Billing Subsystem'),
