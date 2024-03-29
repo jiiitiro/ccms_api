@@ -74,6 +74,8 @@ def get_all_attendance_data():
                     "first_name": employee.first_name,
                     "middle_name": employee.middle_name,
                     "last_name": employee.last_name,
+                    "email": employee.email,
+                    "position": employee.position,
                     "attendance": []
                 }
 
