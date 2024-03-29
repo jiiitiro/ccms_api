@@ -57,13 +57,14 @@ class DeleteAccountForm(FlaskForm):
 
 
 class SuperadminLoginForm(FlaskForm):
-    email = EmailField("Email", validators=[DataRequired(), Email()])
-    password = PasswordField("Password", validators=[DataRequired()])
-    submit = SubmitField("Login")
+    email = StringField("Email", validators=[DataRequired(), Email()], render_kw={"class": "form-control form-control-user", "placeholder": "Enter Email Address..."})
+    password = PasswordField("Password", validators=[DataRequired()], render_kw={"class": "form-control form-control-user", "placeholder": "Password"})
+    remember_me = BooleanField("Remember Me", render_kw={"class": "custom-control-label"})
+    submit = SubmitField("Login", render_kw={"class": "btn btn-primary btn-user btn-block"})
 
 
 class ForgotPasswordForm(FlaskForm):
-    email = EmailField("Email", validators=[DataRequired(), Email()])
+    email = StringField("Email", validators=[DataRequired(), Email()], render_kw={"class": "form-control form-control-user", "placeholder": "Enter Email Address..."})
     submit = SubmitField("Send")
 
 

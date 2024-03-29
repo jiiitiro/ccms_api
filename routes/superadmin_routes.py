@@ -522,7 +522,7 @@ def superadmin_login():
         # Return a JSON response indicating successful login
         return jsonify(success=True)
 
-    return render_template("superadmin_login.html", form=form)
+    return render_template("superadmin_login_1.html", form=form)
 
 
 @superadmin_api.route("/superadmin/forgot-password", methods=["GET", "POST"])

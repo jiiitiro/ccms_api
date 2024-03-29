@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, url_for, redirect
 from dotenv import load_dotenv, find_dotenv
 import os
 from flask_jwt_extended import JWTManager
@@ -73,7 +73,7 @@ with app.app_context():
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return redirect(url_for('superadmin_api.superadmin_login'))
 
 
 if __name__ == "__main__":
