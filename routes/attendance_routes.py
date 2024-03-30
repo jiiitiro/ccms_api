@@ -31,11 +31,13 @@ def get_attendance():
             existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
                                                              work_date=datetime.now().date()).first()
 
+            status = None
             if existing_attendance:
                 # Employee already has login and logout for today.
                 if existing_attendance.login_time and existing_attendance.logout_time:
                     return jsonify(error={"message": "Employee is already logged in and out for today."}), 401
 
+                status = "logout"
                 # Employee is already logged in, so log them out
                 existing_attendance.logout_time = datetime.now()
                 existing_attendance.logout_status = "Logged Out"
@@ -57,6 +59,7 @@ def get_attendance():
                 existing_attendance.ot_hrs = max(0, (ot_delta.total_seconds() + 59) // 3600)  # Round up to the nearest hour
 
             else:
+                status = "login"
                 # Employee is not logged in, so log them in
                 login_time = datetime.now()
                 attendance = Attendance(employee_id=employee.employee_id, work_date=login_time.date(),
@@ -66,7 +69,8 @@ def get_attendance():
 
             db.session.commit()
 
-            return jsonify(success={"message": "Attendance saved."}), 200
+            return jsonify(success={"message": f"Hello {employee.first_name}, "
+                                               f"your attendance {status} was successfully saved."}), 200
 
         return jsonify(error={"message": "Invalid credentials."}), 401
 
