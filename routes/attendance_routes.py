@@ -79,12 +79,15 @@ def get_attendance():
 def get_all_attendance_data():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        # Query employees and their attendance data
-        query = db.session.query(Employee, Attendance).outerjoin(Attendance, Employee.employee_id == Attendance.employee_id).all()
+
+        # Query employees, their attendance data, and schedules
+        query = db.session.query(Employee, Attendance, Schedule).outerjoin(
+            Attendance, Employee.employee_id == Attendance.employee_id).outerjoin(
+            Schedule, Employee.employee_id == Schedule.employee_id).all()
 
         # Organize data into a dictionary
         attendance_data = {}
-        for employee, attendance in query:
+        for employee, attendance, schedule in query:
             if employee.employee_id not in attendance_data:
                 attendance_data[employee.employee_id] = {
                     "employee_id": employee.employee_id,
@@ -93,7 +96,12 @@ def get_all_attendance_data():
                     "last_name": employee.last_name,
                     "email": employee.email,
                     "position": employee.position,
-                    "attendance": []
+                    "attendance": [],
+                    "schedule": {
+                        "start_time": schedule.start_time.strftime("%H:%M:%S") if schedule else None,
+                        "end_time": schedule.end_time.strftime("%H:%M:%S") if schedule else None,
+                        "day_off": schedule.day_off if schedule else None
+                    }
                 }
 
             if attendance:
@@ -103,7 +111,9 @@ def get_all_attendance_data():
                     "login_time": attendance.login_time,
                     "logout_time": attendance.logout_time,
                     "login_status": attendance.login_status,
-                    "logout_status": attendance.logout_status
+                    "logout_status": attendance.logout_status,
+                    "tardiness": attendance.tardiness,
+                    "ot_hrs": attendance.ot_hrs
                 })
 
         # Convert dictionary to list
@@ -142,15 +152,27 @@ def get_specific_attendance_employee(employee_id):
                 "ot_hrs": attendance.ot_hrs
             })
 
+        # Get the employee's schedule
+        employee_schedule = Schedule.query.filter_by(employee_id=employee_id).first()
+
+        # Organize schedule data
+        schedule_data = {
+            "start_time": employee_schedule.start_time.strftime("%H:%M:%S") if employee_schedule else None,
+            "end_time": employee_schedule.end_time.strftime("%H:%M:%S") if employee_schedule else None,
+            "day_off": employee_schedule.day_off if employee_schedule else None
+        }
+
         response = jsonify({
             "employee_id": employee.employee_id,
             "first_name": employee.first_name,
             "middle_name": employee.middle_name,
             "last_name": employee.last_name,
-            "attendance": attendance_list
+            "email": employee.email,
+            "position": employee.position,
+            "attendance": attendance_list,
+            "schedule": schedule_data
         })
 
         return response, 200
     else:
         return jsonify(error={"message": "Not Authorized. Make sure you have the correct api_key."}), 403
-

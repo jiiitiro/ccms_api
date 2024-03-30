@@ -185,7 +185,7 @@ def register_employee():
             token = s.dumps(recipient_email, salt='email-confirm')
 
             # Send Email Confirmation to employee's email
-            # send_email_confirmation(recipient_email, token, new_employee.first_name)
+            send_email_confirmation(recipient_email, token, new_employee.first_name)
 
             return jsonify(
                 success={"message": "Register Successfully, employee needs to confirm the email.",
