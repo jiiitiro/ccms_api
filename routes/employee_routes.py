@@ -1,3 +1,5 @@
+import json
+
 from flask import jsonify, render_template, request, url_for
 import os
 import secrets
@@ -7,9 +9,9 @@ from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
-
+from sqlalchemy.orm import joinedload
 from forms import ChangePasswordForm
-from models import db, Employee
+from models import db, Employee, Schedule, Attendance
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 
@@ -33,21 +35,37 @@ s = URLSafeTimedSerializer('Thisisasecret!')
 def get_all_employee_data():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        user_data = db.session.execute(db.select(Employee)).scalars().all()
-        employee_dict = [
-            {
-                "employee_id": data.employee_id,
-                "first_name": data.first_name,
-                "middle_name": data.middle_name,
-                "last_name": data.last_name,
-                "address": data.address,
-                "email": data.email,
-                "phone": data.phone,
-                "hire_date": data.hire_date,
-                "is_active": data.is_active,
-                "email_confirm": data.email_confirm,
-                "position": data.position
-            } for data in user_data]
+        # Query all employees with their associated schedules
+        data = db.session.query(Employee, Schedule).outerjoin(Schedule, Employee.employee_id == Schedule.employee_id).all()
+
+        # Extract relevant data for each employee and schedule
+        employee_dict = []
+        for employee, schedule in data:
+            employee_info = {
+                "employee_id": employee.employee_id,
+                "first_name": employee.first_name,
+                "middle_name": employee.middle_name,
+                "last_name": employee.last_name,
+                "address": employee.address,
+                "email": employee.email,
+                "phone": employee.phone,
+                "hire_date": employee.hire_date,
+                "is_active": employee.is_active,
+                "email_confirm": employee.email_confirm,
+                "position": employee.position,
+                "daily_rate": employee.daily_rate,
+                "de_minimis": employee.de_minimis,
+                "schedule": {
+                    "schedule_id": schedule.schedule_id if schedule else None,
+                    "start_time": schedule.start_time.strftime(
+                        "%H:%M:%S") if schedule and schedule.start_time else None,
+                    "end_time": schedule.end_time.strftime("%H:%M:%S") if schedule and schedule.end_time else None,
+                    "day_off": schedule.day_off if schedule else None
+                }
+            }
+            employee_dict.append(employee_info)
+
+        # Create the response
         response = jsonify({"employees": employee_dict})
         return response, 200
     else:
@@ -60,19 +78,34 @@ def get_all_employee_data():
 def get_specific_employee_data(employee_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        employee_data = db.session.query(Employee).filter_by(employee_id=employee_id).first()
+        # Query the specific employee with their associated schedule
+        employee_data = (db.session.query(Employee, Schedule).
+                         outerjoin(Schedule, Employee.employee_id == Schedule.employee_id).
+                         filter(Employee.employee_id == employee_id).first())
+
         if employee_data:
+            # Extract employee information
+            employee, schedule = employee_data
             employee_dict = {
-                "employee_id": employee_data.employee_id,
-                "first_name": employee_data.first_name,
-                "middle_name": employee_data.middle_name,
-                "last_name": employee_data.last_name,
-                "address": employee_data.address,
-                "email": employee_data.email,
-                "phone": employee_data.phone,
-                "hire_date": employee_data.hire_date,
-                "is_active": employee_data.is_active,
-                "email_confirm": employee_data.email_confirm,
+                "employee_id": employee.employee_id,
+                "first_name": employee.first_name,
+                "middle_name": employee.middle_name,
+                "last_name": employee.last_name,
+                "address": employee.address,
+                "email": employee.email,
+                "phone": employee.phone,
+                "hire_date": employee.hire_date,
+                "is_active": employee.is_active,
+                "email_confirm": employee.email_confirm,
+                "position": employee.position,
+                "daily_rate": employee.daily_rate,
+                "de_minimis": employee.de_minimis,
+                "schedule": {
+                    "schedule_id": schedule.schedule_id if schedule else None,
+                    "start_time": schedule.start_time.strftime("%H:%M:%S") if schedule and schedule.start_time else None,
+                    "end_time": schedule.end_time.strftime("%H:%M:%S") if schedule and schedule.end_time else None,
+                    "day_off": schedule.day_off if schedule else None
+                } if schedule else None  # Include schedule information if available
             }
             response = jsonify({"employee": employee_dict})
             return response, 200
@@ -105,111 +138,57 @@ def register_employee():
                 password=pbkdf2_sha256.hash(request.form.get("password")),
                 phone=request.form.get("phone"),
                 position=request.form.get("position"),
-                hire_date=datetime.strptime(request.form.get("hire_date"), '%Y-%m-%d').date()
+                hire_date=datetime.strptime(request.form.get("hire_date"), '%Y-%m-%d').date(),
+                daily_rate=float(request.form.get("daily_rate")),
             )
 
+            # Add new employee to the session
             db.session.add(new_employee)
             db.session.commit()
 
-            new_employee_dict = [
-                {
-                    "employee_id": new_employee.employee_id,
-                    "first_name": new_employee.first_name,
-                    "middle_name": new_employee.middle_name,
-                    "last_name": new_employee.last_name,
-                    "address": new_employee.address,
-                    "email": new_employee.email,
-                    "phone": new_employee.phone,
-                    "hire_date": new_employee.hire_date,
-                    "position": new_employee.position,
-                    "is_active": new_employee.is_active,
-                    "email_confirm": new_employee.email_confirm,
+            # Create a new schedule instance
+            new_schedule = Schedule(
+                employee_id=new_employee.employee_id,
+                start_time=datetime.strptime(request.form.get("start_time"), "%H:%M:%S").time(),
+                end_time=datetime.strptime(request.form.get("end_time"), "%H:%M:%S").time(),
+                day_off=request.form.get("day_off")
+            )
+
+            # Add new schedule to the session
+            db.session.add(new_schedule)
+            db.session.commit()
+
+            # Prepare response data
+            new_employee_dict = {
+                "employee_id": new_employee.employee_id,
+                "first_name": new_employee.first_name,
+                "middle_name": new_employee.middle_name,
+                "last_name": new_employee.last_name,
+                "address": new_employee.address,
+                "email": new_employee.email,
+                "phone": new_employee.phone,
+                "hire_date": new_employee.hire_date.strftime("%Y-%m-%d"),  # Convert to string,
+                "position": new_employee.position,
+                "daily_rate": new_employee.daily_rate,
+                "de_minimis": new_employee.de_minimis,
+                "is_active": new_employee.is_active,
+                "email_confirm": new_employee.email_confirm,
+                "schedule": {
+                    "schedule_id": new_schedule.schedule_id,
+                    "start_time": new_schedule.start_time.strftime("%H:%M:%S"),
+                    "end_time": new_schedule.end_time.strftime("%H:%M:%S"),
+                    "day_off": new_schedule.day_off
                 }
-            ]
+            }
 
             recipient_email = request.form.get("email")
             token = s.dumps(recipient_email, salt='email-confirm')
 
-            subject = 'Confirm Email'
-            body = f"""
-                                    <html>
-                                    <head>
-                                        <style>
-                                            body {{
-                                                font-family: Arial, sans-serif;
-                                                background-color: #f7f7f7;
-                                                padding: 20px;
-                                                margin: 0;
-                                            }}
-                                            .container {{
-                                                max-width: 600px;
-                                                margin: 0 auto;
-                                                background-color: #fff;
-                                                border-radius: 8px;
-                                                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                                                padding: 40px;
-                                            }}
-                                            h1 {{
-                                                font-size: 24px;
-                                                color: #333;
-                                            }}
-                                            p {{
-                                                font-size: 16px;
-                                                color: #666;
-                                                margin-bottom: 20px;
-                                            }}
-                                            a {{
-                                                color: #007bff;
-                                                text-decoration: none;
-                                            }}
-                                            a:hover {{
-                                                text-decoration: underline;
-                                            }}
-                                            .password {{
-                                                font-size: 20px;
-                                                color: #333;
-                                                margin-top: 20px;
-                                            }}
-                                            .footer {{
-                                                text-align: center;
-                                                margin-top: 40px;
-                                                font-size: 14px;
-                                                color: #999;
-                                            }}
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div class="container">
-                                            <h1>Hello {new_employee.first_name},</h1>
-                                            <p>Confirm your email address by clicking the following link: <a href="{BASE_URL}/employee/confirm-email/{token}">Confirm Email</a></p>
-
-                                        </div>
-                                        <div class="footer">
-                                            BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
-                                        </div>
-                                    </body>
-                                    </html>
-                                    """
-
-            msg = MIMEMultipart()
-            msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
-            msg['Subject'] = subject
-            msg['From'] = MY_EMAIL
-            msg['To'] = recipient_email
-
-            # Connect to the SMTP server and send the email
-            try:
-                with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                    server.starttls()
-                    server.login(MY_EMAIL, MY_PASSWORD)
-                    server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
-
-                print("Email notification sent successfully")
-            except Exception as e:
-                print(f"Failed to send email notification. Error: {str(e)}")
+            # Send Email Confirmation to employee's email
+            # send_email_confirmation(recipient_email, token, new_employee.first_name)
 
             return jsonify(
-                success={"message": "Register Successfully, employee need to confirm the email.",
+                success={"message": "Register Successfully, employee needs to confirm the email.",
                          "employee": new_employee_dict}), 200
         except Exception as e:
             db.session.rollback()
@@ -217,6 +196,86 @@ def register_employee():
     else:
         return jsonify(
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+
+def send_email_confirmation(recipient_email, token, firstname):
+    subject = 'Confirm Email'
+    body = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: #f7f7f7;
+                padding: 20px;
+                margin: 0;
+            }}
+            .container {{
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #fff;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                padding: 40px;
+            }}
+            h1 {{
+                font-size: 24px;
+                color: #333;
+            }}
+            p {{
+                font-size: 16px;
+                color: #666;
+                margin-bottom: 20px;
+            }}
+            a {{
+                color: #007bff;
+                text-decoration: none;
+            }}
+            a:hover {{
+                text-decoration: underline;
+            }}
+            .password {{
+                font-size: 20px;
+                color: #333;
+                margin-top: 20px;
+            }}
+            .footer {{
+                text-align: center;
+                margin-top: 40px;
+                font-size: 14px;
+                color: #999;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Hello {firstname},</h1>
+            <p>Confirm your email address by clicking the following link: <a href="{BASE_URL}/employee/confirm-email/{token}">Confirm Email</a></p>
+
+        </div>
+        <div class="footer">
+            BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+        </div>
+    </body>
+    </html>
+    """
+
+    msg = MIMEMultipart()
+    msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
+    msg['Subject'] = subject
+    msg['From'] = MY_EMAIL
+    msg['To'] = recipient_email
+
+    # Connect to the SMTP server and send the email
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(MY_EMAIL, MY_PASSWORD)
+            server.sendmail(MY_EMAIL, [recipient_email], msg.as_string())
+
+        print("Email notification sent successfully")
+    except Exception as e:
+        print(f"Failed to send email notification. Error: {str(e)}")
 
 
 # email confirmation
@@ -441,16 +500,28 @@ def employee_link_forgot_password(token):
 def delete_employee_data(employee_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        employee_to_delete = db.session.execute(db.select(Employee).where(Employee.employee_id == employee_id)).scalar()
-        if employee_to_delete:
+        try:
+            # Find the employee to delete
+            employee_to_delete = Employee.query.get(employee_id)
+            if not employee_to_delete:
+                return jsonify(error={"Not Found": f"Employee with ID {employee_id} not found."}), 404
+
+            # Delete associated attendance records
+            Attendance.query.filter_by(employee_id=employee_id).delete()
+
+            # Delete associated schedule
+            Schedule.query.filter_by(employee_id=employee_id).delete()
+
+            # Delete the employee
             db.session.delete(employee_to_delete)
             db.session.commit()
-            return jsonify(success={"Success": "Successfully deleted the employee."}), 200
-        else:
-            return jsonify(error={"Not Found": "Sorry a data with that id was not found in the database."}), 404
+
+            return jsonify(success={"Success": "Successfully deleted the employee and related attendance records."}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify(error={"Message": f"Failed to delete the employee. Error: {str(e)}"}), 500
     else:
-        return jsonify(
-            error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+        return jsonify(error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
 @employee_api.patch('/employee/<int:employee_id>')
@@ -458,17 +529,23 @@ def update_employee(employee_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         try:
-            employee_to_update = Employee.query.filter_by(employee_id=employee_id).first()
+            # Retrieve employee and schedule information
+            employee_to_update = db.session.query(Employee, Schedule).\
+                outerjoin(Schedule, Employee.employee_id == Schedule.employee_id).\
+                filter(Employee.employee_id == employee_id).first()
 
             if employee_to_update:
                 # Get the fields to update from the form data
-                update_data = {'first_name': request.form.get('first_name', employee_to_update.first_name),
-                               'middle_name': request.form.get('middle_name', employee_to_update.middle_name),
-                               'last_name': request.form.get('last_name', employee_to_update.last_name),
-                               'address': request.form.get('address', employee_to_update.address),
-                               'phone': request.form.get('phone', employee_to_update.phone),
-                               'is_active': True if request.form.get('is_active', '').lower() == 'true' else False,
-                               }
+                update_data = {
+                    'first_name': request.form.get('first_name', employee_to_update[0].first_name),
+                    'middle_name': request.form.get('middle_name', employee_to_update[0].middle_name),
+                    'last_name': request.form.get('last_name', employee_to_update[0].last_name),
+                    'address': request.form.get('address', employee_to_update[0].address),
+                    'phone': request.form.get('phone', employee_to_update[0].phone),
+                    'de_minimis': float(request.form.get('de_minimis', employee_to_update[0].de_minimis)),
+                    'is_active': True if request.form.get('is_active', '').lower() == 'true' else False,
+                    'daily_rate': float(request.form.get('daily_rate', employee_to_update[0].daily_rate)),
+                }
 
                 hire_date_str = request.form.get("hire_date", "")
                 if hire_date_str:
@@ -482,21 +559,59 @@ def update_employee(employee_id):
 
                 # Update the employee fields
                 for key, value in update_data.items():
-                    setattr(employee_to_update, key, value)
+                    setattr(employee_to_update[0], key, value)
 
-                db.session.commit()
+                # Initialize variables
+                schedule = None
+                new_schedule = None
 
+                # Update or add schedule information
+                if employee_to_update[1]:  # Check if schedule information is available
+                    schedule = employee_to_update[1]
+                    schedule_data = {
+                        'start_time': datetime.strptime(str(request.form.get('start_time', schedule.start_time)),
+                                                        "%H:%M:%S").time(),
+                        'end_time': datetime.strptime(str(request.form.get('end_time', schedule.end_time)),
+                                                      "%H:%M:%S").time(),
+                        'day_off': request.form.get('day_off', schedule.day_off),
+                    }
+                    # Update existing schedule or add new schedule
+                    if employee_to_update[1]:
+                        # Update existing schedule
+                        for key, value in schedule_data.items():
+                            setattr(schedule, key, value)
+                    else:
+                        # Create new schedule
+                        new_schedule = Schedule(
+                            employee_id=employee_to_update[0].employee_id,
+                            start_time=schedule_data['start_time'],
+                            end_time=schedule_data['end_time'],
+                            day_off=schedule_data['day_off']
+                        )
+                        db.session.add(new_schedule)
+                    db.session.commit()
+
+                    schedule = new_schedule if not schedule else schedule
+
+                # Construct updated_employee_data dictionary with the new schedule data
                 updated_employee_data = {
-                    "employee_id": employee_to_update.employee_id,
-                    "first_name": employee_to_update.first_name,
-                    "middle_name": employee_to_update.middle_name,
-                    "last_name": employee_to_update.last_name,
-                    "address": employee_to_update.address,
-                    "email": employee_to_update.email,
-                    "phone": employee_to_update.phone,
-                    "hire_date": employee_to_update.hire_date,
-                    "is_active": employee_to_update.is_active,
-                    "email_confirm": employee_to_update.email_confirm,
+                    "employee_id": employee_to_update[0].employee_id,
+                    "first_name": employee_to_update[0].first_name,
+                    "middle_name": employee_to_update[0].middle_name,
+                    "last_name": employee_to_update[0].last_name,
+                    "address": employee_to_update[0].address,
+                    "email": employee_to_update[0].email,
+                    "phone": employee_to_update[0].phone,
+                    "hire_date": employee_to_update[0].hire_date,
+                    "is_active": employee_to_update[0].is_active,
+                    "email_confirm": employee_to_update[0].email_confirm,
+                    "daily_rate": employee_to_update[0].daily_rate,
+                    'de_minimis': employee_to_update[0].de_minimis,
+                    "schedule": {
+                        "start_time": schedule.start_time.strftime("%H:%M:%S"),
+                        "end_time": schedule.end_time.strftime("%H:%M:%S"),
+                        "day_off": schedule.day_off
+                    } if schedule else None
                 }
 
                 return jsonify(success={"message": "Employee data updated successfully",
@@ -510,6 +625,7 @@ def update_employee(employee_id):
     else:
         return jsonify(
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
 
 
 @employee_api.put("/employee/change-password/<int:employee_id>")

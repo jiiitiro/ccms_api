@@ -20,7 +20,7 @@ from flask_bootstrap import Bootstrap5
 
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
 
-# from mock_data_func import payroll_admin_data, inventory_admin_data, superadmin_data, employee_data
+# from mock_data_func import payroll_admin_data, inventory_admin_data, superadmin_data, employee_data, payroll_contribution_data
 
 app = Flask(__name__)
 
@@ -69,6 +69,7 @@ with app.app_context():
     # inventory_admin_data("mock_data/inventory_admin_data.csv")
     # superadmin_data("mock_data/superadmin_data.csv")
     # employee_data("mock_data/employee_data.csv")
+    # payroll_contribution_data("mock_data/payroll_contribution.csv")
 
 
 @app.route('/')

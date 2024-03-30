@@ -11321,6 +11321,10 @@ sb-nav-fixed {
     color: #000 !important; /* Set color to black */
 }
 
+/* Additional style to set font color to dark when bg-custom */
+.bg-custom .navbar {
+    color: #000000; /* Change font color to black */
+}
 
 
 

@@ -1,8 +1,8 @@
 import os
 from passlib.hash import pbkdf2_sha256
 from flask import Blueprint, request, jsonify
-from models import db, Employee, Attendance
-from datetime import datetime
+from models import db, Employee, Attendance, Schedule
+from datetime import datetime, timedelta
 
 attendance_api = Blueprint('attendance_api', __name__)
 
@@ -40,11 +40,28 @@ def get_attendance():
                 existing_attendance.logout_time = datetime.now()
                 existing_attendance.logout_status = "Logged Out"
 
+                schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
+
+                # Compute the tardiness based on the difference of Employee's schedule start_time and login_time
+                start_time = datetime.combine(datetime.today(), schedule.start_time)
+                login_time = datetime.combine(datetime.today(), existing_attendance.login_time.time())
+                tardiness_delta = login_time - start_time
+
+                existing_attendance.tardiness = max(0, tardiness_delta.total_seconds() // 60)
+
+                # Compute the ot_hrs based on the difference of Employee's schedule end_time and logout_time
+                end_time = datetime.combine(datetime.today(), schedule.end_time)
+                logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
+                ot_delta = logout_time - end_time
+
+                existing_attendance.ot_hrs = max(0, (ot_delta.total_seconds() + 59) // 3600)  # Round up to the nearest hour
+
             else:
                 # Employee is not logged in, so log them in
                 login_time = datetime.now()
                 attendance = Attendance(employee_id=employee.employee_id, work_date=login_time.date(),
                                         login_time=login_time, login_status="Logged In")
+
                 db.session.add(attendance)
 
             db.session.commit()
@@ -120,7 +137,9 @@ def get_specific_attendance_employee(employee_id):
                 "login_time": attendance.login_time,
                 "logout_time": attendance.logout_time,
                 "login_status": attendance.login_status,
-                "logout_status": attendance.logout_status
+                "logout_status": attendance.logout_status,
+                "tardiness": attendance.tardiness,
+                "ot_hrs": attendance.ot_hrs
             })
 
         response = jsonify({
