@@ -1,6 +1,5 @@
 import os
 from email.mime.multipart import MIMEMultipart
-
 from flask import Blueprint, request, jsonify, render_template
 from forms import ChangePasswordForm
 from models import db, EmployeeAdminLogin
