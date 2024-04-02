@@ -60,6 +60,7 @@ def generate_payroll():
         # Calculate gross pay
         gross_pay = base_salary + employee.de_minimis
 
+        withholding_tax = None
         # Deduct contributions based on the period start date
         if employee.period_start.day >= 16:
 
@@ -77,11 +78,11 @@ def generate_payroll():
 
         thirteenth_month_pay = thirteenth_month_pay_computation(employee)
 
-        other_deductions = calculate_other_deductions()
+        # other_deductions = calculate_other_deductions()
 
         # Calculate net pay
         net_pay = gross_pay - (sss_contribution + philhealth_contribution + pagibig_contribution +
-                               withholding_tax + other_deductions)
+                               withholding_tax)
 
         # Create Payroll instance
         payroll = Payroll(
@@ -95,7 +96,7 @@ def generate_payroll():
             gross_pay=gross_pay,
             net_pay=net_pay,
             thirteenth_month_pay=thirteenth_month_pay,
-            status="Pending"  # Or any other appropriate status
+            status="Calculated"
         )
 
         # Create Payroll Deduction instance
@@ -105,7 +106,7 @@ def generate_payroll():
             philhealth_contribution=philhealth_contribution,
             pagibig_contribution=pagibig_contribution,
             withholding_tax=withholding_tax,
-            other_deductions=other_deductions,
+            other_deductions=0,
         )
 
         # Associate deduction with payroll

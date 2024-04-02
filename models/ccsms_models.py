@@ -1,7 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import time
-from sqlalchemy import Time
+from sqlalchemy import Time, UniqueConstraint
+
 db = SQLAlchemy()
 
 
@@ -105,6 +106,11 @@ class Attendance(db.Model):
 
     # Relationship to Employee
     employee = db.relationship('Employee', back_populates='attendances', lazy=True)
+
+    # Unique constraint on employee_id and work_date
+    __table_args__ = (
+        UniqueConstraint('employee_id', 'work_date', name='_employee_work_date_uc'),
+    )
 
 
 class Payroll(db.Model):

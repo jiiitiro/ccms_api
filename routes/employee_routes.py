@@ -1,5 +1,3 @@
-import json
-
 from flask import jsonify, render_template, request, url_for
 import os
 import secrets

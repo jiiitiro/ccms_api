@@ -10,7 +10,6 @@ attendance_api = Blueprint('attendance_api', __name__)
 API_KEY = os.environ.get('API_KEY')
 
 
-@attendance_api.post("/attendance")
 def get_attendance():
     try:
         employee = Employee.query.filter(Employee.email == request.form.get("email")).first()
@@ -130,17 +129,17 @@ def get_all_attendance_data():
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
-@attendance_api.get("/attendance/<int:employee_id>")
-def get_specific_attendance_employee(employee_id):
+@attendance_api.get("/attendance/<email>")
+def get_specific_attendance_employee(email):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
         # Query employee and their attendance data
-        employee = Employee.query.filter_by(employee_id=employee_id).first()
+        employee = Employee.query.filter_by(email=email).first()
 
         if not employee:
             return jsonify(error={"message": "Employee not found."}), 404
 
-        attendance_data = Attendance.query.filter_by(employee_id=employee_id).all()
+        attendance_data = Attendance.query.filter_by(employee_id=employee.employee_id).all()
 
         # Organize attendance data into a list
         attendance_list = []
@@ -157,7 +156,7 @@ def get_specific_attendance_employee(employee_id):
             })
 
         # Get the employee's schedule
-        employee_schedule = Schedule.query.filter_by(employee_id=employee_id).first()
+        employee_schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
 
         # Organize schedule data
         schedule_data = {
