@@ -67,7 +67,7 @@ class Service(db.Model):
 class Billing(db.Model):
     __tablename__ = 'billing_tbl'
     invoice_id = db.Column(db.Integer, primary_key=True)
-    booking_id = db.Column(db.Integer, db.ForeignKey('booking_tbl.booking_id'))
+    booking_id = db.Column(db.Integer, db.ForeignKey('booking_tbl.booking_id'), unique=True, nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
     payment_status = db.Column(db.String(100), nullable=False)
 
