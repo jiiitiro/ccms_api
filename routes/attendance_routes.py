@@ -139,7 +139,7 @@ def get_specific_attendance_employee(employee_id):
         if not employee:
             return jsonify(error={"message": "Employee not found."}), 404
 
-        attendance_data = Attendance.query.filter_by(employee_id=employee_id).all()
+        attendance_data = Attendance.query.filter_by(employee_id=employee.employee_id).all()
 
         # Organize attendance data into a list
         attendance_list = []
@@ -156,7 +156,7 @@ def get_specific_attendance_employee(employee_id):
             })
 
         # Get the employee's schedule
-        employee_schedule = Schedule.query.filter_by(employee_id=employee_id).first()
+        employee_schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
 
         # Organize schedule data
         schedule_data = {

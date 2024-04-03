@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, url_for, redirect
 from dotenv import load_dotenv, find_dotenv
 import os
 from flask_jwt_extended import JWTManager
@@ -17,14 +17,12 @@ from routes.superadmin_routes import superadmin_api, login_manager, custom_unaut
 from models import db
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
+from mock_data_func import (payroll_admin_data, inventory_admin_data, superadmin_data, employee_data,
+                            payroll_contribution_data, attendance_data)
 
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
 
-# from mock_data_func import payroll_admin_data, inventory_admin_data, superadmin_data, employee_data,
-# payroll_contribution_data, attendance_data
-
 app = Flask(__name__)
-
 app.config.from_pyfile('config.cfg')
 app.config['SECRET_KEY'] = os.environ.get("FLASK_KEY")
 app.register_blueprint(customer_api)
@@ -52,6 +50,7 @@ MY_PASSWORD = os.environ.get("MY_PASSWORD")
 mail = Mail(app)
 Bootstrap5(app)
 login_manager.init_app(app)
+
 # Register custom unauthorized handler
 app.register_error_handler(401, custom_unauthorized_handler)
 
@@ -62,6 +61,7 @@ migrate = Migrate(app, db)
 
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 jwt = JWTManager(app)
+
 
 with app.app_context():
     db.create_all()
