@@ -18,3 +18,4 @@ email_validator==2.1.0.post1
 plotly
 Flask_Login==0.6.3
 apscheduler
+Flask-Mail
