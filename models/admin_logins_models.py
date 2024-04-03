@@ -1,0 +1,74 @@
+from flask_login import UserMixin
+from db import db
+
+
+# Define the payroll_login_tbl
+class BillingAdminLogin(db.Model):
+    __tablename__ = "billing_admin_login_tbl"
+    login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
+
+
+class PayrollAdminLogin(db.Model):
+    __tablename__ = "payroll_admin_login_tbl"
+    login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
+
+
+class EmployeeAdminLogin(db.Model):
+    __tablename__ = "employee_admin_login_tbl"
+    login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
+
+
+class CustomerAdminLogin(db.Model):
+    __tablename__ = "customer_admin_login_tbl"
+    login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
+
+
+class InventoryAdminLogin(db.Model):
+    __tablename__ = "inventory_admin_login_tbl"
+    login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
+
+
+class SuperadminLogin(UserMixin, db.Model):
+    __tablename__ = "superadmin_login_tbl"
+    login_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    email_confirm = db.Column(db.Boolean, default=False)
+
+    # Implement the get_id() method to return the user's id
+    def get_id(self):
+        return str(self.login_id)
+

@@ -1,0 +1,2 @@
+name,email,password,role,is_active,email_confirm
+Alvin Galit,lvngalit26@gmail.com,12345678,Admin,TRUE,TRUE

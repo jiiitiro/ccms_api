@@ -1,9 +1,9 @@
 import os
 from email.mime.multipart import MIMEMultipart
-
+from db import db
 from flask import Blueprint, request, jsonify, render_template
 from forms import ChangePasswordForm
-from models import db, CustomerAdminLogin
+from models import CustomerAdminLogin
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired

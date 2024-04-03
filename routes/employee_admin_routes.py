@@ -2,12 +2,13 @@ import os
 from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify, render_template
 from forms import ChangePasswordForm
-from models import db, EmployeeAdminLogin
+from models import EmployeeAdminLogin
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
 import smtplib
 from passlib.hash import pbkdf2_sha256
+from db import db
 
 employee_admin_api = Blueprint('employee_admin_api', __name__)
 

@@ -1,11 +1,11 @@
 import os
 from email.mime.multipart import MIMEMultipart
-
+from db import db
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
 from passlib.handlers.pbkdf2 import pbkdf2_sha256
 from flask import flash, Flask, request
-from models import db, CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
-from models.ccsms_models import SuperadminLogin
+from models import CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
+from models.admin_logins_models import SuperadminLogin
 from forms import SuperadminLoginForm, ForgotPasswordForm, ChangePasswordForm, RegistrationForm
 import smtplib
 from email.mime.text import MIMEText

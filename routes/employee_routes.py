@@ -9,9 +9,10 @@ from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import joinedload
 from forms import ChangePasswordForm
-from models import db, Employee, Schedule, Attendance
+from models import Employee, Schedule, Attendance
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
+from db import db
 
 
 employee_api = Blueprint('employee_api', __name__)

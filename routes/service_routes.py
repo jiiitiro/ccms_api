@@ -1,14 +1,8 @@
-from flask import jsonify, render_template, request, url_for
 import os
-import secrets
-from passlib.hash import pbkdf2_sha256
-import smtplib
-from itsdangerous import SignatureExpired
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
-from models import db, Service
+from models import Service
 from itsdangerous import URLSafeTimedSerializer
+from db import db
 
 service_api = Blueprint('service_api', __name__)
 

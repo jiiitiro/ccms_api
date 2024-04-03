@@ -1,8 +1,9 @@
 import os
 from passlib.hash import pbkdf2_sha256
 from flask import Blueprint, request, jsonify
-from models import db, Employee, Attendance, Schedule
+from models import Employee, Attendance, Schedule
 from datetime import datetime, timedelta
+from db import db
 
 attendance_api = Blueprint('attendance_api', __name__)
 

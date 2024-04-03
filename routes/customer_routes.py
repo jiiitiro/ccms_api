@@ -1,5 +1,5 @@
 from email.mime.multipart import MIMEMultipart
-
+from db import db
 from flask import render_template
 import os
 from passlib.hash import pbkdf2_sha256
@@ -7,9 +7,10 @@ import smtplib
 from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
 from flask import Blueprint, request, jsonify
-from models import db, Customer, CustomerAddress
+from models import Customer, CustomerAddress
 from itsdangerous import URLSafeTimedSerializer
 from forms import ChangePasswordForm
+
 
 customer_api = Blueprint('customer_api', __name__)
 

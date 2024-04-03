@@ -14,11 +14,11 @@ from routes.attendance_routes import attendance_api
 from routes.service_routes import service_api
 from routes.employee_routes import employee_api
 from routes.superadmin_routes import superadmin_api, login_manager, custom_unauthorized_handler
-from models import db
+from db import db
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
-from mock_data_func import (payroll_admin_data, inventory_admin_data, superadmin_data, employee_data,
-                            payroll_contribution_data, attendance_data)
+# from mock_data_func import (payroll_admin_data, inventory_admin_data, superadmin_data, employee_data,
+#                             payroll_contribution_data, attendance_data)
 
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
 

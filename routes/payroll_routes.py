@@ -7,13 +7,13 @@ from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
-from models import db, Payroll, Employee, Attendance, PayrollContribution
+from models import Payroll, Employee, Attendance, PayrollContribution, PayrollDeduction
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 import calendar
 from datetime import date
-from models.ccsms_models import PayrollDeduction
+from db import db
 
 payroll_api = Blueprint('payroll_api', __name__)
 
