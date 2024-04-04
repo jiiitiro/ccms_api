@@ -4,6 +4,8 @@ from flask import Blueprint, request, jsonify
 from models import Employee, Attendance, Schedule
 from datetime import datetime, timedelta
 from db import db
+from sqlalchemy.exc import IntegrityError
+from datetime import datetime
 
 attendance_api = Blueprint('attendance_api', __name__)
 
@@ -11,6 +13,14 @@ attendance_api = Blueprint('attendance_api', __name__)
 API_KEY = os.environ.get('API_KEY')
 
 
+def parse_datetime(datetime_str):
+    if datetime_str:
+        return datetime.strptime(datetime_str, '%a, %d %b %Y %H:%M:%S %Z')
+    else:
+        return None
+
+
+@attendance_api.post("/attendance")
 def get_attendance():
     try:
         employee = Employee.query.filter(Employee.email == request.form.get("email")).first()
@@ -24,7 +34,7 @@ def get_attendance():
 
         if not employee.is_active:
             return jsonify(error={"message": "Account has been deactivated. Please email as at "
-                                             "www.busyhands_cleaningservices.manpower@gmail.com"}), 401
+                                             "www.busyhands.cleaningservices2024@gmail.com"}), 401
 
         if employee and pbkdf2_sha256.verify(request.form.get("password"), employee.password):
             # Check if employee is already logged in
@@ -40,9 +50,15 @@ def get_attendance():
                 status = "logout"
                 # Employee is already logged in, so log them out
                 existing_attendance.logout_time = datetime.now()
-                existing_attendance.logout_status = "Logged Out"
 
+                # Determine logout_status based on employee's schedule and logout_time
                 schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
+                end_time = datetime.combine(datetime.today(), schedule.end_time)
+                logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
+                if logout_time < end_time:
+                    existing_attendance.logout_status = "Early-Out"
+                else:
+                    existing_attendance.logout_status = "On-Time"
 
                 # Compute the tardiness based on the difference of Employee's schedule start_time and login_time
                 start_time = datetime.combine(datetime.today(), schedule.start_time)
@@ -63,7 +79,15 @@ def get_attendance():
                 # Employee is not logged in, so log them in
                 login_time = datetime.now()
                 attendance = Attendance(employee_id=employee.employee_id, work_date=login_time.date(),
-                                        login_time=login_time, login_status="Logged In")
+                                        login_time=login_time)
+
+                # Determine login_status based on employee's schedule and login_time
+                schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
+                start_time = datetime.combine(datetime.today(), schedule.start_time)
+                if login_time > start_time:
+                    attendance.login_status = "Late"
+                else:
+                    attendance.login_status = "On-Time"
 
                 db.session.add(attendance)
 
@@ -194,4 +218,42 @@ def delete_attendance_by_id(attendance_id):
     except KeyError:
         db.session.rollback()
         return jsonify(error={"message": "Attendance with that id NOT found."}), 403
+
+
+@attendance_api.patch("/attendance/update/<int:attendance_id>")
+def update_attendance_by_id(attendance_id):
+    api_key_header = request.headers.get("x-api-key")
+    if api_key_header == API_KEY:
+        try:
+
+            # Query the attendance record to update
+            attendance = Attendance.query.get(attendance_id)
+            if not attendance:
+                return jsonify(error={"message": "Attendance with that id NOT found."}), 404
+
+            # Initialize attendance updates
+            attendance_updates = {
+                "login_time": parse_datetime(request.form.get("login_time")) or attendance.login_time,
+                "logout_time": parse_datetime(request.form.get("logout_time")) or attendance.logout_time,
+                "work_date": parse_datetime(request.form.get("work_date")) or attendance.work_date,
+                "login_status": request.form.get("login_status", attendance.login_status),
+                "logout_status": request.form.get("logout_status", attendance.logout_status),
+                "ot_hrs": request.form.get("ot_hrs", attendance.ot_hrs),
+                "tardiness": request.form.get("tardiness", attendance.tardiness)
+            }
+
+            # Update the attendance record attributes
+            for key, value in attendance_updates.items():
+                setattr(attendance, key, value)
+
+            # Commit the changes to the database
+            db.session.commit()
+
+            return jsonify(success={"message": "Attendance record updated successfully."}), 200
+        except IntegrityError:
+            # Rollback the transaction in case of integrity error
+            db.session.rollback()
+            return jsonify(error={"message": "Integrity error occurred."}), 500
+    else:
+        return jsonify(error={"message": "Not Authorized. Make sure you have the correct api_key."}), 403
 

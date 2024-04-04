@@ -306,7 +306,8 @@ def send_reset_email(email, reset_token, name):
         <body>
             <div class="container">
                 <h1>Dear {name},</h1>
-                <p>Click the following link to reset your password:  <a href="{BASE_URL}/billing/admin/reset-password/{reset_token}">Reset Password</a></p>
+                <p>Click the following link to reset your password:  
+                <a href="{BASE_URL}/billing/admin/reset-password/{reset_token}">Reset Password</a></p>
 
             </div>
             <div class="footer">
@@ -418,5 +419,3 @@ def user_change_password(login_id):
     else:
         return jsonify(
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
-
-

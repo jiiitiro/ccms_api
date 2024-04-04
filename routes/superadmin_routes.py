@@ -1,9 +1,9 @@
 import os
 from email.mime.multipart import MIMEMultipart
 from db import db
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+from flask import Blueprint, jsonify, render_template, redirect, url_for
 from passlib.handlers.pbkdf2 import pbkdf2_sha256
-from flask import flash, Flask, request
+from flask import flash, request
 from models import CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
 from models.admin_logins_models import SuperadminLogin
 from forms import SuperadminLoginForm, ForgotPasswordForm, ChangePasswordForm, RegistrationForm
@@ -12,7 +12,7 @@ from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
 import plotly.graph_objs as go
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import random
 import string
 
