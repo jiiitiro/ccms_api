@@ -1,0 +1,6 @@
+first_name,middle_name,last_name,address,email,password,phone,position,hire_date,daily_rate,is_active,email_confirm,de_minimis,start_time,end_time,day-off
+Rachel Jhoy,Llena,Cabrera,11 Ibayo II Brgy. Bagbag Nova. Q.C,cabrera.racheljhoy.02202002@gmail,rjcabrera1234,09667721260,Housekeeper ,2024-01-05,610,TRUE,TRUE,0,8:00:00,17:00:00,Monday
+Giebert,Reyes,Delotavo,2340 Kapatiran St. Brgy Comm. Q.C.,delotavo.giebert.10202002@gmail.com,102002Del,09091706139,Housekeeper ,2024-01-05,610,TRUE,TRUE,0,8:00:00,17:00:00,Tuesday
+Cris Christian,Dalag,Delos Santos,"Blk 5 Lot 5 Orient Street San Agustin, Quezon City",delossantos.cris.06172003@gmail.com,061703DS,09458904624,Housekeeper ,2024-01-05,610,TRUE,TRUE,0,8:00:00,17:00:00,Wednesday
+Allyson ,Eser,Canales,"21 sta veronica st. Brgy gulod novaliches, Quezon City",canalesallyson07162002@gmail.com,07162002xy,09459756018,Housekeeper ,2024-01-05,610,TRUE,TRUE,0,8:00:00,17:00:00,Thursday
+Dane Justine,Calura,Cabaya,"Barangay Salvacion Laloma, Quezon City",cabaya.danejustine.102801@gmail.com,agentx44,09687685698,Electrician,2024-01-05,610,TRUE,TRUE,0,8:00:00,17:00:00,Friday

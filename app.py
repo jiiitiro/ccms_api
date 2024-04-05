@@ -17,8 +17,6 @@ from routes.superadmin_routes import superadmin_api, login_manager, custom_unaut
 from db import db
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
-# from mock_data_func import (payroll_admin_data, inventory_admin_data, superadmin_data, employee_data,
-#                             payroll_contribution_data, attendance_data)
 
 APP_BASE_URL = "https://csms-rest-api.onrender.com"
 
@@ -62,21 +60,9 @@ migrate = Migrate(app, db)
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 jwt = JWTManager(app)
 
-
-with app.app_context():
-    db.create_all()
-
-    # payroll_admin_data("mock_data/payroll_admin_data.csv")
-    # inventory_admin_data("mock_data/inventory_admin_data.csv")
-    # superadmin_data("mock_data/superadmin_data.csv")
-    # employee_data("mock_data/employee_data.csv")
-    # payroll_contribution_data("mock_data/payroll_contribution.csv")
-    # Flag to track whether attendance data has been imported
-    # attendance_imported = False
-    #
-    # if not attendance_imported:
-    #     attendance_data("mock_data/attendance_data1.csv")
-    #     attendance_imported = True
+#
+# with app.app_context():
+#     db.create_all()
 
 
 @app.route('/')

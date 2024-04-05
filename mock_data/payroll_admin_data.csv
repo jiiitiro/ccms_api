@@ -1,0 +1,5 @@
+name,email,password,role,is_active,email_confirm
+Julito Tiro,tiro.julitoiii.14@gmail.com,1234Julito,Admin,TRUE,TRUE
+Mark Aropon,markaropon@gmail.com,laffitte1234,Admin,TRUE,TRUE
+Mark Arca,markgervicarca@gmail.com,qwerty1234,Admin,TRUE,TRUE
+

@@ -1,0 +1,6 @@
+first_name,middle_name,last_name,email,password,phone,is_active,email_confirm,houseno_street,barangay,city,region,zipcode
+Kathleen Mae,Agni,Pecoro,pecoro.kathleenmae.01312003@gmail.com,_kath8914,09776723516,TRUE,TRUE,#2 Felipe Street,Damayan,Quezon City,Metro Manila,1105
+Ashley Nicole,Roble,Lagleva,lagleva.ashleynicole.02042002@gmail.com,ashnic@04,09672372219,TRUE,TRUE,#16 Daisy Street,N.S. Amoranto,Quezon City,Metro Manila,1801
+Maria Alesa,Seroya,Tabios,tabios.mariaalesa.march102003@gmail.com,alesa10-,09306193749,TRUE,TRUE,Blk 5 Lot 6 CMP1 Sitio,Baesa,Quezon City,Metro Manila,2105
+Kathleen,Basul,Balberan,balberan.kathleen.11092001@gmail.com,ezreal09,09369226800,TRUE,TRUE,#21 Ukay Street,Culiat,Quezon City,Metro Manila,1112
+Janiela,Auxilio,Tablizo,tablizo.janiela.12172002@gmail.com,jaja1234,09691403344,TRUE,TRUE,Ibayo,Bagbag,Quezon City,Metro Manila,1801
