@@ -69,18 +69,29 @@ def get_all_customer_data():
 def get_specific_customer_data(customer_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        customer_data = db.session.query(Customer).filter_by(customer_id=customer_id).first()
+        customer_data = db.session.query(Customer, CustomerAddress). \
+            filter(Customer.customer_id == customer_id). \
+            join(CustomerAddress, Customer.customer_id == CustomerAddress.customer_id). \
+            first()
+
         if customer_data:
             customer_dict = {
-                "customer_id": customer_data.customer_id,
-                "first_name": customer_data.first_name,
-                "middle_name": customer_data.middle_name,
-                "last_name": customer_data.last_name,
-                "address": customer_data.address,
-                "email": customer_data.email,
-                "phone": customer_data.phone,
-                "is_active": customer_data.is_active,
-                "email_confirm": customer_data.email_confirm,
+                "customer_id": customer_data.Customer.customer_id,
+                "first_name": customer_data.Customer.first_name,
+                "middle_name": customer_data.Customer.middle_name,
+                "last_name": customer_data.Customer.last_name,
+                "email": customer_data.Customer.email,
+                "phone": customer_data.Customer.phone,
+                "is_active": customer_data.Customer.is_active,
+                "email_confirm": customer_data.Customer.email_confirm,
+                "address": {
+                    "address_id": customer_data.CustomerAddress.address_id,
+                    "houseno_street": customer_data.CustomerAddress.houseno_street,
+                    "barangay": customer_data.CustomerAddress.barangay,
+                    "city": customer_data.CustomerAddress.city,
+                    "region": customer_data.CustomerAddress.region,
+                    "zipcode": customer_data.CustomerAddress.zipcode
+                }
             }
             response = jsonify({"customer": customer_dict})
             return response, 200
@@ -293,7 +304,7 @@ def login_customer():
                     "is_active": customer.is_active,
                     "email_confirm": customer.email_confirm,
                     "address": {
-                        "houseno": customer_address.houseno,
+                        "houseno_street": customer_address.houseno_street,
                         "barangay": customer_address.barangay,
                         "city": customer_address.city,
                         "region": customer_address.region,
