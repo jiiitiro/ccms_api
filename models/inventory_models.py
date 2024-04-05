@@ -73,8 +73,7 @@ class EmployeeRequestOrder(db.Model):
     status = db.Column(db.String(50), nullable=False,
                        default='Pending')  # (e.g., Pending, Approved)
 
-    # Define relationship to Inventory
-    inventory = relationship("Inventory", back_populates="employee_request_orders")
+
 
 
 
