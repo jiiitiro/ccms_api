@@ -209,9 +209,12 @@ def get_specific_attendance_employee(employee_id):
 @attendance_api.delete("/attendance/delete/<int:attendance_id>")
 def delete_attendance_by_id(attendance_id):
     try:
-        to_delete_data = Attendance.query.filter_by(attendance_id=attendance_id).first()
+        query_data = Attendance.query.filter_by(attendance_id=attendance_id).first()
 
-        db.session.delete(to_delete_data)
+        if query_data is None:
+            return jsonify(error={"message": "Attendance id not found."}), 404
+
+        db.session.delete(query_data)
         db.session.commit()
 
         return jsonify(success={"message": "Successfully delete the attendance data."}), 200

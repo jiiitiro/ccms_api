@@ -1,4 +1,4 @@
-from flask import Flask, url_for, redirect
+from flask import Flask, url_for, redirect, request
 from dotenv import load_dotenv, find_dotenv
 import os
 from flask_jwt_extended import JWTManager
@@ -64,7 +64,7 @@ migrate = Migrate(app, db)
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY")
 jwt = JWTManager(app)
 
-#
+
 # with app.app_context():
 #     db.create_all()
 
