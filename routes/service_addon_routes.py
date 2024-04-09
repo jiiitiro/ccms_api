@@ -23,6 +23,7 @@ def get_all_service_addon_data():
             {
                 "service_addon_id": data.service_addon_id,
                 "description": data.description,
+                "pricing_description": data.pricing_description,
                 "price": data.price
             } for data in query_data
         ]
@@ -50,6 +51,7 @@ def get_specific_service_addon(service_addon_id):
             {
                 "service_addon_id": query_data.service_addon_id,
                 "description": query_data.description,
+                "pricing_description": query_data.pricing_description,
                 "price": query_data.price
             }
         ]
@@ -70,6 +72,7 @@ def add_service_addon_data():
 
         new_service_addon = ServiceAddon(
             description=request.form.get("description"),
+            pricing_description=request.form.get("pricing_description"),
             price=request.form.get("price")
         )
 
@@ -121,7 +124,8 @@ def update_service_addon(service_addon_id):
 
         update_data = {
             "description": request.form.get("description", service_addon_to_update.description),
-            "price": request.form.get("price", service_addon_to_update.price)
+            "pricing_description": request.form.get("pricing_description", service_addon_to_update.pricing_description),
+            "price": request.form.get("price", service_addon_to_update.price),
         }
 
         for key, value in update_data.items():
@@ -131,6 +135,7 @@ def update_service_addon(service_addon_id):
 
         service_addon_dict = {
             "description": service_addon_to_update.description,
+            "pricing_description": service_addon_to_update.pricing_description,
             "price": service_addon_to_update.price
         }
 
@@ -138,6 +143,7 @@ def update_service_addon(service_addon_id):
                                 "service_addon_data": service_addon_dict}), 200
 
     except Exception as e:
+        db.session.rollback()
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
