@@ -14,11 +14,10 @@ class Customer(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     email_confirm = db.Column(db.Boolean, default=False)
 
-    # Define relationship to the CustomerAddress class
+    # Define relationship
     addresses = db.relationship('CustomerAddress', back_populates='customer', lazy=True)
-
-    # Define relationship to the Booking class
     bookings = db.relationship('Booking', back_populates='customer', lazy=True)
+    billing = db.relationship("Billing", back_populates='customer', lazy=True)
 
 
 class CustomerAddress(db.Model):
@@ -32,7 +31,8 @@ class CustomerAddress(db.Model):
     zipcode = db.Column(db.String(10), nullable=False)
 
     # Define relationship to the Customer class
-    customer = db.relationship('Customer', back_populates='addresses')
+    customer = db.relationship('Customer', back_populates='addresses', lazy=True)
+    bookings = db.relationship("Booking", back_populates='address', lazy=True)
 
 
 # Define the Booking class
@@ -47,16 +47,21 @@ class Booking(db.Model):
     __tablename__ = 'booking_tbl'
     booking_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
+    address_id = db.Column(db.Integer, db.ForeignKey('customer_address.address_id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=False)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'), nullable=True)
     booking_date = db.Column(db.DateTime, nullable=False)
     time_arrival = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(250), nullable=False)
-    total_price = db.Column(db.Float, nullable=True)
+    property_size = db.Column(db.Integer, nullable=False)
+    additional_charge = db.Column(db.Float, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
 
-    # Add a relationship to the Customer class
+    # Add a relationship
     customer = db.relationship('Customer', back_populates='bookings', lazy=True)
     services = db.relationship('Service', back_populates="bookings", lazy=True)
+    billing = db.relationship('Billing', back_populates='bookings', lazy=True)
+    address = db.relationship("CustomerAddress", back_populates='bookings', lazy=True)
     service_addons = db.relationship(
         'ServiceAddon',
         secondary=booking_service_addon_association,
@@ -79,6 +84,7 @@ class ServiceAddon(db.Model):
     __tablename__ = "service_addon_tbl"
     service_addon_id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(255), nullable=False)
+    pricing_description = db.Column(db.String(100), nullable=True)
     price = db.Column(db.Float, nullable=False)
 
 
@@ -87,9 +93,14 @@ class Billing(db.Model):
     __tablename__ = 'billing_tbl'
     invoice_id = db.Column(db.Integer, primary_key=True)
     booking_id = db.Column(db.Integer, db.ForeignKey('booking_tbl.booking_id'), unique=True, nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
-    payment_method = db.Column(db.String(100), nullable=False)
+    method_of_payment = db.Column(db.String(100), nullable=False)
     payment_status = db.Column(db.String(100), nullable=False)
+
+    # Add a relationship
+    customer = db.relationship('Customer', back_populates='billing', lazy=True)
+    bookings = db.relationship('Booking', back_populates='billing', lazy=True)
 
 
 # Define the CustomerFeedback class

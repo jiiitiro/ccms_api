@@ -11,7 +11,6 @@ from models import Customer, CustomerAddress
 from itsdangerous import URLSafeTimedSerializer
 from forms import ChangePasswordForm
 
-
 customer_api = Blueprint('customer_api', __name__)
 
 # api-key
@@ -31,13 +30,24 @@ s = URLSafeTimedSerializer('Thisisasecret!')
 def get_all_customer_data():
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        # Join Customer with CustomerAddress
-        query = db.session.query(Customer, CustomerAddress).filter(Customer.customer_id == CustomerAddress.customer_id)
-        user_data = query.all()
+        # Query all customers with their addresses
+        customers = Customer.query.all()
 
-        customer_dict = []
-        for customer, address in user_data:
-            customer_data = {
+        # Prepare response data
+        customer_data = []
+        for customer in customers:
+            addresses = []
+            for address in customer.addresses:
+                addresses.append({
+                    "address_id": address.address_id,
+                    "houseno_street": address.houseno_street,
+                    "barangay": address.barangay,
+                    "city": address.city,
+                    "region": address.region,
+                    "zipcode": address.zipcode
+                })
+
+            customer_info = {
                 "customer_id": customer.customer_id,
                 "first_name": customer.first_name,
                 "middle_name": customer.middle_name,
@@ -46,18 +56,11 @@ def get_all_customer_data():
                 "phone": customer.phone,
                 "is_active": customer.is_active,
                 "email_confirm": customer.email_confirm,
-                # Include address fields
-                "address": {
-                    "houseno_street": address.houseno_street,
-                    "barangay": address.barangay,
-                    "city": address.city,
-                    "region": address.region,
-                    "zipcode": address.zipcode
-                }
+                "addresses": addresses
             }
-            customer_dict.append(customer_data)
+            customer_data.append(customer_info)
 
-        response = jsonify({"customers": customer_dict})
+        response = jsonify({"customers": customer_data})
         return response, 200
     else:
         return jsonify(
@@ -69,29 +72,31 @@ def get_all_customer_data():
 def get_specific_customer_data(customer_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:
-        customer_data = db.session.query(Customer, CustomerAddress). \
-            filter(Customer.customer_id == customer_id). \
-            join(CustomerAddress, Customer.customer_id == CustomerAddress.customer_id). \
-            first()
+
+        customer_data = Customer.query.filter_by(customer_id=customer_id).first()
 
         if customer_data:
+            addresses = []
+            for address in customer_data.addresses:
+                addresses.append({
+                    "address_id": address.address_id,
+                    "houseno_street": address.houseno_street,
+                    "barangay": address.barangay,
+                    "city": address.city,
+                    "region": address.region,
+                    "zipcode": address.zipcode
+                })
+
             customer_dict = {
-                "customer_id": customer_data.Customer.customer_id,
-                "first_name": customer_data.Customer.first_name,
-                "middle_name": customer_data.Customer.middle_name,
-                "last_name": customer_data.Customer.last_name,
-                "email": customer_data.Customer.email,
-                "phone": customer_data.Customer.phone,
-                "is_active": customer_data.Customer.is_active,
-                "email_confirm": customer_data.Customer.email_confirm,
-                "address": {
-                    "address_id": customer_data.CustomerAddress.address_id,
-                    "houseno_street": customer_data.CustomerAddress.houseno_street,
-                    "barangay": customer_data.CustomerAddress.barangay,
-                    "city": customer_data.CustomerAddress.city,
-                    "region": customer_data.CustomerAddress.region,
-                    "zipcode": customer_data.CustomerAddress.zipcode
-                }
+                "customer_id": customer_data.customer_id,
+                "first_name": customer_data.first_name,
+                "middle_name": customer_data.middle_name,
+                "last_name": customer_data.last_name,
+                "email": customer_data.email,
+                "phone": customer_data.phone,
+                "is_active": customer_data.is_active,
+                "email_confirm": customer_data.email_confirm,
+                "addresses": addresses
             }
             response = jsonify({"customer": customer_dict})
             return response, 200
@@ -337,7 +342,7 @@ def send_email_notification(old_email, new_email):
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login(MY_EMAIL,MY_PASSWORD)
+            server.login(MY_EMAIL, MY_PASSWORD)
             server.sendmail(MY_EMAIL, [receiver_email], msg.as_string())
 
         print("Email notification sent successfully")
@@ -457,7 +462,6 @@ def send_reset_email(email, reset_token, first_name):
 
 @customer_api.route("/customer/reset-password/<token>", methods=['GET', 'POST'])
 def customer_link_forgot_password(token):
-
     form = ChangePasswordForm()
     try:
         email = s.loads(token, salt='password-reset', max_age=1800)
@@ -513,7 +517,8 @@ def update_customer(customer_id):
     if api_key_header == API_KEY:
         try:
             # Perform a join query to retrieve customer and address data
-            query = db.session.query(Customer, CustomerAddress).filter(Customer.customer_id == CustomerAddress.customer_id)
+            query = db.session.query(Customer, CustomerAddress).filter(
+                Customer.customer_id == CustomerAddress.customer_id)
 
             # Filter the query based on the provided customer_id
             query = query.filter(Customer.customer_id == customer_id)
@@ -616,5 +621,37 @@ def user_change_password(customer_id):
     else:
         return jsonify(
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+
+@customer_api.post("/customer/address/add/<int:customer_id>")
+def add_customer_address(customer_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_data = Customer.query.filter_by(customer_id=customer_id).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Customer Id not found."}), 404
+
+        new_address = CustomerAddress(
+            customer_id=query_data.customer_id,
+            houseno_street=request.form.get("houseno_street"),
+            barangay=request.form.get("barangay"),
+            city=request.form.get("city"),
+            region=request.form.get("region"),
+            zipcode=request.form.get("zipcode")
+        )
+
+        db.session.add(new_address)
+        db.session.commit()
+
+        return jsonify(success={"message": "Customer address successfully added."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
