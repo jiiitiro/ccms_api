@@ -16,6 +16,8 @@ from routes.employee_routes import employee_api
 from routes.superadmin_routes import superadmin_api, login_manager, custom_unauthorized_handler
 from routes.inventory_routes import inventory_api
 from routes.supplier_routes import supplier_api
+from routes.customer_feedback_routes import customerfeedback_api
+from routes.service_addon_routes import service_addon_api
 from db import db
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
@@ -38,6 +40,8 @@ app.register_blueprint(superadmin_api)
 app.register_blueprint(attendance_api)
 app.register_blueprint(inventory_api)
 app.register_blueprint(supplier_api)
+app.register_blueprint(customerfeedback_api)
+app.register_blueprint(service_addon_api)
 
 # os environment here
 load_dotenv(find_dotenv())

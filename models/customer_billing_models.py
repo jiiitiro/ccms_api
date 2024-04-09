@@ -39,11 +39,12 @@ class CustomerAddress(db.Model):
 class Booking(db.Model):
     __tablename__ = 'booking_tbl'
     booking_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'))
-    service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'))
-    employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=False)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'), nullable=False)
+    service_addon_id = db.Column(db.Integer, db.ForeignKey('service_addon_tbl.service_addon_id'), nullable=True)
     booking_date = db.Column(db.Date, nullable=False)
-    time_slot = db.Column(db.DateTime, nullable=False)
+    time_arrival = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(250), nullable=False)
 
     # Add a relationship to the Customer class
@@ -57,10 +58,16 @@ class Service(db.Model):
     service_id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(255), nullable=False)
     category = db.Column(db.String(255), nullable=False)
-    duration = db.Column(db.Float, nullable=False)  # in hours
     price = db.Column(db.Float, nullable=False)
 
     bookings = db.relationship('Booking', back_populates='services', lazy=True)
+
+
+class ServiceAddon(db.Model):
+    __tablename__ = "service_addon_tbl"
+    service_addon_id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(255), nullable=False)
+    price = db.Column(db.Float, nullable=False)
 
 
 # Define the Billing class
@@ -87,14 +94,17 @@ class CustomerFeedback(db.Model):
         CheckConstraint('rating >= 1 AND rating <= 5', name='valid_rating'),
     )
 
-    def calculate_rating_status(self):
-        if self.rating == 1:
+    @staticmethod
+    def calculate_rating_status(rating):
+        if rating == 1:
             return "Poor"
-        elif self.rating == 2:
+        elif rating == 2:
             return "Fair"
-        elif self.rating == 3:
+        elif rating == 3:
             return "Average"
-        elif self.rating == 4:
+        elif rating == 4:
             return "Good"
-        else:
+        elif rating == 5:
             return "Excellent"
+        else:
+            return "Invalid Rating"

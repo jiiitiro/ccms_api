@@ -218,9 +218,9 @@ def delete_attendance_by_id(attendance_id):
         db.session.commit()
 
         return jsonify(success={"message": "Successfully delete the attendance data."}), 200
-    except KeyError:
+    except Exception as e:
         db.session.rollback()
-        return jsonify(error={"message": "Attendance with that id NOT found."}), 403
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 403
 
 
 @attendance_api.patch("/attendance/update/<int:attendance_id>")
