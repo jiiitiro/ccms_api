@@ -52,6 +52,7 @@ class Booking(db.Model):
     booking_date = db.Column(db.DateTime, nullable=False)
     time_arrival = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(250), nullable=False)
+    total_price = db.Column(db.Float, nullable=True)
 
     # Add a relationship to the Customer class
     customer = db.relationship('Customer', back_populates='bookings', lazy=True)
@@ -87,6 +88,7 @@ class Billing(db.Model):
     invoice_id = db.Column(db.Integer, primary_key=True)
     booking_id = db.Column(db.Integer, db.ForeignKey('booking_tbl.booking_id'), unique=True, nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
+    payment_method = db.Column(db.String(100), nullable=False)
     payment_status = db.Column(db.String(100), nullable=False)
 
 
