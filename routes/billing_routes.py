@@ -35,7 +35,7 @@ def get_all_billing_data():
 
 
 @billing_api.get("/billing/<int:invoice_id>")
-def get_all_billing_data(invoice_id):
+def get_specific_billing_data(invoice_id):
     try:
         api_key_header = request.headers.get("x-api-key")
         if api_key_header != API_KEY:

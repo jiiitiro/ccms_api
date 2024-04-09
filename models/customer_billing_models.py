@@ -36,20 +36,31 @@ class CustomerAddress(db.Model):
 
 
 # Define the Booking class
+booking_service_addon_association = db.Table(
+    'booking_service_addon_association',
+    db.Column('booking_id', db.Integer, db.ForeignKey('booking_tbl.booking_id')),
+    db.Column('service_addon_id', db.Integer, db.ForeignKey('service_addon_tbl.service_addon_id'))
+)
+
+
 class Booking(db.Model):
     __tablename__ = 'booking_tbl'
     booking_id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=False)
-    employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'), nullable=False)
-    service_addon_id = db.Column(db.Integer, db.ForeignKey('service_addon_tbl.service_addon_id'), nullable=True)
-    booking_date = db.Column(db.Date, nullable=False)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'), nullable=True)
+    booking_date = db.Column(db.DateTime, nullable=False)
     time_arrival = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(250), nullable=False)
 
     # Add a relationship to the Customer class
     customer = db.relationship('Customer', back_populates='bookings', lazy=True)
     services = db.relationship('Service', back_populates="bookings", lazy=True)
+    service_addons = db.relationship(
+        'ServiceAddon',
+        secondary=booking_service_addon_association,
+        backref=db.backref('bookings', lazy='dynamic')
+    )
 
 
 # Define the Service class
