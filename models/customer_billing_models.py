@@ -97,10 +97,12 @@ class Billing(db.Model):
     total_amount = db.Column(db.Float, nullable=False)
     method_of_payment = db.Column(db.String(100), nullable=False)
     payment_status = db.Column(db.String(100), nullable=False)
+    service_status = db.Column(db.String(100), default="Not Started")
 
     # Add a relationship
     customer = db.relationship('Customer', back_populates='billing', lazy=True)
     bookings = db.relationship('Booking', back_populates='billing', lazy=True)
+    feedback = db.relationship('CustomerFeedback', back_populates='billing', lazy=True)
 
 
 # Define the CustomerFeedback class
@@ -108,11 +110,11 @@ class CustomerFeedback(db.Model):
     __tablename__ = "customer_feedback_tbl"
     customer_feedback_id = db.Column(db.Integer, primary_key=True)
     invoice_id = db.Column(db.Integer, db.ForeignKey('billing_tbl.invoice_id'), nullable=False)
-    service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=False)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
     comment = db.Column(db.String(255), nullable=True)
     rating = db.Column(db.Integer, nullable=True)
     rating_status = db.Column(db.String(20), nullable=True)
+
+    billing = db.relationship('Billing', back_populates='feedback', lazy=True)
 
     __table_args__ = (
         CheckConstraint('rating >= 1 AND rating <= 5', name='valid_rating'),

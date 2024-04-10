@@ -169,7 +169,7 @@ def add_booking():
             address_id=request.form.get("address_id"),
             booking_date=datetime.now(),
             time_arrival=request.form.get("time_arrival"),
-            status="Processing",
+            status="APPROVED",
             property_size=int(request.form.get("property_size")),
             additional_charge=float(request.form.get("additional_charge")),
             total_price=total_price  # Assign total price to the booking
@@ -185,24 +185,24 @@ def add_booking():
         # Retrieve the service addon IDs associated with the new booking
         new_service_addon_ids = [addon.service_addon_id for addon in new_booking.service_addons]
 
-        # Prepare response data
-        new_booking_dict = {
-            "booking_id": new_booking.booking_id,
-            "customer_id": new_booking.customer_id,
-            "customer_name": f"{new_booking.customer.first_name} {new_booking.customer.middle_name} "
-                             f"{new_booking.customer.last_name}",
-            "customer_address": new_booking.address_id,
-            "customer_phone": new_booking.customer.phone,
-            "service_id": new_booking.service_id,
-            "employee_id": new_booking.employee_id,
-            "service_addon_ids": new_service_addon_ids,
-            "booking_date": new_booking.booking_date,
-            "time_arrival": new_booking.time_arrival,
-            "status": new_booking.status,
-            "property_size": f"{new_booking.property_size} sqm",
-            "additional_charge": new_booking.additional_charge,
-            "total_price": total_price  # Include total price in the response
-        }
+        # # Prepare response data
+        # new_booking_dict = {
+        #     "booking_id": new_booking.booking_id,
+        #     "customer_id": new_booking.customer_id,
+        #     "customer_name": f"{new_booking.customer.first_name} {new_booking.customer.middle_name} "
+        #                      f"{new_booking.customer.last_name}",
+        #     "customer_address": new_booking.address_id,
+        #     "customer_phone": new_booking.customer.phone,
+        #     "service_id": new_booking.service_id,
+        #     "employee_id": new_booking.employee_id,
+        #     "service_addon_ids": new_service_addon_ids,
+        #     "booking_date": new_booking.booking_date,
+        #     "time_arrival": new_booking.time_arrival,
+        #     "status": new_booking.status,
+        #     "property_size": f"{new_booking.property_size} sqm",
+        #     "additional_charge": new_booking.additional_charge,
+        #     "total_price": total_price  # Include total price in the response
+        # }
         return jsonify(success={"message": "New booking successfully added."})
 
     except Exception as e:
