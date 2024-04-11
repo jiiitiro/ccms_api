@@ -97,7 +97,7 @@ def add_item_with_supplier():
                 available_stock=int(request.form.get("available_stock")),
                 reorder_level=int(request.form.get("reorder_level")),
                 item_status="Available",
-                unit_price=request.form.get("unit_price")
+                unit_price=float(request.form.get("unit_price"))
             )
         # if there is no supplier
         else:
@@ -107,7 +107,7 @@ def add_item_with_supplier():
                 available_stock=request.form.get("available_stock"),
                 reorder_level=request.form.get("reorder_level"),
                 item_status="Available",
-                unit_price=request.form.get("unit_price")
+                unit_price=float(request.form.get("unit_price"))
             )
 
         db.session.add(new_inventory)
