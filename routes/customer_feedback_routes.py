@@ -100,12 +100,33 @@ def add_customer_feedback(customer_id):
         db.session.add(new_customer_feedback)
         db.session.commit()
 
+        return jsonify(success={"message": "Customer feedback successfully added."}), 200
+
     except Exception as e:
         db.session.rollback()
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
+@customerfeedback_api.delete("/customer-feedback/delete/<int:customer_feedback_id>")
+def delete_feedback(customer_feedback_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
+        query_data = CustomerFeedback.query.filter_by(customer_feedback_id=customer_feedback_id).first()
 
+        if query_data is None:
+            return jsonify(error={"message": "Customer feedback id not found."}), 404
+
+        db.session.delete(query_data)
+        db.session.commit()
+
+        return jsonify(success={"message": "Customer feedback successfully deleted."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 

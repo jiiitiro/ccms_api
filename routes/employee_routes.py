@@ -323,15 +323,17 @@ def login_employee():
                 # access_token = create_access_token(identity=employee.employee_id)
                 # return {"access_token": access_token}
                 login_data_dict = {
-                    "login_id": employee.login_id,
-                    "name": employee.name,
+                    "employee_id": employee.employee_id,
+                    "first_name": employee.first_name,
+                    "middle_name": employee.middle_name,
+                    "last_name": employee.last_name,
                     "email": employee.email,
-                    "role": employee.role,
                     "is_active": employee.is_active,
                     "email_confirm": employee.email_confirm,
                 }
 
-                return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
+                return jsonify(success={"message": f"Welcome {employee.first_name}!",
+                                        "user_data": login_data_dict}), 200
 
             return jsonify(error={"message": "Invalid credentials."}), 401
         except Exception as e:
