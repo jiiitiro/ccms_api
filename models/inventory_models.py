@@ -15,6 +15,7 @@ class Inventory(db.Model):
     used_item = db.Column(db.Integer, nullable=False, default=0)
     reorder_level = db.Column(db.Integer, nullable=True, default=0)
     item_status = db.Column(db.String(20), nullable=True)
+    unit_price = db.Column(db.Float, nullable=True)
 
     # Define relationship to Supplier
     supplier = relationship("Supplier", back_populates="inventory")
@@ -46,15 +47,11 @@ class PurchaseOrder(db.Model):
     total_item_qty = db.Column(db.Integer, nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(50), nullable=False,
-                       default='In-Progress')  # (e.g., In Progress, Received)
+                       default='Pending')  # (e.g., In Progress, Received)
     prepared_by = db.Column(db.String(255), nullable=False)
     prepared_date = db.Column(db.Date, nullable=False)
     received_by = db.Column(db.String(255), nullable=True)
     received_date = db.Column(db.DateTime, nullable=True)
-
-    # if no supplier
-    category = db.Column(db.String(255), nullable=True)
-    item_name = db.Column(db.String(255), nullable=True)
 
     # Define relationship to Supplier
     supplier = relationship("Supplier", back_populates="purchase_orders")

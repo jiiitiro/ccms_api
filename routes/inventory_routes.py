@@ -25,7 +25,8 @@ def get_all_inventory_data():
                     "available_stock": data.available_stock,
                     "used_item": data.used_item,
                     "reorder_level": data.reorder_level,
-                    "item_status": data.item_status
+                    "item_status": data.item_status,
+                    "unit_price": data.unit_price
                 } for data in query_data
             ]
             return jsonify({"inventory_data": inventory_data}), 200
@@ -58,7 +59,8 @@ def get_specific_inventory_data(inventory_id):
                     "available_stock": inventory_data.available_stock,
                     "used_item": inventory_data.used_item,
                     "reorder_level": inventory_data.reorder_level,
-                    "item_status": inventory_data.item_status
+                    "item_status": inventory_data.item_status,
+                    "unit_price": inventory_data.unit_price
                 }
             ]
 
@@ -94,7 +96,8 @@ def add_item_with_supplier():
                 item_name=request.form.get("item_name"),
                 available_stock=int(request.form.get("available_stock")),
                 reorder_level=int(request.form.get("reorder_level")),
-                item_status="Available"
+                item_status="Available",
+                unit_price=request.form.get("unit_price")
             )
         # if there is no supplier
         else:
@@ -103,7 +106,8 @@ def add_item_with_supplier():
                 item_name=request.form.get("item_name"),
                 available_stock=request.form.get("available_stock"),
                 reorder_level=request.form.get("reorder_level"),
-                item_status="Available"
+                item_status="Available",
+                unit_price=request.form.get("unit_price")
             )
 
         db.session.add(new_inventory)
@@ -164,6 +168,7 @@ def update_inventory_data(inventory_id):
         query_data.category = request.form.get("category", query_data.category)
         query_data.item_name = request.form.get("item_name", query_data.item_name)
         query_data.reorder_level = request.form.get("reorder_level", query_data.reorder_level)
+        query_data.unit_price = float(request.form.get("unit_price", query_data.unit_price))
 
         if request.form.get("used_item") and request.form.get("available_stock"):
             query_data.used_item += int(request.form.get("used_item"))
