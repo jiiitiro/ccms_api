@@ -628,7 +628,6 @@ def update_employee(employee_id):
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-
 @employee_api.put("/employee/change-password/<int:employee_id>")
 def user_change_password(employee_id):
     api_key_header = request.headers.get("x-api-key")

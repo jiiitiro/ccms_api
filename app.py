@@ -20,6 +20,7 @@ from routes.customer_feedback_routes import customerfeedback_api
 from routes.service_addon_routes import service_addon_api
 from routes.booking_routes import booking_api
 from routes.billing_routes import billing_api
+from routes.purchase_order_routes import purchase_order_api
 from db import db
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
@@ -46,6 +47,7 @@ app.register_blueprint(customerfeedback_api)
 app.register_blueprint(service_addon_api)
 app.register_blueprint(booking_api)
 app.register_blueprint(billing_api)
+app.register_blueprint(purchase_order_api)
 
 # os environment here
 load_dotenv(find_dotenv())
