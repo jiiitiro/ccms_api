@@ -29,7 +29,7 @@ def get_all_inventory_data():
                     "unit_price": data.unit_price
                 } for data in query_data
             ]
-            return jsonify({"inventory_data": inventory_data}), 200
+            return jsonify(inventory_data), 200
         except Exception as e:
             # Return error response if any exception occurs
             return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
