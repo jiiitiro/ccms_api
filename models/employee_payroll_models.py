@@ -67,10 +67,11 @@ class Payroll(db.Model):
     employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
     period_start = db.Column(db.Date, nullable=False)
     period_end = db.Column(db.Date, nullable=False)
-    total_ot_hrs = db.Column(db.Float, nullable=False, default=0)
-    base_salary = db.Column(db.Float, nullable=False, default=0)
-    gross_pay = db.Column(db.Float, nullable=False, default=0)
-    net_pay = db.Column(db.Float, nullable=False, default=0)
+    total_ot_hrs = db.Column(db.Float, nullable=False)
+    total_tardiness = db.Column(db.Float, nullable=False)
+    base_salary = db.Column(db.Float, nullable=False)
+    gross_pay = db.Column(db.Float, nullable=False)
+    net_pay = db.Column(db.Float, nullable=False)
     thirteenth_month_pay = db.Column(db.Float, nullable=True, default=0)
     status = db.Column(db.String(50), nullable=False)
 
@@ -79,6 +80,11 @@ class Payroll(db.Model):
 
     # Relationship to PayrollDeduction
     deductions = db.relationship('PayrollDeduction', back_populates='payroll', lazy=True)
+
+    # Unique constraint
+    __table_args__ = (
+        UniqueConstraint('employee_id', 'period_start', 'period_end', name='unique_payroll_record'),
+    )
 
 
 class PayrollDeduction(db.Model):
@@ -97,9 +103,12 @@ class PayrollDeduction(db.Model):
     payroll = db.relationship('Payroll', back_populates='deductions', lazy=True)
 
 
-class PayrollContribution(db.Model):
-    __tablename__ = "payroll_contribution_tbl"
-    payroll_contribution_id = db.Column(db.Integer, primary_key=True)
-    sss_contribution = db.Column(db.Float, nullable=False, default=4.5)
-    philhealth_contribution = db.Column(db.Float, nullable=False, default=5)
-    pagibig_contribution = db.Column(db.Float, nullable=False, default=200)
+class PayrollContributionRate(db.Model):
+    __tablename__ = "payroll_contribution_rate_tbl"
+    payroll_contribution_rate_id = db.Column(db.Integer, primary_key=True)
+    sss = db.Column(db.Float, nullable=False, default=4.5)
+    philhealth = db.Column(db.Float, nullable=False, default=5)
+    pagibig = db.Column(db.Float, nullable=False, default=200)
+
+
+

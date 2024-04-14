@@ -13,6 +13,7 @@ from models import Employee, Schedule, Attendance
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 from db import db
+from routes.superadmin_routes import generate_random_password
 
 
 employee_api = Blueprint('employee_api', __name__)
@@ -127,14 +128,15 @@ def register_employee():
 
             if existing_employee:
                 return jsonify(error={"message": "Email already exists. Please use a different email address."}), 400
-
+            
+            random_password = generate_random_password()
             new_employee = Employee(
                 first_name=request.form.get("first_name"),
                 middle_name=request.form.get("middle_name"),
                 last_name=request.form.get("last_name"),
                 address=request.form.get("address"),
                 email=request.form.get("email"),
-                password=pbkdf2_sha256.hash(request.form.get("password")),
+                password=pbkdf2_sha256.hash(random_password),
                 phone=request.form.get("phone"),
                 position=request.form.get("position"),
                 hire_date=datetime.strptime(request.form.get("hire_date"), '%Y-%m-%d').date(),
@@ -184,10 +186,11 @@ def register_employee():
             token = s.dumps(recipient_email, salt='email-confirm')
 
             # Send Email Confirmation to employee's email
-            send_email_confirmation(recipient_email, token, new_employee.first_name)
+            send_email_confirmation(recipient_email, token, new_employee.first_name, random_password)
 
             return jsonify(
-                success={"message": "Register Successfully, employee needs to confirm the email.",
+                success={"message": "Successfully registered..."
+                                    "randomly generated password and email confirmation was sent to employee's email.",
                          "employee": new_employee_dict}), 200
         except Exception as e:
             db.session.rollback()
@@ -197,7 +200,7 @@ def register_employee():
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
-def send_email_confirmation(recipient_email, token, firstname):
+def send_email_confirmation(recipient_email, token, firstname, password):
     subject = 'Confirm Email'
     body = f"""
     <html>
@@ -250,6 +253,8 @@ def send_email_confirmation(recipient_email, token, firstname):
         <div class="container">
             <h1>Hello {firstname},</h1>
             <p>Confirm your email address by clicking the following link: <a href="{BASE_URL}/employee/confirm-email/{token}">Confirm Email</a></p>
+            <p>This is your randomly generated password:</p>
+            <p class="password">{password}</p>
 
         </div>
         <div class="footer">

@@ -7,7 +7,7 @@ from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
-from models import Payroll, Employee, Attendance, PayrollContribution, PayrollDeduction
+from models import Payroll, Employee, Attendance, PayrollContributionRate, PayrollDeduction
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -38,20 +38,19 @@ def payroll_data():
             'employee_position': data.employee.position,
             'period_start': data.period_start,
             'period_end': data.period_end,
-            'basic_pay': data.basic_pay,
-            'overtime_hours': data.overtime_hours,
-            'overtime_pay': data.overtime_pay,
-            'allowances': data.allowances,
+            'daily_rate': data.employee.daily_rate,
+            'base_salary': data.base_salary,
             'gross_pay': data.gross_pay,
-            'sss_contribution': data.sss_contribution,
-            'philhealth_contribution': data.philhealth_contribution,
-            'pagibig_contribution': data.pagibig_contribution,
+            'net_pay': data.net_pay,
+            'sss_contribution': data.deduction.sss_contribution,
+            'philhealth_contribution': data.deduction.philhealth_contribution,
+            'pagibig_contribution': data.deduction.pagibig_contribution,
             'withholding_tax': data.witholding_tax,
             'other_deduction': data.other_deduction,
-            'net_pay': data.net_pay,
             'thirteenth_month_pay': data.thirteenth_month_pay,
             'status': data.status
         } for data in query_data]
+
         return jsonify(success={"payroll_data": payroll_dict}), 200
 
     else:
@@ -66,28 +65,27 @@ def get_specific_payroll(payroll_id):
         query_data = Payroll.query.filter_by(payroll_id=payroll_id).first()
         if query_data:
             payroll_dict = {
-                'payroll_id': payroll_data.payroll_id,
-                'employee_id': payroll_data.employee_id,
+                'payroll_id': query_data.payroll_id,
+                'employee_id': query_data.employee_id,
                 'employee_name': f"{query_data.employee.first_name} {query_data.employee.middle_name} "
                                  f"{query_data.employee.last_name}",
                 'employee_position': query_data.employee.position,
-                'period_start': payroll_data.period_start,
-                'period_end': payroll_data.period_end,
-                'basic_pay': payroll_data.basic_pay,
-                'overtime_hours': payroll_data.overtime_hours,
-                'overtime_pay': payroll_data.overtime_pay,
-                'allowances': payroll_data.allowances,
-                'gross_pay': payroll_data.gross_pay,
-                'sss_contribution': payroll_data.sss_contribution,
-                'philhealth_contribution': payroll_data.philhealth_contribution,
-                'pagibig_contribution': payroll_data.pagibig_contribution,
-                'withholding_tax': payroll_data.witholding_tax,
-                'other_deduction': payroll_data.other_deduction,
-                'net_pay': payroll_data.net_pay,
-                'thirteenth_month_pay': payroll_data.thirteenth_month_pay,
-                'status': payroll_data.status
+                'period_start': query_data.period_start,
+                'period_end': query_data.period_end,
+                'daily_rate': query_data.employee.daily_rate,
+                'base_salary': query_data.base_salary,
+                'gross_pay': query_data.gross_pay,
+                'net_pay': query_data.net_pay,
+                'sss_contribution': query_data.deduction.sss_contribution,
+                'philhealth_contribution': query_data.deduction.philhealth_contribution,
+                'pagibig_contribution': query_data.deduction.pagibig_contribution,
+                'withholding_tax': query_data.witholding_tax,
+                'other_deduction': query_data.other_deduction,
+                'thirteenth_month_pay': query_data.thirteenth_month_pay,
+                'status': query_data.status
             }
             response = jsonify({"payroll": payroll_dict})
+
             return response, 200
         else:
             return jsonify(error={"message": "Payroll id not found."}), 404
@@ -96,96 +94,237 @@ def get_specific_payroll(payroll_id):
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
+@payroll_api.post("/payroll/add")
+def add_payroll():
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_employee_id = Employee.query.filter_by(employee_id=request.form.get("employee_id")).first()
+
+        if query_employee_id is None:
+            return jsonify(error={"message": "Employee id not found."}), 404
+
+        new_payroll = Payroll(
+            employee_id=query_employee_id.employee_id,
+            period_start=request.form.get("period_start"),
+            period_end=request.form.get("period_end"),
+            total_ot_hrs=request.form.get("total_ot_hrs"),
+            total_tardiness=request.form.get("total_tardiness"),
+            base_salary=request.form.get("base_salary"),
+            gross_pay=request.form.get("gross_pay"),
+            net_pay=request.form.get("net_pay"),
+            thirteenth_month_pay=request.form.get("thirteenth_month_pay"),
+            status=request.form.get("status"),
+        )
+
+        if (request.form.get("sss_contribution") and request.form.get("philhealth_contribution")
+                and request.form.get("pagibig_contribution") and request.form.get("withholding_tax")
+                and request.form.get("other_deduction")):
+            new_payroll_deduction = PayrollDeduction(
+                payroll_id=new_payroll.payroll_id,
+                sss_contribution=request.form.get("sss_contribution"),
+                philhealth_contribution=request.form.get("philhealth_contribution"),
+                pagibig_contribution=request.form.get("pagibig_contribution"),
+                withholding_tax=request.form.get("withholding_tax"),
+                other_deductions=request.form.get("other_deductions")
+            )
+
+            new_payroll.deductions.append(new_payroll_deduction)
+
+        db.session.add(new_payroll)
+        db.session.commit()
+
+        return jsonify(success={"message": "Payroll successfully added."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
 # Function to generate payroll for employees
 def generate_payroll():
-    # Get all active employees
-    active_employees = Employee.query.filter_by(is_active=True).all()
+    try:
+        # Get all active employees
+        active_employees = Employee.query.filter_by(is_active=True).all()
 
-    # Get payroll contributions
-    payroll_contributions = PayrollContribution.query.first()
-    sss_contribution_rate = payroll_contributions.sss_contribution
-    philhealth_contribution_rate = payroll_contributions.philhealth_contribution
-    pagibig_contribution_rate = payroll_contributions.pagibig_contribution
+        # Get payroll contributions
+        payroll_contributions = PayrollContributionRate.query.first()
+        sss_contribution_rate = payroll_contributions.sss
+        philhealth_contribution_rate = payroll_contributions.philhealth
+        pagibig_contribution_rate = payroll_contributions.pagibig
 
-    # Calculate payroll for each employee
-    for employee in active_employees:
-        # Get the attendances within the period
-        attendances_within_period = Attendance.query.filter(
-            Attendance.employee_id == employee.employee_id,
-            Attendance.work_date.between(get_period_start(), get_period_end())
-        ).all()
+        # Calculate payroll for each employee
+        for employee in active_employees:
+            # Get the attendances within the period
+            attendances_within_period = Attendance.query.filter(
+                Attendance.employee_id == employee.employee_id,
+                Attendance.work_date.between(get_period_start(), get_period_end())
+            ).all()
 
-        # Initialize total days worked
-        total_days_worked = 0
+            # Initialize total days worked
+            total_days_worked = 0
+            total_ot_hrs = 0
+            total_tardiness = 0
 
-        # Calculate total days worked by iterating over attendances
-        for attendance in attendances_within_period:
-            if attendance.login_time and attendance.logout_time:
-                total_days_worked += 1
-            elif attendance.login_time and not attendance.logout_time:
-                pass
+            # Calculate total days worked by iterating over attendances
+            for attendance in attendances_within_period:
+                if attendance.login_time and attendance.logout_time:
+                    total_days_worked += 1
+                    total_ot_hrs += attendance.ot_hrs
+                    total_tardiness += attendance.tardiness
 
-        # Calculate base salary based on total days worked
-        base_salary = employee.daily_rate * total_days_worked
+            # Calculate base salary based on total days worked
+            base_salary = employee.daily_rate * total_days_worked
 
-        # Calculate gross pay
-        gross_pay = base_salary + employee.de_minimis
+            # Calculate gross pay
+            gross_pay = base_salary + employee.de_minimis
 
-        withholding_tax = None
-        # Deduct contributions based on the period start date
-        if employee.period_start.day >= 16:
+            # 13th month
+            thirteenth_month_pay = thirteenth_month_pay_computation(employee)
 
-            sss_contribution = base_salary * (sss_contribution_rate / 100)
-            philhealth_contribution = (employee.base_salary * (philhealth_contribution_rate / 100)) / 2
-            pagibig_contribution = pagibig_contribution_rate
+            # other_deductions = calculate_other_deductions()
+
+            withholding_tax = None
+
+            # Deduct contributions based on the period start date
+            if employee.period_start.day >= 16:
+
+                sss_contribution = base_salary * (sss_contribution_rate / 100)
+                philhealth_contribution = (employee.base_salary * (philhealth_contribution_rate / 100)) / 2
+                pagibig_contribution = pagibig_contribution_rate
+            else:
+                sss_contribution = 0
+                philhealth_contribution = 0
+                pagibig_contribution = 0
 
             # Calculate withholding tax and other deductions (if any)
             withholding_tax = calculate_withholding_tax(gross_pay)
 
-        else:
-            sss_contribution = 0
-            philhealth_contribution = 0
-            pagibig_contribution = 0
+            # Calculate net pay
+            net_pay = gross_pay - (sss_contribution + philhealth_contribution + pagibig_contribution +
+                                   withholding_tax)
 
-        thirteenth_month_pay = thirteenth_month_pay_computation(employee)
+            # Create Payroll instance
+            payroll = Payroll(
+                employee_id=employee.employee_id,
+                period_start=get_period_start(),
+                period_end=get_period_end(),
+                total_ot_hrs=total_ot_hrs,
+                total_tardiness=total_tardiness,
+                base_salary=base_salary,
+                gross_pay=gross_pay,
+                net_pay=net_pay,
+                thirteenth_month_pay=thirteenth_month_pay,
+                status="Calculated"
+            )
 
-        # other_deductions = calculate_other_deductions()
+            # Create Payroll Deduction instance
+            deduction = PayrollDeduction(
+                payroll_id=payroll.payroll_id,
+                sss_contribution=sss_contribution,
+                philhealth_contribution=philhealth_contribution,
+                pagibig_contribution=pagibig_contribution,
+                withholding_tax=withholding_tax,
+                other_deductions=0,
+            )
 
-        # Calculate net pay
-        net_pay = gross_pay - (sss_contribution + philhealth_contribution + pagibig_contribution +
-                               withholding_tax)
+            # Associate deduction with payroll
+            payroll.deductions.append(deduction)
 
-        # Create Payroll instance
-        payroll = Payroll(
-            employee_id=employee.employee_id,
-            period_start=get_period_start(),
-            period_end=get_period_end(),
-            overtime_hours=employee.overtime_hours,
-            overtime_pay=employee.overtime_pay,
-            allowances=employee.allowances,
-            base_salary=base_salary,
-            gross_pay=gross_pay,
-            net_pay=net_pay,
-            thirteenth_month_pay=thirteenth_month_pay,
-            status="Calculated"
+            db.session.add(payroll)
+
+        db.session.commit()
+
+        print("Payroll successfully created.")
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"An error occurred: {str(e)}")
+
+
+@payroll_api.get("/payroll-contribution")
+def get_payroll_contribution_data():
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_data = PayrollContributionRate.query.first()
+
+        payroll_contribution_rate_data = [
+            {
+                "payroll_contribution_rate_id": query_data.payroll_contribution_rate_id,
+                "sss": query_data.sss,
+                "philhealth": query_data.philhealth,
+                "pagibig": query_data.pagibig
+            }
+        ]
+
+        return jsonify(success={"payroll_contribution_rate_data": payroll_contribution_rate_data}), 200
+
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
+@payroll_api.post("/payroll-contribution/add")
+def add_payroll_contribution():
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        new_payroll_contribution_rate = PayrollContributionRate(
+            payroll_contribution_rate_id=1,
+            sss=float(4.5),
+            philhealth=float(5),
+            pagibig=float(200)
         )
 
-        # Create Payroll Deduction instance
-        deduction = PayrollDeduction(
-            payroll_id=payroll.payroll_id,
-            sss_contribution=sss_contribution,
-            philhealth_contribution=philhealth_contribution,
-            pagibig_contribution=pagibig_contribution,
-            withholding_tax=withholding_tax,
-            other_deductions=0,
-        )
+        db.session.add(new_payroll_contribution_rate)
+        db.session.commit()
 
-        # Associate deduction with payroll
-        payroll.deductions.append(deduction)
+        return jsonify(sucess={"message": "Payroll contribution rate successfully added."}), 200
 
-        db.session.add(payroll)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
-    db.session.commit()
+
+@payroll_api.patch("/payroll-contribution/update/1")
+def update_payroll_contribution_rate():
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_data = PayrollContributionRate.query.filter_by(payroll_contribution_rate_id=1).first()
+
+        query_data.sss = request.form.get("sss", query_data.sss)
+        query_data.philhealth = request.form.get("philhealth", query_data.philhealth)
+        query_data.pagibig = request.form.get("pagibig", query_data.pagibig)
+
+        db.session.commit()
+
+        payroll_contribution_rate_data = [
+            {
+                "payroll_contribution_rate_id": query_data.payroll_contribution_rate_id,
+                "sss": query_data.sss,
+                "philhealth": query_data.philhealth,
+                "pagibig": query_data.pagibig
+            }
+        ]
+
+        return jsonify(success={"message": "Payroll contribution rare successfully updated.",
+                                "payroll_contribution_rate_data": payroll_contribution_rate_data}), 200
+
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
 def calculate_withholding_tax(gross_pay):
@@ -215,7 +354,7 @@ def calculate_withholding_tax(gross_pay):
                 # Apply the highest tax rate for incomes above the highest threshold
                 tax_due += (taxable_income - tax_brackets[-1][0]) * tax_brackets[-1][1]
             else:
-                # Apply tax rate for this bracket
+                # Apply the tax rate for this bracket
                 tax_due += (threshold - tax_brackets[i - 1][0]) * rate
 
     # Convert annual tax due to monthly withholding tax
@@ -287,5 +426,3 @@ scheduler = BackgroundScheduler()
 # Add the payroll generation job to run on the 10th and 25th of every month
 scheduler.add_job(generate_payroll, 'cron', day='5,20')
 
-# Start the scheduler
-scheduler.start()

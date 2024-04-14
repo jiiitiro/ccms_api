@@ -21,6 +21,7 @@ from routes.service_addon_routes import service_addon_api
 from routes.booking_routes import booking_api
 from routes.billing_routes import billing_api
 from routes.purchase_order_routes import purchase_order_api
+from routes.payroll_routes import scheduler
 from db import db
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
@@ -85,4 +86,6 @@ def home():
 
 
 if __name__ == "__main__":
+    # Start the scheduler
+    scheduler.start()
     app.run(debug=True, port=5013)
