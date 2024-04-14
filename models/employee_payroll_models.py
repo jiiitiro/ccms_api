@@ -69,6 +69,7 @@ class Payroll(db.Model):
     period_end = db.Column(db.Date, nullable=False)
     total_ot_hrs = db.Column(db.Float, nullable=False)
     total_tardiness = db.Column(db.Float, nullable=False)
+    total_days_of_work = db.Column(db.Integer, nullable=False)
     base_salary = db.Column(db.Float, nullable=False)
     gross_pay = db.Column(db.Float, nullable=False)
     net_pay = db.Column(db.Float, nullable=False)
@@ -91,13 +92,12 @@ class PayrollDeduction(db.Model):
     __tablename__ = "payroll_deduction_tbl"
     payroll_deduction_id = db.Column(db.Integer, primary_key=True)
     payroll_id = db.Column(db.Integer, db.ForeignKey('payroll_tbl.payroll_id'))
-
     # Government Mandated Contributions
-    sss_contribution = db.Column(db.Float, nullable=False, default=0)
-    philhealth_contribution = db.Column(db.Float, nullable=False, default=0)
-    pagibig_contribution = db.Column(db.Float, nullable=False, default=0)
-    withholding_tax = db.Column(db.Float, nullable=False, default=0)
-    other_deductions = db.Column(db.Float, nullable=False, default=0)
+    sss_contribution = db.Column(db.Float, nullable=False, default=0.0)
+    philhealth_contribution = db.Column(db.Float, nullable=False, default=0.0)
+    pagibig_contribution = db.Column(db.Float, nullable=False, default=0.0)
+    withholding_tax = db.Column(db.Float, nullable=False, default=0.0)
+    other_deductions = db.Column(db.Float, nullable=False, default=0.0)
 
     # Relationship to Payroll
     payroll = db.relationship('Payroll', back_populates='deductions', lazy=True)
@@ -109,6 +109,7 @@ class PayrollContributionRate(db.Model):
     sss = db.Column(db.Float, nullable=False, default=4.5)
     philhealth = db.Column(db.Float, nullable=False, default=5)
     pagibig = db.Column(db.Float, nullable=False, default=200)
+    minimum_rate = db.Column(db.Float, nullable=True)
 
 
 
