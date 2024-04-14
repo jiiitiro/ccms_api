@@ -1,19 +1,18 @@
-from flask import jsonify, render_template, request, url_for
+from email.mime.application import MIMEApplication
 import os
-import secrets
-from passlib.hash import pbkdf2_sha256
-import smtplib
-from itsdangerous import SignatureExpired
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
 from models import Payroll, Employee, Attendance, PayrollContributionRate, PayrollDeduction
-from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 import calendar
 from datetime import date
 from db import db
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import asyncio
+import pdfcrowd
+import sys
 
 payroll_api = Blueprint('payroll_api', __name__)
 
@@ -281,6 +280,176 @@ def delete_payroll(payroll_id):
     except Exception as e:
         db.session.rollback()
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
+@payroll_api.post("/payroll/email-payslip/all")
+async def send_payslip():
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        period_start = request.form.get("period_start")
+        period_end = request.form.get("period_end")
+
+        # Query payrolls based on the filters
+        query_data = Payroll.query.filter(
+            Payroll.period_start == period_start,
+            Payroll.period_end == period_end
+        ).all()
+
+        if not query_data:
+            return jsonify(error={"message": "Payroll with that period start and end not found."}), 404
+
+        tasks = []
+        for payroll in query_data:
+            if payroll.employee and payroll.employee.email and payroll.employee.is_active:
+                pdf = await create_pdf(payroll)
+                tasks.append(send_email(payroll.employee.email, pdf, period_start, period_end, payroll.employee.last_name))
+
+        await asyncio.gather(*tasks)
+
+        return jsonify(success={"message": "Payslip sent successfully."}), 200
+
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
+async def create_pdf(payroll):
+    payslip_data = {
+        'employee_id': payroll.employee_id,
+        'employee_name': f"{payroll.employee.first_name} {payroll.employee.middle_name} {payroll.employee.last_name}",
+        'employee_position': payroll.employee.position,
+        'period_start': payroll.period_start,
+        'period_end': payroll.period_end,
+        'daily_rate': payroll.employee.daily_rate,
+        'base_salary': payroll.base_salary,
+        'gross_pay': payroll.gross_pay,
+        'net_pay': payroll.net_pay,
+        'total_ot_hrs': payroll.total_ot_hrs,
+        'total_tardiness': payroll.total_tardiness,
+        'total_days_of_work': payroll.total_days_of_work,
+        'sss_contribution': payroll.deductions[0].sss_contribution,
+        'philhealth_contribution': payroll.deductions[0].philhealth_contribution,
+        'pagibig_contribution': payroll.deductions[0].pagibig_contribution,
+        'withholding_tax': payroll.deductions[0].withholding_tax,
+        'other_deduction': payroll.deductions[0].other_deductions,
+        'thirteenth_month_pay': payroll.thirteenth_month_pay
+    }
+
+    payslip_html = render_template_string("""
+        <html>
+            <head></head>
+            <body>
+                <table border="1">
+                    <tr>
+                        <td colspan="6">COMPANY NAME</td>
+                        <td colspan="4">PAYSLIP - SEMI-MONTHLY PAYROLL</td>
+                        <td>PERIOD: {{ period_start }} - {{ period_end }}</td>
+                    </tr>
+        
+                    <tr>
+                        <td>EMPLOYEE:</td>
+                        <td>{{ employee_name }}</td>
+                        <td>STATUS:</td>
+                        <td>{{ status }}</td>
+                        <td>BASIC PAY:</td>
+                        <td>{{ basic_pay }}</td>
+                    </tr>
+        
+                    <tr>
+                        <td>Position:</td>
+                        <td>{{ employee_position }}</td>
+                        <td>Net Pay:</td>
+                        <td>{{ net_pay }}</td>
+                        <td>Other Row:</td>
+                        <td>{{ other_row_value }}</td>
+                    </tr>
+        
+                    <!-- Additional rows based on payslip_data -->
+                    <tr>
+                        <td>Daily Rate:</td>
+                        <td>{{ daily_rate }}</td>
+                        <td>Total OT Hours:</td>
+                        <td>{{ total_ot_hrs }}</td>
+                    </tr>
+                    <tr>
+                        <td>Base Salary:</td>
+                        <td>{{ base_salary }}</td>
+                        <td>Gross Pay:</td>
+                        <td>{{ gross_pay }}</td>
+                        <td>Total Tardiness:</td>
+                        <td>{{ total_tardiness }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Days of Work:</td>
+                        <td>{{ total_days_of_work }}</td>
+                        <td>SSS Contribution:</td>
+                        <td>{{ sss_contribution }}</td>
+                        <td>Philhealth Contribution:</td>
+                        <td>{{ philhealth_contribution }}</td>
+                    </tr>
+                    <tr>
+                        <td>Pagibig Contribution:</td>
+                        <td>{{ pagibig_contribution }}</td>
+                        <td>Withholding Tax:</td>
+                        <td>{{ withholding_tax }}</td>
+                        <td>Other Deduction:</td>
+                        <td>{{ other_deduction }}</td>
+                    </tr>
+                    <tr>
+                        <td>13th Month Pay:</td>
+                        <td>{{ thirteenth_month_pay }}</td>
+                        <td colspan="2"></td>
+                        <td colspan="2"></td>
+                    </tr>
+        
+                </table>
+        
+                </body>
+            </html>
+    """, **payslip_data)
+
+    try:
+        # Create the API client instance
+        client = pdfcrowd.HtmlToPdfClient('JTiro14', '47bf533ed48d35294b7fedd267986fc1')
+
+        # Set to use HTTP
+        client.setUseHttp(True)
+
+        # Convert HTML string to PDF
+        pdf_output = client.convertString(payslip_html)
+
+        return pdf_output
+
+    except pdfcrowd.Error as why:
+        sys.stderr.write('Pdfcrowd Error: {}\n'.format(why))
+        raise
+
+
+async def send_email(recipient_email, pdf_bytes, period_start, period_end, last_name):
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = MY_EMAIL
+    sender_password = MY_PASSWORD
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = recipient_email
+    message["Subject"] = "Your Payslip"
+
+    message.attach(MIMEText("Please find attached your payslip.", "plain"))
+
+    attachment = MIMEApplication(pdf_bytes, "pdf")
+    attachment.add_header("Content-Disposition", "attachment",
+                          filename=f"payslips_{period_start}-{period_end}_{last_name}.pdf")
+    message.attach(attachment)
+
+    context = smtplib.SMTP(smtp_server, smtp_port)
+    context.starttls()
+    context.login(sender_email, sender_password)
+    context.sendmail(sender_email, recipient_email, message.as_string())
+    context.quit()
 
 
 # Function to generate payroll for employees

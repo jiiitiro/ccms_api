@@ -19,3 +19,5 @@ plotly
 Flask_Login==0.6.3
 apscheduler
 Flask-Mail
+flask[async]
+pdfcrowd

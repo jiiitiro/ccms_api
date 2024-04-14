@@ -1,6 +1,5 @@
 import os
 from flask import Blueprint, request, jsonify
-from sqlalchemy.orm import joinedload
 
 from db import db
 from models import Billing, Booking, Customer

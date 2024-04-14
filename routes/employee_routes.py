@@ -1,13 +1,11 @@
 from flask import jsonify, render_template, request, url_for
 import os
-import secrets
 from passlib.hash import pbkdf2_sha256
 import smtplib
 from itsdangerous import SignatureExpired
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import Blueprint, request, jsonify
-from sqlalchemy.orm import joinedload
 from forms import ChangePasswordForm
 from models import Employee, Schedule, Attendance
 from itsdangerous import URLSafeTimedSerializer

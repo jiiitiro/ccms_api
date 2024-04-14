@@ -1,7 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify
 from models import Service
-from itsdangerous import URLSafeTimedSerializer
 from db import db
 
 service_api = Blueprint('service_api', __name__)

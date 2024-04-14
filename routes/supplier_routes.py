@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify
-from models import Employee, Attendance, Schedule, Inventory, Supplier
+from models import Supplier
 from db import db
 
 supplier_api = Blueprint('supplier_api', __name__)
