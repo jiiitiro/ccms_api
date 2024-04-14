@@ -37,7 +37,7 @@ def payroll_data():
             'employee_position': data.employee.position,
             'period_start': data.period_start,
             'period_end': data.period_end,
-            'daily_rate': data.employee.daily_rate,
+            'daily_rate': float(data.employee.daily_rate),
             'base_salary': data.base_salary,
             'gross_pay': data.gross_pay,
             'net_pay': data.net_pay,
@@ -77,7 +77,7 @@ def get_specific_payroll(employee_id):
                              'employee_name': f"{query_data.first_name} {query_data.middle_name} "
                                               f"{query_data.last_name}",
                              'employee_position': query_data.position,
-                             'daily_rate': query_data.daily_rate,
+                             'daily_rate': float(query_data.daily_rate),
                              "payrolls": [
                                 {
                                     'payroll_id': payroll.payroll_id,

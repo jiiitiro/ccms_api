@@ -51,7 +51,7 @@ def get_all_employee_data():
                 "is_active": employee.is_active,
                 "email_confirm": employee.email_confirm,
                 "position": employee.position,
-                "daily_rate": employee.daily_rate,
+                "daily_rate": float(employee.daily_rate),
                 "de_minimis": employee.de_minimis,
                 "schedule": {
                     "schedule_id": schedule.schedule_id if schedule else None,
@@ -96,7 +96,7 @@ def get_specific_employee_data(employee_id):
                 "is_active": employee.is_active,
                 "email_confirm": employee.email_confirm,
                 "position": employee.position,
-                "daily_rate": employee.daily_rate,
+                "daily_rate": float(employee.daily_rate),
                 "de_minimis": employee.de_minimis,
                 "schedule": {
                     "schedule_id": schedule.schedule_id if schedule else None,
@@ -168,7 +168,7 @@ def register_employee():
                 "phone": new_employee.phone,
                 "hire_date": new_employee.hire_date.strftime("%Y-%m-%d"),  # Convert to string,
                 "position": new_employee.position,
-                "daily_rate": new_employee.daily_rate,
+                "daily_rate": float(new_employee.daily_rate),
                 "de_minimis": new_employee.de_minimis,
                 "is_active": new_employee.is_active,
                 "email_confirm": new_employee.email_confirm,
