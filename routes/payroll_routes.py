@@ -1,6 +1,6 @@
 from email.mime.application import MIMEApplication
 import os
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template_string
 from models import Payroll, Employee, Attendance, PayrollContributionRate, PayrollDeduction
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
