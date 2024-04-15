@@ -29,7 +29,8 @@ def get_all_customer_feedback_data():
                                  f"{data.billing.customer.last_name}",
                 "comment": data.comment,
                 "rating": data.rating,
-                "rating_status": data.rating_status
+                "rating_status": data.rating_status,
+                "service": data.billing.bookings.services.category,
             } for data in query_data
         ]
 
