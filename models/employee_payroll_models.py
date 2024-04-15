@@ -25,6 +25,7 @@ class Employee(db.Model):
     attendances = db.relationship('Attendance', back_populates='employee', lazy=True)
     schedules = db.relationship('Schedule', back_populates='employee', lazy=True)
     payrolls = db.relationship('Payroll', back_populates='employee', lazy=True)
+    employee_request_order = db.relationship("EmployeeRequestOrder", back_populates='employee', lazy=True)
 
 
 # Define the Schedule class

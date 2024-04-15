@@ -14,8 +14,6 @@ class Supplier(db.Model):
     # Define relationship
     inventory = relationship("Inventory", back_populates="supplier")
     purchase_orders = relationship("PurchaseOrder", back_populates="supplier")
-
-    # Define relationship to PurchaseOrderInventoryAssociation
     purchase_order_associations = db.relationship("PurchaseOrderInventoryAssociation", back_populates="supplier")
 
 
@@ -31,11 +29,11 @@ class Inventory(db.Model):
     item_status = db.Column(db.String(20), nullable=True)
     unit_price = db.Column(db.Float, nullable=True)
 
-    # Define relationship to Supplier
+    # Define relationship
     supplier = db.relationship("Supplier", back_populates="inventory")
-
-    # Define relationship to PurchaseOrderInventoryAssociation
     purchase_order_associations = db.relationship("PurchaseOrderInventoryAssociation", back_populates="inventory")
+    employee_request_inventory_association = db.relationship("EmployeeRequestInventoryAssociation",
+                                                             back_populates="inventory", lazy=True)
 
 
 class PurchaseOrderInventoryAssociation(db.Model):
@@ -75,8 +73,32 @@ class EmployeeRequestOrder(db.Model):
     __tablename__ = "employee_request_order_tbl"
     employee_order_id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'), nullable=False)
-    inventory_id = db.Column(db.Integer, db.ForeignKey('inventory_tbl.inventory_id'), nullable=True)
-    total_item_qty = db.Column(db.Integer, nullable=False)
+    total_item_qty = db.Column(db.Integer, nullable=False, default=0)
     order_date = db.Column(db.Date, nullable=False)
-    approved_by = db.Column(db.String(255), nullable=False)
-    status = db.Column(db.String(50), nullable=False, default='Pending')  # (e.g., Pending, Approved)
+    approved_by = db.Column(db.String(255), nullable=True)
+    approved_date = db.Column(db.Date, nullable=True)
+    received_by = db.Column(db.String(255), nullable=True)
+    received_date = db.Column(db.Date, nullable=True)
+    status = db.Column(db.String(50), nullable=False, default='Pending')
+
+    # Relationship
+    employee = db.relationship("Employee", back_populates="employee_request_order", lazy=True)
+    employee_request_inventory_association = db.relationship("EmployeeRequestInventoryAssociation",
+                                                             back_populates="employee_request_order", lazy=True)
+
+
+class EmployeeRequestInventoryAssociation(db.Model):
+    __tablename__ = "employee_request_inventory_association_tbl"
+    employee_request_id = db.Column(db.Integer, primary_key=True)
+    employee_order_id = db.Column(db.Integer, db.ForeignKey('employee_request_order_tbl.employee_order_id'),
+                                  nullable=True)
+    inventory_id = db.Column(db.Integer, db.ForeignKey('inventory_tbl.inventory_id'), nullable=True)
+    item_qty = db.Column(db.Integer, nullable=False, default=0)
+
+    # Relationship
+    employee_request_order = db.relationship("EmployeeRequestOrder",
+                                             back_populates="employee_request_inventory_association", lazy=True)
+    inventory = db.relationship("Inventory", back_populates="employee_request_inventory_association", lazy=True)
+
+
+

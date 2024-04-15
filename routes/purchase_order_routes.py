@@ -175,9 +175,6 @@ def delete_purchase_order(purchase_order_id):
         for association in query_data_po_associations:
             db.session.delete(association)
 
-        # Commit the changes
-        db.session.commit()
-
         # Delete the PurchaseOrder object
         db.session.delete(query_data_po)
         db.session.commit()

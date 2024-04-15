@@ -251,7 +251,7 @@ def update_payroll_contribution_rate():
             }
         ]
 
-        return jsonify(success={"message": "Payroll contribution rare successfully updated.",
+        return jsonify(success={"message": "Payroll contribution rate successfully updated.",
                                 "payroll_contribution_rate_data": payroll_contribution_rate_data}), 200
 
     except Exception as e:
