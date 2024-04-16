@@ -19,16 +19,30 @@ def get_all_supplier_data():
 
         query_data = Supplier.query.all()
 
-        supplier_data = [
-            {
+        supplier_data = []
+
+        for data in query_data:
+            items = []
+            for item in data.inventory:
+                items.append({
+                    "inventory_id": item.inventory_id,
+                    "category": item.category,
+                    "item_name": item.item_name,
+                    "available_stock": item.available_stock,
+                    "used_item": item.used_item,
+                    "reorder_level": item.reorder_level,
+                    "unit_price": item.unit_price
+                })
+
+            supplier_data.append({
                 "supplier_id": data.supplier_id,
                 "supplier_name": data.supplier_name,
                 "contact_person": data.contact_person,
                 "email": data.email,
                 "phone": data.phone,
-                "address": data.supplier_id
-            } for data in query_data
-        ]
+                "address": data.address,
+                "items": items
+            })
 
         return jsonify(success={"supplier_data": supplier_data}), 200
 
@@ -49,18 +63,30 @@ def get_specific_supplier(supplier_id):
         if query_data is None:
             return jsonify(error={"message": "supplier id not found."}), 404
 
-        supplier_data = [
-            {
+        items = []
+        for item in query_data.inventory:
+            items.append({
                 "supplier_id": query_data.supplier_id,
-                "supplier_name": query_data.supplier_name,
-                "contact_person": query_data.contact_person,
-                "email": query_data.email,
-                "phone": query_data.phone,
-                "address": query_data.supplier_id
-            }
-        ]
+                "inventory_id": item.inventory_id,
+                "category": item.category,
+                "item_name": item.item_name,
+                "available_stock": item.available_stock,
+                "used_item": item.used_item,
+                "reorder_level": item.reorder_level,
+                "unit_price": item.unit_price
+            })
 
-        return jsonify(success={"supplier_data": supplier_data}), 200
+        # supplier_data = {
+        #     "supplier_id": query_data.supplier_id,
+        #     "supplier_name": query_data.supplier_name,
+        #     "contact_person": query_data.contact_person,
+        #     "email": query_data.email,
+        #     "phone": query_data.phone,
+        #     "address": query_data.address,
+        #     "items": items
+        # }
+
+        return jsonify(success={"supplier_data": items}), 200
 
     except Exception as e:
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500

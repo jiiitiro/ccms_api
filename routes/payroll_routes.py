@@ -338,76 +338,280 @@ async def create_pdf(payroll):
     }
 
     payslip_html = render_template_string("""
-        <html>
-            <head></head>
-            <body>
-                <table border="1">
-                    <tr>
-                        <td colspan="6">COMPANY NAME</td>
-                        <td colspan="4">PAYSLIP - SEMI-MONTHLY PAYROLL</td>
-                        <td>PERIOD: {{ period_start }} - {{ period_end }}</td>
-                    </tr>
+    <html>
+        <head>
+            <style>
+                .container {
+                    background-color: #fff;
+                    border: 1px solid #000;
+                    width: 210mm; /* A4 width */
+                    height: 297mm; /* A4 height */
+                    margin: 0;
+                    padding: 0;
+                }
         
-                    <tr>
-                        <td>EMPLOYEE:</td>
-                        <td>{{ employee_name }}</td>
-                        <td>STATUS:</td>
-                        <td>{{ status }}</td>
-                        <td>BASIC PAY:</td>
-                        <td>{{ basic_pay }}</td>
-                    </tr>
+                .cols {
+                    border: 1px solid #000;
+                    font-size: 10px; /* Reduced font size */
+                    padding: 5px;
+                }
         
-                    <tr>
-                        <td>Position:</td>
-                        <td>{{ employee_position }}</td>
-                        <td>Net Pay:</td>
-                        <td>{{ net_pay }}</td>
-                        <td>Other Row:</td>
-                        <td>{{ other_row_value }}</td>
-                    </tr>
+                h1 {
+                    font-size: 18px; /* Reduced font size */
+                }
         
-                    <!-- Additional rows based on payslip_data -->
-                    <tr>
-                        <td>Daily Rate:</td>
-                        <td>{{ daily_rate }}</td>
-                        <td>Total OT Hours:</td>
-                        <td>{{ total_ot_hrs }}</td>
-                    </tr>
-                    <tr>
-                        <td>Base Salary:</td>
-                        <td>{{ base_salary }}</td>
-                        <td>Gross Pay:</td>
-                        <td>{{ gross_pay }}</td>
-                        <td>Total Tardiness:</td>
-                        <td>{{ total_tardiness }}</td>
-                    </tr>
-                    <tr>
-                        <td>Total Days of Work:</td>
-                        <td>{{ total_days_of_work }}</td>
-                        <td>SSS Contribution:</td>
-                        <td>{{ sss_contribution }}</td>
-                        <td>Philhealth Contribution:</td>
-                        <td>{{ philhealth_contribution }}</td>
-                    </tr>
-                    <tr>
-                        <td>Pagibig Contribution:</td>
-                        <td>{{ pagibig_contribution }}</td>
-                        <td>Withholding Tax:</td>
-                        <td>{{ withholding_tax }}</td>
-                        <td>Other Deduction:</td>
-                        <td>{{ other_deduction }}</td>
-                    </tr>
-                    <tr>
-                        <td>13th Month Pay:</td>
-                        <td>{{ thirteenth_month_pay }}</td>
-                        <td colspan="2"></td>
-                        <td colspan="2"></td>
-                    </tr>
+                p {
+                    margin: 0;
+                }
         
-                </table>
+                @page {
+                    size: A4;
+                    margin: 0;
+                }
+            </style>
+        </head> 
+        <body>     
+        <div class="container">
+                <div class="row">
+                    <div class="col col-12 cols">
+                        <h1 class="h3 text-center p-1 ">COMPANY NAME</h1>
+                    </div>
+                 <div class="col col-9 d-flex align-items-center justify-content-between cols">
+                        <p>PAYSLIP - SEMI-MONTHLY PAYROLL</p>       
+                        <p >PERIOD : {{ period_start }} - {{ period_end }} </p>
+                    </div>
+                    <div class="col col-3 side d-flex align-items-center justify-content-between">
+                        <p>BASIC PAY : </p>           
+                        <p > 0.00 </p>
+                    </div>
+                    <div class="col col-5 cols">
+                        <p > EMPLOYEE : {{ employee_name }} </p>
+                    </div>
+                    <div class="col col-4 cols">
+                        <p > STATUS : {{ status }} </p>
+                    </div>
+                    <div class="col col-3 side d-flex align-items-center justify-content-between">
+                        <p  >OVERTIME : </p>       
+                        <p > 0.00 </p>
+                    </div>
+                    <div class="col col-9 cols">
+                        <p > POSITION :  {{ employee_position }} </p>
+                    </div>
+                    <div class="col col-3 side d-flex align-items-center justify-content-between">
+                        <p >13TH MONTH: </p>       
+                        <p > 0.00 </p>
+                    </div>
+                    <div class="col col-1 d-flex align-items-center justify-content-center cols">
+                        <p >OVERTIME</p>              
+                     </div>
+                     <div class="col col-1  d-flex align-items-center justify-content-center cols">
+                        <p >MIN</p>              
+                     </div>
+                     <div class="col col-1   d-flex align-items-center justify-content-center cols">
+                        <p>PAY</p>              
+                     </div>
+                     <div class="col col-2  d-flex align-items-center justify-content-center cols ">
+                        <p >ADJUSTMENTS</p>             
+                     </div>
+                     <div class="col col-1 d-flex align-items-center justify-content-center cols">
+                        <p >AMOUNT</p>         
+                     </div>
+                     <div class="col col-2 d-flex align-items-center justify-content-center cols">
+                        <p >DEDUCTIONS</p>             
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                        <p>AMOUNT</p>         
+                     </div>
+                     <div class="col col-3 side d-flex align-items-center justify-content-between">
+                        <p  >ALLOWANCE: </p>       
+                        <p> 0.00 </p>
+                    </div>
+                    <div class="col col-1    d-flex align-items-center justify-content-center cols ">
+                        <p >REGULAR</p>              
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                        <p>0</p>              
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                        <p>0.00</p>              
+                     </div>
+                     <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                        <p >13TH MONTH</p>              
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                        <p >0.00</p>              
+                     </div>
+                     <div class="col col-2    d-flex align-items-center justify-content-center cols ">
+                        <p>WITH TAX</p>              
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                        <p>0.00</p>              
+                     </div>
+                     <div class="col col-3 side d-flex align-items-center justify-content-between">
+                        <p >GROSS PAY: </p>       
+                        <p > 0.00 </p>
+                    </div>
+                 
         
-                </body>
-            </html>
+                    <div class="col col-1    d-flex align-items-center justify-content-center">
+           
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center">
+                           
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center">
+        
+                     </div>
+                     <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                        <p>INCENTIVES</p>              
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center cols ">
+                        <p >0.00</p>              
+                     </div>
+                     <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                        <p >SSS</p>              
+                     </div>
+                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                        <p>0.00</p>              
+                     </div>
+                     <div class="col col-3 side d-flex align-items-center justify-content-between">
+                        <p >DEDUCTIONS: </p>       
+                        <p> 0.00 </p>
+                    </div>
+        
+        
+                    <div class="col col-1    d-flex align-items-center justify-content-center">
+           
+                    </div>
+                    <div class="col col-1    d-flex align-items-center justify-content-center">
+                          
+                    </div>
+                    <div class="col col-1    d-flex align-items-center justify-content-center">
+        
+                    </div>
+                    <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                       <p >PAID LEAVES</p>              
+                    </div>
+                    <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                       <p >0.00</p>              
+                    </div>
+                    <div class="col col-2    d-flex align-items-center justify-content-center cols ">
+                       <p >Philhealth</p>              
+                    </div>
+                    <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                       <p >0.00</p>              
+                    </div>
+                    <div class="col col-3 side d-flex align-items-center justify-content-between">
+                       <p  >NET PAY: </p>       
+                       <p > 0.00 </p>
+                   </div>
+        
+                   <div class="col col-1    d-flex align-items-center justify-content-center">
+           
+                   </div>
+                   <div class="col col-1    d-flex align-items-center justify-content-center">
+                         
+                   </div>
+                   <div class="col col-1    d-flex align-items-center justify-content-center">
+        
+                   </div>
+                   <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                      <p>HOLIDAY PAY</p>              
+                   </div>
+                   <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                      <p>0.00</p>              
+                   </div>
+                   <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                      <p >PAG-IBIG</p>              
+                   </div>
+                   <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                      <p>0.00</p>              
+                   </div>
+                   <div class="col col-3 side">
+                 
+                  </div>
+        
+                   
+                  <div class="col col-1    d-flex align-items-center justify-content-center">
+           
+                  </div>
+                  <div class="col col-1    d-flex align-items-center justify-content-center">
+                        
+                  </div>
+                  <div class="col col-1    d-flex align-items-center justify-content-center">
+        
+                  </div>
+                  <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                     <p>OTHERS</p>              
+                  </div>
+                  <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                    <p>0.00</p>               
+                  </div>
+                  <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                     <p >TARDINESS</p>              
+                  </div>
+                  <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                    <p>0.00</p>               
+                  </div>
+                  <div class="col col-3 side">
+                
+                 </div>
+        
+                 <div class="col col-1    d-flex align-items-center justify-content-center">
+           
+                 </div>
+                 <div class="col col-1    d-flex align-items-center justify-content-center">
+                       
+                 </div>
+                 <div class="col col-1    d-flex align-items-center justify-content-center">
+        
+                 </div>
+                 <div class="col col-2    d-flex align-items-center justify-content-center">
+                               
+                 </div>
+                 <div class="col col-1    d-flex align-items-center justify-content-center">
+                               
+                 </div>
+                 <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                    <p>LOAN</p>              
+                 </div>
+                 <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                    <p>0.00</p>              
+                 </div>
+                 <div class="col col-3 side">
+               
+                </div>
+        
+                <div class="col col-1    d-flex align-items-center justify-content-center ">
+           
+                </div>
+                <div class="col col-1    d-flex align-items-center justify-content-center">
+                      
+                </div>
+                <div class="col col-1    d-flex align-items-center justify-content-center">
+        
+                </div>
+                <div class="col col-2    d-flex align-items-center justify-content-center">
+                              
+                </div>
+                <div class="col col-1    d-flex align-items-center justify-content-center">
+                              
+                </div>
+                <div class="col col-2    d-flex align-items-center justify-content-center cols">
+                   <p>OTHERS</p>              
+                </div>
+                <div class="col col-1    d-flex align-items-center justify-content-center cols">
+                   <p>0.00</p>              
+                </div>
+                <div class="col col-3 side d-flex align-items-center justify-content-between">
+                    <p class="mt-3">RECEIVED BY: </p>       
+                    <p class="mt-3"> NAME </p>
+                </div>
+                   
+                </div>
+            </div>
+        </body>
+    </html>
     """, **payslip_data)
 
     try:
@@ -416,6 +620,10 @@ async def create_pdf(payroll):
 
         # Set to use HTTP
         client.setUseHttp(True)
+
+        # Set the PDF options
+        client.setPageSize('Letter')
+        client.setOrientation('landscape')
 
         # Convert HTML string to PDF
         pdf_output = client.convertString(payslip_html)
