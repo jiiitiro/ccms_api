@@ -98,7 +98,7 @@ def delete_data(service_id):
         return jsonify(error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
-@service_api.patch("/service/update/<int:service_id>")
+@service_api.post("/service/update/<int:service_id>")
 def update_service(service_id):
     api_key_header = request.headers.get("x-api-key")
     if api_key_header == API_KEY:

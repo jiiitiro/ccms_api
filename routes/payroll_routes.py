@@ -79,25 +79,25 @@ def get_specific_payroll(employee_id):
                              'employee_position': query_data.position,
                              'daily_rate': float(query_data.daily_rate),
                              "payrolls": [
-                                {
-                                    'payroll_id': payroll.payroll_id,
-                                    'period_start': payroll.period_start,
-                                    'period_end': payroll.period_end,
-                                    'base_salary': payroll.base_salary,
-                                    'gross_pay': payroll.gross_pay,
-                                    'net_pay': payroll.net_pay,
-                                    'total_ot_hrs': payroll.total_ot_hrs,
-                                    'total_tardiness': payroll.total_tardiness,
-                                    'total_days_of_work': payroll.total_days_of_work,
-                                    'sss_contribution': payroll.deductions[0].sss_contribution,
-                                    'philhealth_contribution': payroll.deductions[0].philhealth_contribution,
-                                    'pagibig_contribution': payroll.deductions[0].pagibig_contribution,
-                                    'withholding_tax': payroll.deductions[0].withholding_tax,
-                                    'other_deduction': payroll.deductions[0].other_deductions,
-                                    'thirteenth_month_pay': payroll.thirteenth_month_pay,
-                                    'status': payroll.status
-                                } for payroll in query_data.payrolls
-                                ]}
+                                 {
+                                     'payroll_id': payroll.payroll_id,
+                                     'period_start': payroll.period_start,
+                                     'period_end': payroll.period_end,
+                                     'base_salary': payroll.base_salary,
+                                     'gross_pay': payroll.gross_pay,
+                                     'net_pay': payroll.net_pay,
+                                     'total_ot_hrs': payroll.total_ot_hrs,
+                                     'total_tardiness': payroll.total_tardiness,
+                                     'total_days_of_work': payroll.total_days_of_work,
+                                     'sss_contribution': payroll.deductions[0].sss_contribution,
+                                     'philhealth_contribution': payroll.deductions[0].philhealth_contribution,
+                                     'pagibig_contribution': payroll.deductions[0].pagibig_contribution,
+                                     'withholding_tax': payroll.deductions[0].withholding_tax,
+                                     'other_deduction': payroll.deductions[0].other_deductions,
+                                     'thirteenth_month_pay': payroll.thirteenth_month_pay,
+                                     'status': payroll.status
+                                 } for payroll in query_data.payrolls
+                             ]}
 
             employee_data.append(employee_dict)
 
@@ -287,7 +287,8 @@ async def send_payslip():
     try:
         api_key_header = request.headers.get("x-api-key")
         if api_key_header != API_KEY:
-            return jsonify(error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
         period_start = request.form.get("period_start")
         period_end = request.form.get("period_end")
@@ -305,7 +306,8 @@ async def send_payslip():
         for payroll in query_data:
             if payroll.employee and payroll.employee.email and payroll.employee.is_active:
                 pdf = await create_pdf(payroll)
-                tasks.append(send_email(payroll.employee.email, pdf, period_start, period_end, payroll.employee.last_name))
+                tasks.append(
+                    send_email(payroll.employee.email, pdf, period_start, period_end, payroll.employee.last_name))
 
         await asyncio.gather(*tasks)
 
@@ -316,6 +318,11 @@ async def send_payslip():
 
 
 async def create_pdf(payroll):
+    total_deduction = (float(payroll.deductions[0].sss_contribution) +
+                       float(payroll.deductions[0].philhealth_contribution) +
+                       float(payroll.deductions[0].pagibig_contribution) +
+                       float(payroll.deductions[0].withholding_tax) +
+                       float(payroll.deductions[0].other_deductions))
     payslip_data = {
         'employee_id': payroll.employee_id,
         'employee_name': f"{payroll.employee.first_name} {payroll.employee.middle_name} {payroll.employee.last_name}",
@@ -334,280 +341,468 @@ async def create_pdf(payroll):
         'pagibig_contribution': payroll.deductions[0].pagibig_contribution,
         'withholding_tax': payroll.deductions[0].withholding_tax,
         'other_deduction': payroll.deductions[0].other_deductions,
-        'thirteenth_month_pay': payroll.thirteenth_month_pay
+        'thirteenth_month_pay': payroll.thirteenth_month_pay,
+        'status': payroll.employee.is_active,
+        'deduction': total_deduction,
     }
 
     payslip_html = render_template_string("""
     <html>
         <head>
             <style>
-                .container {
+                .container{
                     background-color: #fff;
+                    border:1px solid #000;
+                    max-width: 1000px;
+                 
+                }
+                
+                .head{
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                     border: 1px solid #000;
-                    width: 210mm; /* A4 width */
-                    height: 297mm; /* A4 height */
-                    margin: 0;
-                    padding: 0;
                 }
-        
-                .cols {
+                
+                .period{
+                    display: flex;
+                    align-items: center;
+                    justify-content: center; 
+                    
+                }
+                
+                p{
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    font-size: .9rem;
+                }
+                
+                
+                
+                .p1:nth-child(1), .p1:nth-child(2) {
+                    width: 380px ;
                     border: 1px solid #000;
-                    font-size: 10px; /* Reduced font size */
-                    padding: 5px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center  ;
+                    
+                    
                 }
-        
-                h1 {
-                    font-size: 18px; /* Reduced font size */
+                
+                .p1:nth-child(3){
+                    width:  240px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between    ;
+                
+                    
                 }
-        
-                p {
-                    margin: 0;
+                
+                .p2:nth-child(1), .p2:nth-child(2) {
+                    width: 380px ;
+                    border: 1px solid #000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between  ;
+                   
+                    
                 }
-        
-                @page {
-                    size: A4;
-                    margin: 0;
+                
+                
+                .p3:nth-child(1) {
+                    width: 760px ;
+                    border: 1px solid #000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between  ;
+                   
+                    
+                }
+                
+                .p3:nth-child(2){
+                    width:  240px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between  ;
+                 
+                }
+                
+                
+                
+                
+                .p4:nth-child(1) {
+                    width: 230px ;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between  ;
+                   
+                    
+                }
+                .p4:nth-child(2){
+                    width: 265px ;
+                 
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between  ;
+                }
+                .p4:nth-child(3){
+                    width: 265px ;
+                   
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between  ;
+                }
+                
+                .p4:nth-child(4){
+                    width:  240px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between  ;
+                   
+                }
+                 
+                
+                .p4-2:nth-child(1), .p4-2:nth-child(3){
+                    width: 85px;
+                
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    
+                
+                }
+                .p4-2:nth-child(2){
+                    width: 60px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                   
+                }
+                
+                
+                .p4-3:first-child(1){
+                    width: 135px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  
+                }
+                
+                .p4-3:last-child{
+                    width: 130px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    
+                }
+                
+                .border{
+                    border: 1px solid #000;
+                }
+                .p4-10 {
+                    display: flex;
+                    justify-content: flex-end; /* Aligns content to the right */
+                }
+                
+                .right-align {
+                    margin-left: auto; /* Moves the text to the right */
                 }
             </style>
         </head> 
         <body>     
-        <div class="container">
+            <div class="container">
                 <div class="row">
-                    <div class="col col-12 cols">
-                        <h1 class="h3 text-center p-1 ">COMPANY NAME</h1>
-                    </div>
-                 <div class="col col-9 d-flex align-items-center justify-content-between cols">
-                        <p>PAYSLIP - SEMI-MONTHLY PAYROLL</p>       
-                        <p >PERIOD : {{ period_start }} - {{ period_end }} </p>
-                    </div>
-                    <div class="col col-3 side d-flex align-items-center justify-content-between">
-                        <p>BASIC PAY : </p>           
-                        <p > 0.00 </p>
-                    </div>
-                    <div class="col col-5 cols">
-                        <p > EMPLOYEE : {{ employee_name }} </p>
-                    </div>
-                    <div class="col col-4 cols">
-                        <p > STATUS : {{ status }} </p>
-                    </div>
-                    <div class="col col-3 side d-flex align-items-center justify-content-between">
-                        <p  >OVERTIME : </p>       
-                        <p > 0.00 </p>
-                    </div>
-                    <div class="col col-9 cols">
-                        <p > POSITION :  {{ employee_position }} </p>
-                    </div>
-                    <div class="col col-3 side d-flex align-items-center justify-content-between">
-                        <p >13TH MONTH: </p>       
-                        <p > 0.00 </p>
-                    </div>
-                    <div class="col col-1 d-flex align-items-center justify-content-center cols">
-                        <p >OVERTIME</p>              
-                     </div>
-                     <div class="col col-1  d-flex align-items-center justify-content-center cols">
-                        <p >MIN</p>              
-                     </div>
-                     <div class="col col-1   d-flex align-items-center justify-content-center cols">
-                        <p>PAY</p>              
-                     </div>
-                     <div class="col col-2  d-flex align-items-center justify-content-center cols ">
-                        <p >ADJUSTMENTS</p>             
-                     </div>
-                     <div class="col col-1 d-flex align-items-center justify-content-center cols">
-                        <p >AMOUNT</p>         
-                     </div>
-                     <div class="col col-2 d-flex align-items-center justify-content-center cols">
-                        <p >DEDUCTIONS</p>             
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                        <p>AMOUNT</p>         
-                     </div>
-                     <div class="col col-3 side d-flex align-items-center justify-content-between">
-                        <p  >ALLOWANCE: </p>       
-                        <p> 0.00 </p>
-                    </div>
-                    <div class="col col-1    d-flex align-items-center justify-content-center cols ">
-                        <p >REGULAR</p>              
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                        <p>0</p>              
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                        <p>0.00</p>              
-                     </div>
-                     <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                        <p >13TH MONTH</p>              
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                        <p >0.00</p>              
-                     </div>
-                     <div class="col col-2    d-flex align-items-center justify-content-center cols ">
-                        <p>WITH TAX</p>              
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                        <p>0.00</p>              
-                     </div>
-                     <div class="col col-3 side d-flex align-items-center justify-content-between">
-                        <p >GROSS PAY: </p>       
-                        <p > 0.00 </p>
-                    </div>
-                 
-        
-                    <div class="col col-1    d-flex align-items-center justify-content-center">
-           
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center">
-                           
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center">
-        
-                     </div>
-                     <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                        <p>INCENTIVES</p>              
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center cols ">
-                        <p >0.00</p>              
-                     </div>
-                     <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                        <p >SSS</p>              
-                     </div>
-                     <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                        <p>0.00</p>              
-                     </div>
-                     <div class="col col-3 side d-flex align-items-center justify-content-between">
-                        <p >DEDUCTIONS: </p>       
-                        <p> 0.00 </p>
-                    </div>
-        
-        
-                    <div class="col col-1    d-flex align-items-center justify-content-center">
-           
-                    </div>
-                    <div class="col col-1    d-flex align-items-center justify-content-center">
-                          
-                    </div>
-                    <div class="col col-1    d-flex align-items-center justify-content-center">
-        
-                    </div>
-                    <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                       <p >PAID LEAVES</p>              
-                    </div>
-                    <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                       <p >0.00</p>              
-                    </div>
-                    <div class="col col-2    d-flex align-items-center justify-content-center cols ">
-                       <p >Philhealth</p>              
-                    </div>
-                    <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                       <p >0.00</p>              
-                    </div>
-                    <div class="col col-3 side d-flex align-items-center justify-content-between">
-                       <p  >NET PAY: </p>       
-                       <p > 0.00 </p>
-                   </div>
-        
-                   <div class="col col-1    d-flex align-items-center justify-content-center">
-           
-                   </div>
-                   <div class="col col-1    d-flex align-items-center justify-content-center">
-                         
-                   </div>
-                   <div class="col col-1    d-flex align-items-center justify-content-center">
-        
-                   </div>
-                   <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                      <p>HOLIDAY PAY</p>              
-                   </div>
-                   <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                      <p>0.00</p>              
-                   </div>
-                   <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                      <p >PAG-IBIG</p>              
-                   </div>
-                   <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                      <p>0.00</p>              
-                   </div>
-                   <div class="col col-3 side">
-                 
-                  </div>
-        
-                   
-                  <div class="col col-1    d-flex align-items-center justify-content-center">
-           
-                  </div>
-                  <div class="col col-1    d-flex align-items-center justify-content-center">
+                    <div class="head">
+                        <h1 class="h1">BusyHands Cleaning Service Inc.</h1>
+                    </div>    
+                    <div class="period">
+                        <div class="p1">
+                            <p> PAYSLIP - Semi-Monthly Payroll</p>
+                        </div>
+                        <div class="p1">
+                            <p>PERIOD :  {{ period_start }} - {{ period_end }}</p>
+                        </div>
+                        <div class="p1">
+                            <p> BASIC PAY :</p>
+                            <p> {{ base_salary }} </p>
+                        </div>
+                    </div>   
+                    <div class="period">
+                        <div class="p2">
+                            <p> EMPLOYEE : {{ employee_name }} </p>
+                        </div>
+                        <div class="p2">
+                            <p>DAYS :  {{ total_days_of_work }}</p>
+                        </div>
+                        <div class="p1">
+                            <p> OVERTIME :</p>
+                            <p>0.00</p>
+                        </div>
+                    </div>   
+                    <div class="period">
+                        <div class="p3">
+                            <p> POSITION : {{ employee_position }}</p>
+                        </div>             
+                        <div class="p3">
+                            <p> 13TH MONTH :</p>
+                            <p> {{ thirteenth_month_pay }} </p>
+                        </div>
+                    </div>   
+                    <div class="period ">
+                        <div class="p4 border">
+                        <div class="p4-2">
+                                <p></p>
+                             </div>
+                           <div class="p4-2">
+                                <p >MINS</p>
+                             </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>ADJUSTMENTS</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>AMOUNTS</p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>ADJUSTMENTS</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>AMOUNTS</p>
+                           </div>
+                        </div>                               
+                        <div class="p4 border-less">
+                            <p> ALLOWANCE :</p>
+                            <p> 0.00 </p>
+                        </div>
+                    </div>   
+                    <div class="period">
+                        <div class="p4 border">
+                           <div class="p4-2">
+                                <p>TARDINESS</p>
+                           </div>
+                           <div class="p4-2">
+                                <p> {{ total_tardiness }}</p>
+                             </div>
+            
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>13TH MONTH</p>
+                             </div>
+                            <div class="p4-3">
+                                <p> {{ thirteenth_month_pay }}</p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>WITH TAX</p>
+                             </div>
+                            <div class="p4-3">
+                                <p> {{ withholding_tax }} </p>
+                           </div>
+                        </div>                               
+                        <div class="p4">
+                            <p> GROSS PAY :</p>
+                            <p> {{ gross_pay }}</p>
+                        </div>
                         
-                  </div>
-                  <div class="col col-1    d-flex align-items-center justify-content-center">
-        
-                  </div>
-                  <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                     <p>OTHERS</p>              
-                  </div>
-                  <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                    <p>0.00</p>               
-                  </div>
-                  <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                     <p >TARDINESS</p>              
-                  </div>
-                  <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                    <p>0.00</p>               
-                  </div>
-                  <div class="col col-3 side">
+                    </div>   
+                    <div class="period">
+                        <div class="p4 border">
+                           <div class="p4-2">
+                                <p>OVERTIME</p>
+                           </div>
+                           <div class="p4-2">
+                                <p> {{ total_ot_hrs }} </p>
+                             </div>
                 
-                 </div>
-        
-                 <div class="col col-1    d-flex align-items-center justify-content-center">
-           
-                 </div>
-                 <div class="col col-1    d-flex align-items-center justify-content-center">
-                       
-                 </div>
-                 <div class="col col-1    d-flex align-items-center justify-content-center">
-        
-                 </div>
-                 <div class="col col-2    d-flex align-items-center justify-content-center">
-                               
-                 </div>
-                 <div class="col col-1    d-flex align-items-center justify-content-center">
-                               
-                 </div>
-                 <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                    <p>LOAN</p>              
-                 </div>
-                 <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                    <p>0.00</p>              
-                 </div>
-                 <div class="col col-3 side">
-               
-                </div>
-        
-                <div class="col col-1    d-flex align-items-center justify-content-center ">
-           
-                </div>
-                <div class="col col-1    d-flex align-items-center justify-content-center">
-                      
-                </div>
-                <div class="col col-1    d-flex align-items-center justify-content-center">
-        
-                </div>
-                <div class="col col-2    d-flex align-items-center justify-content-center">
-                              
-                </div>
-                <div class="col col-1    d-flex align-items-center justify-content-center">
-                              
-                </div>
-                <div class="col col-2    d-flex align-items-center justify-content-center cols">
-                   <p>OTHERS</p>              
-                </div>
-                <div class="col col-1    d-flex align-items-center justify-content-center cols">
-                   <p>0.00</p>              
-                </div>
-                <div class="col col-3 side d-flex align-items-center justify-content-between">
-                    <p class="mt-3">RECEIVED BY: </p>       
-                    <p class="mt-3"> NAME </p>
-                </div>
-                   
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>INCENTIVES</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>0.00</p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>SSS</p>
+                             </div>
+                            <div class="p4-3">
+                                <p> {{ sss_contribution }} </p>
+                           </div>
+                        </div>                               
+                        <div class="p4">
+                            <p> DEDUCTIONS :</p>
+                            <p> {{ deduction }} </p>
+                        </div>             
+                    </div>   
+                    <div class="period">
+                        <div class="p4">
+                           <div class="p4-2">
+                                <p></p>
+                           </div>
+                           <div class="p4-2">
+                                <p></p>
+                             </div>
+                            <div class="p4-2">
+                                <p></p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>PAID LEAVES</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>0.00</p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>Philhealth</p>
+                             </div>
+                            <div class="p4-3">
+                                <p> {{ philhealth_contribution }} </p>
+                           </div>
+                        </div>                               
+                        <div class="p4">
+                            <p> NET PAY :</p>
+                            <p> {{ net_pay }} </p>
+                        </div>             
+                    </div>   
+                    <div class="period">
+                        <div class="p4">
+                           <div class="p4-2">
+                                <p></p>
+                           </div>
+                           <div class="p4-2">
+                                <p></p>
+                             </div>
+                            <div class="p4-2">
+                                <p></p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>HOLIDAY PAY</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>0.00</p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>PAG-IBIG</p>
+                             </div>
+                            <div class="p4-3">
+                                <p> {{ pagibig_contribution }} </p>
+                           </div>
+                        </div>                               
+                        <div class="p4">
+                          
+                        </div>             
+                    </div>   
+                    <div class="period">
+                        <div class="p4">
+                           <div class="p4-2">
+                                <p></p>
+                           </div>
+                           <div class="p4-2">
+                                <p></p>
+                             </div>
+                            <div class="p4-2">
+                                <p></p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>OTHERS</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>0.00</p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>TARDINESS</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>0.00</p>
+                           </div>
+                        </div>                               
+                        <div class="p4">
+                          
+                        </div>             
+                    </div>   
+                    <div class="period">
+                        <div class="p4">
+                           <div class="p4-2">
+                                <p></p>
+                           </div>
+                           <div class="p4-2">
+                                <p></p>
+                             </div>
+                            <div class="p4-2">
+                                <p></p>
+                           </div>
+                        </div>
+                        <div class="p4">
+                            <div class="p4-3">
+                                <p></p>
+                             </div>
+                            <div class="p4-3">
+                                <p></p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>LOAN</p>
+                             </div>
+                            <div class="p4-3">
+                                <p>0.00</p>
+                           </div>
+                        </div>                               
+                        <div class="p4">
+                          
+                        </div>             
+                    </div>   
+                    <div class="period">
+                        <div class="p4">
+                           <div class="p4-2">
+                                <p></p>
+                           </div>
+                           <div class="p4-2">
+                                <p></p>
+                             </div>
+                            <div class="p4-2">
+                                <p></p>
+                           </div>
+                        </div>
+                        <div class="p4">
+                            <div class="p4-3">
+                                <p></p>
+                             </div>
+                            <div class="p4-3">
+                                <p></p>
+                           </div>
+                        </div>
+                        <div class="p4 border">
+                            <div class="p4-3">
+                                <p>OTHERS</p>
+                             </div>
+                            <div class="p4-3">
+                                <p> {{ other_deductions }} </p>
+                           </div>
+                        </div>                               
+                        <div class="p4">
+                            <p></p>
+                            <p></p>
+                        </div>             
+                    </div>   
                 </div>
             </div>
         </body>
@@ -622,7 +817,7 @@ async def create_pdf(payroll):
         client.setUseHttp(True)
 
         # Set the PDF options
-        client.setPageSize('Letter')
+        client.setPageSize('A4')
         client.setOrientation('landscape')
 
         # Convert HTML string to PDF
