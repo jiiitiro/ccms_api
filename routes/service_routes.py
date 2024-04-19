@@ -2,6 +2,9 @@ import os
 from flask import Blueprint, request, jsonify
 from models import Service
 from db import db
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 service_api = Blueprint('service_api', __name__)
 
@@ -101,28 +104,35 @@ def delete_data(service_id):
 @service_api.post("/service/update/<int:service_id>")
 def update_service(service_id):
     api_key_header = request.headers.get("x-api-key")
-    if api_key_header == API_KEY:
-        try:
-            service_to_update = Service.query.filter_by(service_id=service_id).first()
 
-            if service_to_update:
-                # Get the fields to update from the form data
-                update_data = {'description': request.form.get('description', service_to_update.description),
-                               'category': request.form.get('category', service_to_update.category),
-                               'price': request.form.get('price', service_to_update.price)}
-
-                # Update the customer fields
-                for key, value in update_data.items():
-                    setattr(service_to_update, key, value)
-
-                db.session.commit()
-
-                return jsonify(success={"message": "Service data updated successfully."}), 200
-            else:
-                return jsonify(error={"message": "Service id not found"}), 404
-
-        except Exception as e:
-            db.session.rollback()
-            return jsonify(error={"message": f"Failed to update customer data. Error: {str(e)}"}), 500
-    else:
+    if api_key_header != API_KEY:
+        logging.warning("Invalid API key")
         return jsonify(error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+    try:
+        service_to_update = Service.query.filter_by(service_id=service_id).first()
+
+        if service_to_update:
+            # Get the fields to update from the form data
+            update_data = {
+                'description': request.form.get('description', service_to_update.description),
+                'category': request.form.get('category', service_to_update.category),
+                'price': request.form.get('price', service_to_update.price)
+            }
+
+            # Update the service fields
+            for key, value in update_data.items():
+                setattr(service_to_update, key, value)
+
+            db.session.commit()
+            logging.info(f"Service updated successfully: {service_to_update}")
+
+            return jsonify(success={"message": "Service data updated successfully."}), 200
+        else:
+            logging.warning(f"Service id {service_id} not found")
+            return jsonify(error={"message": "Service id not found"}), 404
+
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Failed to update service. Error: {str(e)}")
+        return jsonify(error={"message": f"Failed to update service. Error: {str(e)}"}), 500

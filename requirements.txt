@@ -21,3 +21,4 @@ apscheduler
 Flask-Mail
 flask[async]
 pdfcrowd
+logging
