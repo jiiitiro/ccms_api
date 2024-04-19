@@ -117,14 +117,7 @@ def update_service(service_id):
 
                 db.session.commit()
 
-                service_dict = {
-                    "description": service_to_update.description,
-                    "category": service_to_update.category,
-                    "price": service_to_update.price,
-                }
-
-                return jsonify(success={"message": "Service data updated successfully",
-                                        "service_data": service_dict}), 200
+                return jsonify(success={"message": "Service data updated successfully."}), 200
             else:
                 return jsonify(error={"message": "Service id not found"}), 404
 
