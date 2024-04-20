@@ -830,6 +830,26 @@ async def create_pdf(payroll):
         raise
 
 
+@payroll_api.delete("/payroll-contribution/delete/<int:payroll_contribution_rate>")
+def delete_payroll_contribution_rate(payroll_contribution_rate):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+        query_data = PayrollContributionRate.query.filter_by(payroll_contribution_rate=payroll_contribution_rate).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Payroll contribution rate id not found."}), 401
+
+        db.session.delete(query_data)
+        db.session.commit()
+
+        return jsonify(success={"message": "Payroll contribution rate successfully deleted."}), 200
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
 async def send_email(recipient_email, pdf_bytes, period_start, period_end, last_name):
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
