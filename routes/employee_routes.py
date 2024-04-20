@@ -141,9 +141,6 @@ def register_employee():
                 daily_rate=float(request.form.get("daily_rate")),
             )
 
-            # Add new employee to the session
-            db.session.add(new_employee)
-
             # Create a new schedule instance
             new_schedule = Schedule(
                 employee_id=new_employee.employee_id,
@@ -152,7 +149,13 @@ def register_employee():
                 day_off=request.form.get("day_off")
             )
 
-            # Add new schedule to the session
+            # Add new employee and schedule to the session
+            db.session.add(new_employee)
+            db.session.flush()  # Flush to generate new_employee.employee_id
+
+            # Assign employee_id to new_schedule
+            new_schedule.employee_id = new_employee.employee_id
+
             db.session.add(new_schedule)
             db.session.commit()
 
