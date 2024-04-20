@@ -143,7 +143,6 @@ def register_employee():
 
             # Add new employee to the session
             db.session.add(new_employee)
-            db.session.commit()
 
             # Create a new schedule instance
             new_schedule = Schedule(

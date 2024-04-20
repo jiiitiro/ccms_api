@@ -89,5 +89,5 @@ def home():
 
 if __name__ == "__main__":
     # Start the scheduler
-    scheduler.start()
+    # scheduler.start()
     app.run(debug=True, port=5013)
