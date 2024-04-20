@@ -188,7 +188,9 @@ def get_payroll_contribution_data():
                 "payroll_contribution_rate_id": query_data.payroll_contribution_rate_id,
                 "sss": query_data.sss,
                 "philhealth": query_data.philhealth,
-                "pagibig": query_data.pagibig
+                "pagibig": query_data.pagibig,
+                "minimum_rate": query_data.minimum_rate,
+                "year": query_data.year
             }
         ]
 
@@ -207,11 +209,11 @@ def add_payroll_contribution():
                 error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
         new_payroll_contribution_rate = PayrollContributionRate(
-            payroll_contribution_rate_id=1,
-            sss=float(4.5),
-            philhealth=float(5),
-            pagibig=float(200),
-            minimum_rate=float(610)
+            sss=float(request.form.get("sss")),
+            philhealth=float(request.form.get("philhealth")),
+            pagibig=float(request.form.get("pagibig")),
+            minimum_rate=float(request.form.get(request.form.get("minimum_rate"))),
+            year=int(request.form.get("year"))
         )
 
         db.session.add(new_payroll_contribution_rate)
@@ -238,6 +240,7 @@ def update_payroll_contribution_rate():
         query_data.philhealth = request.form.get("philhealth", query_data.philhealth)
         query_data.pagibig = request.form.get("pagibig", query_data.pagibig)
         query_data.minimum_rate = request.form.get("minimum_rate", query_data.minimum_rate)
+        query_data.year = request.form.get("year", query_data.year)
 
         db.session.commit()
 
@@ -247,7 +250,8 @@ def update_payroll_contribution_rate():
                 "sss": float(query_data.sss),
                 "philhealth": float(query_data.philhealth),
                 "pagibig": float(query_data.pagibig),
-                "minimum_rate": float(query_data.minimum_rate)
+                "minimum_rate": float(query_data.minimum_rate),
+                "year": int(query_data.year)
             }
         ]
 

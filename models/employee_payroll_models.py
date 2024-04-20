@@ -107,10 +107,12 @@ class PayrollDeduction(db.Model):
 class PayrollContributionRate(db.Model):
     __tablename__ = "payroll_contribution_rate_tbl"
     payroll_contribution_rate_id = db.Column(db.Integer, primary_key=True)
+    year = db.Column(db.Integer, nullable=False, unique=True)
     sss = db.Column(db.Float, nullable=False, default=4.5)
     philhealth = db.Column(db.Float, nullable=False, default=5)
     pagibig = db.Column(db.Float, nullable=False, default=200)
     minimum_rate = db.Column(db.Float, nullable=True)
+
 
 
 
