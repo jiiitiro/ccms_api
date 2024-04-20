@@ -830,14 +830,14 @@ async def create_pdf(payroll):
         raise
 
 
-@payroll_api.delete("/payroll-contribution/delete/<int:payroll_contribution_rate>")
-def delete_payroll_contribution_rate(payroll_contribution_rate):
+@payroll_api.delete("/payroll-contribution/delete/<int:payroll_contribution_rate_id>")
+def delete_payroll_contribution_rate(payroll_contribution_rate_id):
     try:
         api_key_header = request.headers.get("x-api-key")
         if api_key_header != API_KEY:
             return jsonify(
                 error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
-        query_data = PayrollContributionRate.query.filter_by(payroll_contribution_rate=payroll_contribution_rate).first()
+        query_data = PayrollContributionRate.query.filter_by(payroll_contribution_rate_id=payroll_contribution_rate_id).first()
 
         if query_data is None:
             return jsonify(error={"message": "Payroll contribution rate id not found."}), 401
