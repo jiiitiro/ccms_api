@@ -21,7 +21,7 @@ from routes.service_addon_routes import service_addon_api
 from routes.booking_routes import booking_api
 from routes.billing_routes import billing_api
 from routes.purchase_order_routes import purchase_order_api
-from routes.payroll_routes import scheduler
+# from routes.payroll_routes import scheduler
 from routes.employee_request_order_routes import employee_request_api
 from db import db
 from flask_migrate import Migrate

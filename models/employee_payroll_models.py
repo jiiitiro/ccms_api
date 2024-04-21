@@ -104,14 +104,15 @@ class PayrollDeduction(db.Model):
     payroll = db.relationship('Payroll', back_populates='deductions', lazy=True)
 
 
-class PayrollContributionRate(db.Model):
-    __tablename__ = "payroll_contribution_rate_tbl"
-    payroll_contribution_rate_id = db.Column(db.Integer, primary_key=True)
+class PayrollContribution(db.Model):
+    __tablename__ = "payroll_contribution_tbl"
+    payroll_contribution_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     year = db.Column(db.Integer, nullable=False, unique=True)
-    sss = db.Column(db.Float, nullable=False, default=4.5)
-    philhealth = db.Column(db.Float, nullable=False, default=5)
-    pagibig = db.Column(db.Float, nullable=False, default=200)
-    minimum_rate = db.Column(db.Float, nullable=True)
+    sss = db.Column(db.Float, nullable=False)
+    philhealth = db.Column(db.Float, nullable=False)
+    pagibig = db.Column(db.Float, nullable=False)
+    minimum_rate = db.Column(db.Float, nullable=False)
+
 
 
 
