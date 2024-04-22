@@ -361,6 +361,48 @@ async def send_payslip():
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
+@payroll_api.post("/payroll/email-payslip/<int:employee_id>")
+async def send_payslip_specific_employee(employee_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_employee = Employee.query.filter_by(employee_id=employee_id).first()
+
+        if query_employee is None:
+            return jsonify(error={"message": f"Employee with id {employee_id} not found."}), 404
+
+        period_start = request.form.get("period_start")
+        period_end = request.form.get("period_end")
+
+        print(
+            f"Received period_start: {period_start}, period_end: {period_end}, employee_id: {employee_id}")  # Debug print
+
+        # Query payrolls based on the filters
+        payroll = Payroll.query.filter(
+            Payroll.period_start == period_start,
+            Payroll.period_end == period_end,
+            Payroll.employee_id == employee_id).first()
+
+        if payroll is None:
+            return jsonify(error={"message": "Payroll with that period start and end not found."}), 404
+
+        tasks = []
+        if payroll.employee and payroll.employee.email and payroll.employee.is_active:
+            pdf = await create_pdf(payroll)
+            tasks.append(
+                send_email(payroll.employee.email, pdf, period_start, period_end, payroll.employee.last_name))
+
+        await asyncio.gather(*tasks)
+
+        return jsonify(success={"message": "Payslip sent successfully."}), 200
+
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
 async def create_pdf(payroll):
     total_deduction = (float(payroll.deductions[0].sss_contribution) +
                        float(payroll.deductions[0].philhealth_contribution) +
