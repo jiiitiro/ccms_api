@@ -52,6 +52,8 @@ class Attendance(db.Model):
     logout_status = db.Column(db.String(50), nullable=True)
     tardiness = db.Column(db.Integer, nullable=True)  # Assuming tardiness is measured in minutes
     ot_hrs = db.Column(db.Float, nullable=True)
+    login_location = db.Column(db.String(255), nullable=True)
+    logout_location = db.Column(db.String(255), nullable=True)
 
     # Relationship to Employee
     employee = db.relationship('Employee', back_populates='attendances', lazy=True)

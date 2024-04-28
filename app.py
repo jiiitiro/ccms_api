@@ -21,6 +21,7 @@ from routes.service_addon_routes import service_addon_api
 from routes.booking_routes import booking_api
 from routes.billing_routes import billing_api
 from routes.purchase_order_routes import purchase_order_api
+from routes.property_size_pricing_routes import property_size_pricing_api
 # from routes.payroll_routes import scheduler
 from routes.employee_request_order_routes import employee_request_api
 from db import db
@@ -51,6 +52,7 @@ app.register_blueprint(booking_api)
 app.register_blueprint(billing_api)
 app.register_blueprint(purchase_order_api)
 app.register_blueprint(employee_request_api)
+app.register_blueprint(property_size_pricing_api)
 
 # os environment here
 load_dotenv(find_dotenv())

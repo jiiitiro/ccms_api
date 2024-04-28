@@ -35,7 +35,8 @@ def get_all_billing_data():
                 "status": booking.status,
                 "property_size": f"{booking.property_size} sqm",
                 "additional_charge": booking.additional_charge,
-                "total_price": booking.total_price
+                "total_price": booking.total_price,
+                "notes": booking.notes
             }
 
             # Include service addons if available
@@ -93,7 +94,8 @@ def get_specific_booking(booking_id):
             "status": booking.status,
             "property_size": f"{booking.property_size} sqm",
             "additional_charge": booking.additional_charge,
-            "total_price": booking.total_price
+            "total_price": booking.total_price,
+            "notes": booking.notes
         }
 
         # Include service addons if available
@@ -170,7 +172,8 @@ def add_booking():
             status="APPROVED",
             property_size=int(request.form.get("property_size")),
             additional_charge=float(request.form.get("additional_charge")),
-            total_price=total_price  # Assign total price to the booking
+            total_price=total_price,  # Assign total price to the booking
+            notes=request.form.get("notes")
         )
 
         # Add service addons to the booking

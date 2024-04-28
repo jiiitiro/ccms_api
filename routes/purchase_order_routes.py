@@ -144,6 +144,7 @@ def add_purchase_order():
             )
             new_purchase_order.purchase_order_associations.append(new_association)
 
+
         db.session.add(new_purchase_order)
         db.session.commit()
 
@@ -152,6 +153,15 @@ def add_purchase_order():
     except Exception as e:
         db.session.rollback()
         return jsonify(error={"message": f"An error occurred: {str(e)} "}), 500
+
+
+async def create_pdf(purchase_order):
+    purchase_order_data = {
+        "purchase_order_id": purchase_order.purchase_order_id,
+        "supplier_id": purchase_order.supplier_id,
+        "supplier_name": purchase_order.supplier.supplier_name,
+
+    }
 
 
 @purchase_order_api.delete("/purchase-order/delete/<int:purchase_order_id>")

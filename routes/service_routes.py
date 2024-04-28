@@ -1,6 +1,6 @@
 import os
 from flask import Blueprint, request, jsonify
-from models import Service
+from models import Service, ServiceAddon
 from db import db
 import logging
 
@@ -15,17 +15,50 @@ API_KEY = os.environ.get('API_KEY')
 @service_api.get("/service/all")
 def get_all_data():
     api_key_header = request.headers.get("x-api-key")
+
     if api_key_header == API_KEY:
         response_data = db.session.execute(db.select(Service)).scalars().all()
-        services_data = [
-            {
+
+        response_service_addons = ServiceAddon.query.all()
+
+        services_data = []
+        property_size = []
+        service_addons = []
+
+        for data in response_data:
+            service = {
                 "service_id": data.service_id,
                 "category": data.category,
                 "description": data.description,
                 "price": data.price,
-            } for data in response_data
-        ]
-        response = jsonify({"services_data": services_data})
+                "add_price_per_floor": data.add_price_per_floor,
+            }
+
+            services_data.append(service)
+
+            for data1 in data.property_size_pricing:
+                property1 = {
+                    "service_id": data.service_id,
+                    "property_size_pricing_id": data1.property_size_pricing_id,
+                    "property_size": data1.property_size,
+                    "pricing": data1.pricing
+                }
+
+                property_size.append(property1)
+
+        for data3 in response_service_addons:
+            service_addon = {
+                "service_addon_id": data3.service_addon_id,
+                "description": data3.description,
+                "pricing_description": data3.pricing_description,
+                "price": data3.price
+            }
+
+            service_addons.append(service_addon)
+
+        response = jsonify({"services_data": services_data, "property_sizes": property_size,
+                            "service_addons": service_addons})
+
         return response, 200
     else:
         return jsonify(
@@ -43,6 +76,14 @@ def get_specific_data(service_id):
                 "category": service_data.category,
                 "description": service_data.description,
                 "price": service_data.price,
+                "add_price_per_floor": service_data.add_price_per_floor,
+                "property_sizes": [
+                    {
+                        "property_size_pricing_id": data.property_size_pricing_id,
+                        "property_size": data.property_size,
+                        "pricing": data.pricing
+                    } for data in service_data.property_size_pricing
+                ]
             }
             response = jsonify({"service_data": service_dict})
             return response, 200
@@ -63,6 +104,7 @@ def add_service():
                 description=request.form.get("description"),
                 category=request.form.get("category"),
                 price=request.form.get("price"),
+                add_price_per_floor=request.form.get("add_price_per_floor")
             )
 
             db.session.add(new_service)
@@ -74,6 +116,7 @@ def add_service():
                     "description": new_service.description,
                     "category": new_service.category,
                     "price": new_service.price,
+                    "add_price_per_floor": new_service.add_price_per_floor
                 }
             ]
 
@@ -117,7 +160,8 @@ def update_service(service_id):
             update_data = {
                 'description': request.form.get('description', service_to_update.description),
                 'category': request.form.get('category', service_to_update.category),
-                'price': request.form.get('price', service_to_update.price)
+                'price': request.form.get('price', service_to_update.price),
+                'add_price_per_floor': request.form.get('add_price_per_floor', service_to_update.add_price_per_floor)
             }
 
             # Update the service fields

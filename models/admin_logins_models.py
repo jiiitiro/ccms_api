@@ -13,6 +13,8 @@ class BillingAdminLogin(db.Model):
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
 
+    billing_admin_activity_logs = db.relationship("BillingAdminActivityLogs", back_populates="billing_admin")
+
 
 class PayrollAdminLogin(db.Model):
     __tablename__ = "payroll_admin_login_tbl"
@@ -23,6 +25,8 @@ class PayrollAdminLogin(db.Model):
     role = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
+
+    payroll_admin_activity_logs = db.relationship("PayrollAdminActivityLogs", back_populates="payroll_admin")
 
 
 class EmployeeAdminLogin(db.Model):
@@ -35,6 +39,8 @@ class EmployeeAdminLogin(db.Model):
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
 
+    employee_admin_activity_logs = db.relationship("EmployeeAdminActivityLogs", back_populates="employee_admin")
+
 
 class CustomerAdminLogin(db.Model):
     __tablename__ = "customer_admin_login_tbl"
@@ -45,6 +51,8 @@ class CustomerAdminLogin(db.Model):
     role = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
+
+    customer_admin_activity_logs = db.relationship("CustomerAdminActivityLogs", back_populates="customer_admin")
 
 
 class InventoryAdminLogin(db.Model):
@@ -57,6 +65,8 @@ class InventoryAdminLogin(db.Model):
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
 
+    inventory_admin_activity_logs = db.relationship("InventoryAdminActivityLogs", back_populates="inventory_admin")
+
 
 class SuperadminLogin(UserMixin, db.Model):
     __tablename__ = "superadmin_login_tbl"
@@ -68,7 +78,8 @@ class SuperadminLogin(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
 
+    superadmin_activity_logs = db.relationship("SuperadminActivityLogs", back_populates="superadmin")
+
     # Implement the get_id() method to return the user's id
     def get_id(self):
         return str(self.login_id)
-

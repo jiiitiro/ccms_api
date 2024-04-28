@@ -56,6 +56,7 @@ class Booking(db.Model):
     property_size = db.Column(db.Integer, nullable=False)
     additional_charge = db.Column(db.Float, nullable=False)
     total_price = db.Column(db.Float, nullable=False)
+    notes = db.Column(db.String(250), nullable=True)
 
     # Add a relationship
     customer = db.relationship('Customer', back_populates='bookings', lazy=True)
@@ -76,8 +77,20 @@ class Service(db.Model):
     description = db.Column(db.String(255), nullable=False)
     category = db.Column(db.String(255), nullable=False)
     price = db.Column(db.Float, nullable=False)
+    add_price_per_floor = db.Column(db.Float, nullable=True)
 
     bookings = db.relationship('Booking', back_populates='services', lazy=True)
+    property_size_pricing = db.relationship('PropertySizePricing', back_populates='services', lazy=True)
+
+
+class PropertySizePricing(db.Model):
+    __tablename__ = "property_size_pricing_tbl"
+    property_size_pricing_id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=True)
+    property_size = db.Column(db.String(255), nullable=False)
+    pricing = db.Column(db.Float, nullable=False)
+
+    services = db.relationship('Service', back_populates="property_size_pricing", lazy=True)
 
 
 class ServiceAddon(db.Model):
