@@ -68,30 +68,38 @@ def get_all_employee_request_order():
 
         query_data = EmployeeRequestOrder.query.all()
 
-        employee_request_order_data = [{
-            "employee_order_id": data.employee_order_id,
-            "employee_id": data.employee_id,
-            "request_by": f"{data.employee.first_name} {data.employee.middle_name} "
-                          f"{data.employee.last_name}",
-            "request_order": [{
-                "employee_request_id": order.employee_request_id,
-                "inventory_id": order.inventory_id,
-                "item_name": order.inventory.item_name,
-                "item_qty": order.item_qty
-            } for order in data.employee_request_inventory_association],
-            "total_item_qty": data.total_item_qty,
-            "order_date": data.order_date,
-            "approved_by": data.approved_by,
-            "approve_date": data.approved_date,
-            "received_by": data.received_by,
-            "received_date": data.received_date,
-            "status": data.status
-        } for data in query_data]
+        employee_request_order_data = []
+        for data in query_data:
+            employee_order = {
+                "employee_order_id": data.employee_order_id,
+                "employee_id": data.employee_id,
+                "request_by": f"{data.employee.first_name} {data.employee.middle_name} "
+                              f"{data.employee.last_name}",
+                "request_order": [],
+                "total_item_qty": data.total_item_qty,
+                "order_date": data.order_date,
+                "approved_by": data.approved_by,
+                "approve_date": data.approved_date,
+                "received_by": data.received_by,
+                "received_date": data.received_date,
+                "status": data.status
+            }
+            for order in data.employee_request_inventory_association:
+                if order.inventory is not None:
+                    employee_order["request_order"].append({
+                        "employee_request_id": order.employee_request_id,
+                        "inventory_id": order.inventory_id,
+                        "item_name": order.inventory.item_name,
+                        "item_qty": order.item_qty
+                    })
+
+            employee_request_order_data.append(employee_order)
 
         return jsonify(employee_request_order_data), 200
 
     except Exception as e:
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
 
 
 @employee_request_api.get("/employee-request-order/<int:employee_order_id>")
