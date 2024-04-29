@@ -55,13 +55,13 @@ class Booking(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
     address_id = db.Column(db.Integer, db.ForeignKey('customer_address.address_id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=False)
+    property_size_pricing_id = db.Column(db.Integer, db.ForeignKey('property_size_pricing_tbl.property_size_pricing_id'), nullable=False)
     booking_date = db.Column(db.DateTime, nullable=False)
     time_arrival = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(250), nullable=False)
-    property_size = db.Column(db.Integer, nullable=False)
-    additional_charge = db.Column(db.Float, nullable=False)
+    booking_status = db.Column(db.String(250), nullable=False)
     total_price = db.Column(db.Float, nullable=False)
     notes = db.Column(db.String(250), nullable=True)
+    service_status = db.Column(db.String(100), default="Not assigned")
 
     # Add a relationship
     customer = db.relationship('Customer', back_populates='bookings', lazy=True)
@@ -77,8 +77,9 @@ class Booking(db.Model):
     employee = db.relationship(
         'Employee',
         secondary=booking_employee_association,
-        backref=db.backref('booking', lazy='dynamic')
+        backref=db.backref('bookings', lazy='dynamic')
     )
+    property_size_pricing = db.relationship('PropertySizePricing', back_populates='bookings', lazy=True)
 
 
 # Define the Service class
@@ -102,6 +103,7 @@ class PropertySizePricing(db.Model):
     pricing = db.Column(db.Float, nullable=False)
 
     services = db.relationship('Service', back_populates="property_size_pricing", lazy=True)
+    bookings = db.relationship("Booking", back_populates='property_size_pricing', lazy=True)
 
 
 class ServiceAddon(db.Model):
@@ -120,8 +122,10 @@ class Billing(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
     method_of_payment = db.Column(db.String(100), nullable=False)
+    payment_date = db.Column(db.DateTime, nullable=False)
+    reference_number = db.Column(db.String(255), nullable=False)
+    mobile_number = db.Column(db.String(11), nullable=False)
     payment_status = db.Column(db.String(100), nullable=False)
-    service_status = db.Column(db.String(100), default="Not Started")
 
     # Add a relationship
     customer = db.relationship('Customer', back_populates='billing', lazy=True)

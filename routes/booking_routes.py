@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, request, jsonify
 from db import db
-from models import Booking, Customer, Service, Employee, ServiceAddon, CustomerAddress
+from models import Booking, Customer, Service, Employee, ServiceAddon, CustomerAddress, PropertySizePricing
 from datetime import datetime
 
 booking_api = Blueprint("booking_api", __name__)
@@ -29,15 +29,21 @@ def get_all_billing_data():
                                  f"{booking.customer.last_name}",
                 "customer_address": booking.address_id,
                 "customer_phone": booking.customer.phone,
-                "employee_id": booking.employee_id,
                 "booking_date": booking.booking_date,
                 "time_arrival": booking.time_arrival,
-                "status": booking.status,
-                "property_size": f"{booking.property_size} sqm",
-                "additional_charge": booking.additional_charge,
+                "booking_status": booking.booking_status,
+                "property_size": booking.property_size_pricing.property_size,
                 "total_price": booking.total_price,
-                "notes": booking.notes
+                "notes": booking.notes,
+                "service_status": booking.service_status
             }
+
+            if booking.employee:
+                booking_dict["assign_employee"] = [{
+                    "employee_id": employee.employee_id,
+                    "employee_name": f"{employee.first_name} {employee.middle_name} "
+                                     f"{employee.last_name}"
+                }for employee in booking.employee]
 
             # Include service addons if available
             if booking.service_addons:
@@ -88,15 +94,22 @@ def get_specific_booking(booking_id):
                              f"{booking.customer.last_name}",
             "customer_address": booking.address_id,
             "customer_phone": booking.customer.phone,
-            "employee_id": booking.employee_id,
+            "assign_employee": [],
             "booking_date": booking.booking_date,
             "time_arrival": booking.time_arrival,
-            "status": booking.status,
-            "property_size": f"{booking.property_size} sqm",
-            "additional_charge": booking.additional_charge,
+            "booking_status": booking.booking_status,
+            "property_size": booking.property_size_pricing.property_size,
             "total_price": booking.total_price,
-            "notes": booking.notes
+            "notes": booking.notes,
+            "service_status": booking.service_status
         }
+
+        if booking.employee:
+            booking_dict["assign_employee"] = [{
+                "employee_id": employee.employee_id,
+                "employee_name": f"{employee.first_name} {employee.middle_name} "
+                                 f"{employee.last_name}"
+            } for employee in booking.employee]
 
         # Include service addons if available
         if booking.service_addons:
@@ -145,10 +158,11 @@ def assign_employee(booking_id):
 
         # Check if all service addons were found
         if len(query_employee) != len(employee_ids):
-            return jsonify(error={"message": "One or more service addon IDs not found."}), 404
+            return jsonify(error={"message": "One or more employee IDs not found."}), 404
 
         # Update the booking with the assigned employees
         query_booking.employee = query_employee
+        query_booking.service = "Assigned"
         db.session.commit()
 
         return jsonify(success=True, message="Employees assigned successfully."), 200
@@ -175,6 +189,16 @@ def add_booking():
         if query_service is None:
             return jsonify(error={"message": "Service not found."}), 404
 
+        # Check if property_size_pricing_id is in query_service.property_size_pricing.property_size_pricing_id
+        property_size_pricing_id = request.form.get("property_size_pricing_id")
+
+        # Query property size pricing by ID
+        property_size_pricing = PropertySizePricing.query.get(property_size_pricing_id)
+
+        # Check if property size pricing is found
+        if property_size_pricing is None or property_size_pricing not in query_service.property_size_pricing:
+            return jsonify(error={"message": "Property size pricing ID not found in service."}), 404
+
         # Check if the address ID exists in the customer's addresses
         address_id = request.form.get("address_id")
         if address_id not in [str(addr.address_id) for addr in query_customer.addresses]:
@@ -191,21 +215,20 @@ def add_booking():
             return jsonify(error={"message": "One or more service addon IDs not found."}), 404
 
         # Calculate total price
-        total_price = (query_service.price + float(request.form.get("additional_charge")) +
-                       sum(addon.price for addon in query_service_addons))
+        total_price = (query_service.price + sum(addon.price for addon in query_service_addons) +
+                       property_size_pricing.pricing)
 
         # Create a new booking
         new_booking = Booking(
             customer_id=query_customer.customer_id,
             service_id=query_service.service_id,
+            property_size_pricing_id=property_size_pricing_id,
             address_id=request.form.get("address_id"),
             booking_date=datetime.now(),
             time_arrival=request.form.get("time_arrival"),
-            status="APPROVED",
-            property_size=int(request.form.get("property_size")),
-            additional_charge=float(request.form.get("additional_charge")),
-            total_price=total_price,  # Assign total price to the booking
-            notes=request.form.get("notes")
+            booking_status="Processing",
+            total_price=float(total_price),  # Assign total price to the booking
+            notes=request.form.get("notes") if request.form.get("notes") is not None else None
         )
 
         # Add service addons to the booking
@@ -215,27 +238,6 @@ def add_booking():
         db.session.add(new_booking)
         db.session.commit()
 
-        # Retrieve the service addon IDs associated with the new booking
-        new_service_addon_ids = [addon.service_addon_id for addon in new_booking.service_addons]
-
-        # # Prepare response data
-        # new_booking_dict = {
-        #     "booking_id": new_booking.booking_id,
-        #     "customer_id": new_booking.customer_id,
-        #     "customer_name": f"{new_booking.customer.first_name} {new_booking.customer.middle_name} "
-        #                      f"{new_booking.customer.last_name}",
-        #     "customer_address": new_booking.address_id,
-        #     "customer_phone": new_booking.customer.phone,
-        #     "service_id": new_booking.service_id,
-        #     "employee_id": new_booking.employee_id,
-        #     "service_addon_ids": new_service_addon_ids,
-        #     "booking_date": new_booking.booking_date,
-        #     "time_arrival": new_booking.time_arrival,
-        #     "status": new_booking.status,
-        #     "property_size": f"{new_booking.property_size} sqm",
-        #     "additional_charge": new_booking.additional_charge,
-        #     "total_price": total_price  # Include total price in the response
-        # }
         return jsonify(success={"message": "New booking successfully added."})
 
     except Exception as e:
