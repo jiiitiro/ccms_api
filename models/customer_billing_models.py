@@ -42,6 +42,12 @@ booking_service_addon_association = db.Table(
     db.Column('service_addon_id', db.Integer, db.ForeignKey('service_addon_tbl.service_addon_id'))
 )
 
+booking_employee_association = db.Table(
+    'booking_employee_association',
+    db.Column('booking_id', db.Integer, db.ForeignKey('booking_tbl.booking_id')),
+    db.Column('employee_id', db.Integer, db.ForeignKey('employee_tbl.employee_id'))
+)
+
 
 class Booking(db.Model):
     __tablename__ = 'booking_tbl'
@@ -49,7 +55,6 @@ class Booking(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customer_tbl.customer_id'), nullable=False)
     address_id = db.Column(db.Integer, db.ForeignKey('customer_address.address_id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=False)
-    employee_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'), nullable=True)
     booking_date = db.Column(db.DateTime, nullable=False)
     time_arrival = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(250), nullable=False)
@@ -67,6 +72,12 @@ class Booking(db.Model):
         'ServiceAddon',
         secondary=booking_service_addon_association,
         backref=db.backref('bookings', lazy='dynamic')
+    )
+
+    employee = db.relationship(
+        'Employee',
+        secondary=booking_employee_association,
+        backref=db.backref('booking', lazy='dynamic')
     )
 
 

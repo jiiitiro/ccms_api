@@ -126,6 +126,38 @@ def get_specific_booking(booking_id):
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
+@booking_api.put("/booking/assign-employee/<int:booking_id>")
+def assign_employee(booking_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_booking = Booking.query.filter_by(booking_id=booking_id).first()
+
+        if query_booking is None:
+            return jsonify(error={"message": "Booking id not found."}), 404
+
+        employee_ids = [int(_id.strip()) for _id in request.form.get("employee_id").split(',')]
+
+        query_employee = Employee.query.filter(Employee.employee_id.in_(employee_ids)).all()
+
+        # Check if all service addons were found
+        if len(query_employee) != len(employee_ids):
+            return jsonify(error={"message": "One or more service addon IDs not found."}), 404
+
+        # Update the booking with the assigned employees
+        query_booking.employee = query_employee
+        db.session.commit()
+
+        return jsonify(success=True, message="Employees assigned successfully."), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
 @booking_api.post("/booking/add")
 def add_booking():
     try:
@@ -232,6 +264,7 @@ def delete_booking_data(booking_id):
     except Exception as e:
         db.session.rollback()
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
 
 
 

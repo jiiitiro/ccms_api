@@ -3,9 +3,10 @@ from email.mime.multipart import MIMEMultipart
 from db import db
 from flask import Blueprint, jsonify, render_template, redirect, url_for
 from passlib.handlers.pbkdf2 import pbkdf2_sha256
-from flask import flash, request
+from flask import flash, request, session
 from models import CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
 from models.admin_logins_models import SuperadminLogin
+from models.activity_logs_models import SuperadminActivityLogs
 from forms import SuperadminLoginForm, ForgotPasswordForm, ChangePasswordForm, RegistrationForm
 import smtplib
 from email.mime.text import MIMEText
@@ -15,7 +16,8 @@ import plotly.graph_objs as go
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import random
 import string
-
+from datetime import datetime, timedelta
+from functools import wraps
 
 superadmin_api = Blueprint('superadmin_api', __name__)
 login_manager = LoginManager()
@@ -30,12 +32,6 @@ SUPERADMIN_PASSWORD = os.environ.get("SUPERADMIN_PASSWORD")
 
 s = URLSafeTimedSerializer('Thisisasecret!')
 
-# @superadmin_api.get("/superadmin/login")
-# def login_superadmin():
-#     return render_template("superadmin_login.html")
-
-from functools import wraps
-
 
 def custom_unauthorized_handler(e):
     return render_template('401.html'), 401  # Render custom HTML for unauthorized access, return HTTP status code 401
@@ -45,7 +41,7 @@ def login_required_with_custom_error(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
-            return render_template('401.html'), 401  # Render custom HTML for unauthorized access, return HTTP status code 401
+            return render_template('401.html'), 401
         return f(*args, **kwargs)
     return decorated_function
 
@@ -53,6 +49,16 @@ def login_required_with_custom_error(f):
 @login_manager.user_loader
 def load_user(login_id):
     return db.get_or_404(SuperadminLogin, login_id)
+
+
+def log_activity(table_name, **kwargs):
+    try:
+        new_activity_log = table_name(**kwargs, log_date=datetime.now())
+        db.session.add(new_activity_log)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 @superadmin_api.get("/superadmin/dashboard")
@@ -508,19 +514,64 @@ def superadmin_login():
         email = form.email.data
         password = form.password.data
 
-        # Query the database to find the user by email
-        user = SuperadminLogin.query.filter_by(email=email).first()
+        try:
+            # Query the database to find the user by email
+            user = SuperadminLogin.query.filter_by(email=email).first()
 
-        if not user:
-            return jsonify(success=False, message="That email does not exist, please try again.")
+            if not user:
+                return jsonify(success=False, message="That email does not exist, please try again.")
 
-        if not pbkdf2_sha256.verify(password, user.password):
-            return jsonify(success=False, message="Password incorrect, please try again.")
+            if user.failed_timer is not None:
+                if user.failed_timer > datetime.now():
+                    time_remaining = user.failed_timer - datetime.now()
 
-        # Login the user
-        login_user(user)
-        # Return a JSON response indicating successful login
-        return jsonify(success=True)
+                    log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                                 logs_description=f"Too many failed attempts {user.consecutive_failed_login}x. ")
+
+                    return jsonify(success=False,
+                                   message=f"Please try again in {time_remaining.seconds} seconds.")
+
+            if not pbkdf2_sha256.verify(password, user.password):
+                if user.consecutive_failed_login is None:
+                    user.consecutive_failed_login = 0
+
+                user.consecutive_failed_login += 1
+
+                if user.consecutive_failed_login >= 3:
+                    user.failed_timer = datetime.now() + timedelta(seconds=30)
+
+                    log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                                 logs_description=f"Password incorrect {user.consecutive_failed_login}x times.")
+
+                    return jsonify(success=False, message=f"Password incorrect {user.consecutive_failed_login}x, "
+                                                          f"please try again in 30secs.")
+
+                log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                             logs_description=f"Password incorrect {user.consecutive_failed_login} times.")
+
+                return jsonify(success=False,
+                               message=f"Password incorrect {user.consecutive_failed_login}x, please try again.")
+
+            # Reset consecutive_failed_login and failed_timer
+            user.consecutive_failed_login = 0
+            user.failed_timer = None
+
+            db.session.commit()
+            # Login the user
+            login_user(user)
+
+            # Store user login_id in session storage
+            session['login_id'] = user.login_id
+
+            # Return a JSON response indicating successful login
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"User logged in.")
+
+            return jsonify(success=True)
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify(success=False, message=f"An error occurred: {str(e)}")
 
     return render_template("superadmin_login_1.html", form=form)
 
@@ -536,14 +587,74 @@ def superadmin_forgot_password():
         if not user:
             return jsonify(success=False, message="That email does not exist, please try again.")
         else:
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Forgot password")
 
             reset_token = s.dumps(email, salt='password-reset')
 
             subject = 'Password Reset'
-            body = (f"Click the following link to reset your password: "
-                    f"{BASE_URL}/superadmin/reset-password/{reset_token}")
 
-            msg = MIMEText(body)
+            body = f"""
+                        <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Arial, sans-serif;
+                                    background-color: #f7f7f7;
+                                    padding: 20px;
+                                    margin: 0;
+                                }}
+                                .container {{
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    background-color: #fff;
+                                    border-radius: 8px;
+                                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                                    padding: 40px;
+                                }}
+                                h1 {{
+                                    font-size: 24px;
+                                    color: #333;
+                                }}
+                                p {{
+                                    font-size: 16px;
+                                    color: #666;
+                                    margin-bottom: 20px;
+                                }}
+                                a {{
+                                    color: #007bff;
+                                    text-decoration: none;
+                                }}
+                                a:hover {{
+                                    text-decoration: underline;
+                                }}
+                                .password {{
+                                    font-size: 20px;
+                                    color: #333;
+                                    margin-top: 20px;
+                                }}
+                                .footer {{
+                                    text-align: center;
+                                    margin-top: 40px;
+                                    font-size: 14px;
+                                    color: #999;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h1>Hello {user.name},</h1>
+                                <p>Click the following link to reset your password: <a href="{BASE_URL}/superadmin/reset-password/{reset_token}">Reset Password</a></p>
+                            </div>
+                            <div class="footer">
+                                BusyHands Cleaning Services Inc. 2024 | Contact Us: busyhands.cleaningservices@gmail.com
+                            </div>
+                        </body>
+                        </html>
+                        """
+
+            msg = MIMEMultipart()
+            msg.attach(MIMEText(body, 'html'))  # Set the message type to HTML
             msg['Subject'] = subject
             msg['From'] = MY_EMAIL
             msg['To'] = email
@@ -590,7 +701,21 @@ def superadmin_link_forgot_password(token):
 
 @superadmin_api.get("/superadmin/logout")
 def superadmin_logout():
+    # Retrieve user login id from session storage
+    user_login_id = session.get('login_id')
+
+    if user_login_id is None:
+        return jsonify(success=False, message="User not logged in.")
+
+    # Log the logout activity
+    log_activity(SuperadminActivityLogs, login_id=user_login_id,
+                 logs_description="User logged out.")
+
+    # Clear user information from session storage
+    session.pop('login_id', None)
+
     logout_user()
+
     return redirect(url_for("superadmin_api.superadmin_login"))
 
 
@@ -1026,6 +1151,16 @@ def deactivate_billing_account(login_id):
     if admin_user:
         admin_user.is_active = False
         db.session.commit()
+
+        # Retrieve user login id from session storage
+        user_login_id = session.get('login_id')
+
+        if user_login_id is None:
+            return jsonify(success=False, message="User not logged in.")
+
+        # Log the logout activity
+        log_activity(SuperadminActivityLogs, login_id=user_login_id,
+                     logs_description=f"Successfully deactivated the billing admin account. User is {admin_user.name}")
 
         return jsonify(success=True, message="Successfully deactivated the billing admin account.")
     else:
