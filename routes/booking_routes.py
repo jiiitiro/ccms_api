@@ -240,7 +240,7 @@ def add_booking():
         db.session.add(new_booking)
         db.session.commit()
 
-        return jsonify(success={"message": "New booking successfully added."})
+        return jsonify(success={"message": "New booking successfully added."}), 201
 
     except Exception as e:
         db.session.rollback()
