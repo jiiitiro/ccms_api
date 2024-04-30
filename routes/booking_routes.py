@@ -27,7 +27,9 @@ def get_all_billing_data():
                 "customer_id": booking.customer_id,
                 "customer_name": f"{booking.customer.first_name} {booking.customer.middle_name} "
                                  f"{booking.customer.last_name}",
-                "customer_address": booking.address_id,
+                "customer_address_id": booking.address_id,
+                "customer_address": f"{booking.address.houseno_street}, {booking.address.barangay}, "
+                                    f"{booking.address.city}, {booking.address.region}, {booking.address.zipcode}",
                 "customer_phone": booking.customer.phone,
                 "booking_date": booking.booking_date,
                 "time_arrival": booking.time_arrival,
