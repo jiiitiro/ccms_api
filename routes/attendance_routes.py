@@ -54,6 +54,7 @@ def get_attendance():
                 schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
                 end_time = datetime.combine(datetime.today(), schedule.end_time)
                 logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
+
                 if logout_time < end_time:
                     existing_attendance.logout_status = "Early-Out"
                 else:
@@ -71,14 +72,16 @@ def get_attendance():
                 logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
                 ot_delta = logout_time - end_time
 
-                existing_attendance.ot_hrs = max(0, (ot_delta.total_seconds() + 59) // 3600)  # Round up to the nearest hour
+                existing_attendance.ot_hrs = max(0, (ot_delta.total_seconds() + 59) // 3600)
+
+                existing_attendance.logout_location = request.form.get("logout_location")
 
             else:
                 status = "login"
                 # Employee is not logged in, so log them in
                 login_time = datetime.now()
                 attendance = Attendance(employee_id=employee.employee_id, work_date=login_time.date(),
-                                        login_time=login_time)
+                                        login_time=login_time, login_location=request.form.get("login_location"))
 
                 # Determine login_status based on employee's schedule and login_time
                 schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
@@ -258,4 +261,3 @@ def update_attendance_by_id(attendance_id):
             return jsonify(error={"message": "Integrity error occurred."}), 500
     else:
         return jsonify(error={"message": "Not Authorized. Make sure you have the correct api_key."}), 403
-
