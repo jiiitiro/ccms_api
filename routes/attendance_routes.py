@@ -2,9 +2,11 @@ import os
 from passlib.hash import pbkdf2_sha256
 from flask import Blueprint, request, jsonify
 from models import Employee, Attendance, Schedule
+from models.activity_logs_models import PayrollAdminActivityLogs
 from db import db
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
+from functions import log_activity
 
 attendance_api = Blueprint('attendance_api', __name__)
 
@@ -39,6 +41,8 @@ def get_attendance():
             # Check if employee is already logged in
             existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
                                                              work_date=datetime.now().date()).first()
+
+            log_activity(Attendance, login_id=employee.login_id, logs_description=f"Password incorrect {employee.consecutive_failed_login}")
 
             status = None
             if existing_attendance:

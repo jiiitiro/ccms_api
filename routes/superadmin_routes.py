@@ -18,6 +18,7 @@ import random
 import string
 from datetime import datetime, timedelta
 from functools import wraps
+from functions import log_activity
 
 superadmin_api = Blueprint('superadmin_api', __name__)
 login_manager = LoginManager()
@@ -49,16 +50,6 @@ def login_required_with_custom_error(f):
 @login_manager.user_loader
 def load_user(login_id):
     return db.get_or_404(SuperadminLogin, login_id)
-
-
-def log_activity(table_name, **kwargs):
-    try:
-        new_activity_log = table_name(**kwargs, log_date=datetime.now())
-        db.session.add(new_activity_log)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        raise e
 
 
 @superadmin_api.get("/superadmin/dashboard")
