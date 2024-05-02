@@ -240,7 +240,7 @@ def add_booking():
         db.session.add(new_booking)
         db.session.commit()
 
-        return jsonify(success={"message": "New booking successfully added."}), 201
+        return jsonify(success={"message": "New booking successfully added.", "booking_id": new_booking.booking_id}), 201
 
     except Exception as e:
         db.session.rollback()
@@ -270,5 +270,31 @@ def delete_booking_data(booking_id):
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
+@booking_api.get("/booking/<int:customer_id>")
+def get_booking_of_specific_customer(customer_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
+        query_customer = Customer.query.filter_by(customer_id=customer_id).first()
+
+        if query_customer is None:
+            return jsonify(error={"message": "Customer id not found"}), 404
+
+        booking_data = [{
+            "booking_id": booking.booking_id,
+            "customer_id": booking.customer_id,
+            "address_id": booking.address_id,
+            "full_address": f"{booking.address.houseno_street}, {booking.address.barangay}, {booking.address.city}, {booking.address.region}, {booking.address.zipcode}"
+        }for booking in query_customer.bookings]
+
+
+
+
+
+
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 

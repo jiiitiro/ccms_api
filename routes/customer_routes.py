@@ -36,16 +36,17 @@ def get_all_customer_data():
         # Prepare response data
         customer_data = []
         for customer in customers:
-            addresses = []
-            for address in customer.addresses:
-                addresses.append({
+            addresses = [
+                {
                     "address_id": address.address_id,
                     "houseno_street": address.houseno_street,
                     "barangay": address.barangay,
                     "city": address.city,
                     "region": address.region,
-                    "zipcode": address.zipcode
-                })
+                    "zipcode": address.zipcode,
+                    "full_address": f"{address.houseno_street}, {address.barangay}, {address.city}, {address.region}, {address.zipcode}"
+                } for address in customer.addresses
+            ]
 
             customer_info = {
                 "customer_id": customer.customer_id,
@@ -298,7 +299,7 @@ def login_customer():
             if customer and pbkdf2_sha256.verify(request.form.get("password"), customer.password):
                 # access_token = create_access_token(identity=customer.customer_id)
                 # return {"access_token": access_token}
-                customer_address = CustomerAddress.query.filter_by(customer_id=customer.customer_id).first()
+                customer_address = CustomerAddress.query.filter_by(customer_id=customer.customer_id).all()
 
                 login_data_dict = {
                     "customer_id": customer.customer_id,
@@ -308,13 +309,16 @@ def login_customer():
                     "email": customer.email,
                     "is_active": customer.is_active,
                     "email_confirm": customer.email_confirm,
-                    "address": {
-                        "houseno_street": customer_address.houseno_street,
-                        "barangay": customer_address.barangay,
-                        "city": customer_address.city,
-                        "region": customer_address.region,
-                        "zipcode": customer_address.zipcode
-                    } if customer_address else None  # Return None if no address found
+                    "address": [{
+                        "address_id": address.address_id,
+                        "houseno_street": address.houseno_street,
+                        "barangay": address.barangay,
+                        "city": address.city,
+                        "region": address.region,
+                        "zipcode": address.zipcode,
+                        "full_address": f"{address.houseno_street}, {address.barangay}, {address.city}, "
+                                        f"{address.region}, {address.zipcode}"
+                    } for address in customer_address]
                 }
 
                 return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
