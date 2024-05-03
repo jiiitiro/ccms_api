@@ -7,6 +7,7 @@ from db import db
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from functions import attendance_log_activity
+from datetime import datetime, timedelta
 
 attendance_api = Blueprint('attendance_api', __name__)
 
@@ -43,9 +44,6 @@ def get_attendance():
             # Check if employee is already logged in
             existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
                                                              work_date=datetime.now().date()).first()
-
-            attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
-                                    logs_description=f"Password incorrect {employee.consecutive_failed_login}")
 
             status = None
             if existing_attendance:
@@ -110,8 +108,19 @@ def get_attendance():
             return jsonify(success={"message": f"Hello {employee.first_name}, "
                                                f"your attendance {status} was successfully saved."}), 200
 
-        return jsonify(error={"message": "Invalid credentials."}), 401
+        if employee.consecutive_failed_login >= 3:
+            employee.failed_timer = datetime.now() + timedelta(seconds=30)
 
+            attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
+                                    logs_description=f"Password incorrect {employee.consecutive_failed_login}x times.")
+
+            return jsonify(success=False, message=f"Password incorrect {employee.consecutive_failed_login}x, "
+                                                  f"please try again in 30secs."), 401
+
+        attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
+                                logs_description=f"Password incorrect {employee.consecutive_failed_login}")
+
+        return jsonify(error={"message": "Invalid Credentials"}), 401
     except Exception as e:
         db.session.rollback()
         return jsonify(error={"Message": f"Failed to login. Error: {str(e)}"}), 500

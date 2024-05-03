@@ -20,6 +20,8 @@ class Employee(db.Model):
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
     de_minimis = db.Column(db.Float, nullable=True, default=0.0)
+    consecutive_failed_login = db.Column(db.Integer, nullable=True)
+    failed_timer = db.Column(db.DateTime, nullable=True)
 
     # Relationship to other tables
     attendances = db.relationship('Attendance', back_populates='employee', lazy=True)
