@@ -1,6 +1,6 @@
 from email.mime.multipart import MIMEMultipart
 from db import db
-from flask import render_template
+from flask import render_template, redirect, url_for
 import os
 from passlib.hash import pbkdf2_sha256
 import smtplib
@@ -66,6 +66,55 @@ def get_all_customer_data():
     else:
         return jsonify(
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+
+@customer_api.post("/customer/<email_address>")
+def verify_email(email_address):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_user_email = Customer.query.filter_by(email_address=email_address).first()
+
+        if query_user_email is None:
+            new_customer = Customer(
+                first_name=request.form.get("first_name"),
+                email=email_address,
+                google_id=request.form.get("google_id"),
+                google_login=True
+            )
+
+            db.session.add(new_customer)
+            db.session.commit()
+
+            new_customer_data = [
+                {
+                    "customer_id": new_customer.customer_id,
+                    "name": new_customer.first_name,
+                    "google_id": new_customer.google_id,
+                    "email": new_customer.email,
+                    "google_login": new_customer.google_login
+                }
+            ]
+
+            return jsonify(success={"message": "Successfully Registered.", "customer_data": new_customer_data}), 201
+
+        customer_data = [
+            {
+                "customer_id": query_user_email.customer_id,
+                "name": query_user_email.first_name,
+                "google_id": query_user_email.google_id,
+                "email": query_user_email.email,
+                "google_login": query_user_email.google_login
+            }
+        ]
+        return jsonify(success={"message": "Successfully Fetch Data", "customer_data": customer_data}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
 # get specific customer data

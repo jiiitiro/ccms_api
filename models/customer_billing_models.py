@@ -7,12 +7,14 @@ class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(250), nullable=False)
     middle_name = db.Column(db.String(250), nullable=True)
-    last_name = db.Column(db.String(250), nullable=False)
+    last_name = db.Column(db.String(250), nullable=True)
     email = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(200), nullable=False)
+    password = db.Column(db.String(200), nullable=True)
     phone = db.Column(db.String(11), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     email_confirm = db.Column(db.Boolean, default=False)
+    google_login = db.Column(db.Boolean)
+    google_id = db.Column(db.String(255))
 
     # Define relationship
     addresses = db.relationship('CustomerAddress', back_populates='customer', lazy=True)
