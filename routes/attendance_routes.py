@@ -42,7 +42,7 @@ def get_attendance():
             existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
                                                              work_date=datetime.now().date()).first()
 
-            log_activity(Attendance, login_id=employee.login_id, logs_description=f"Password incorrect {employee.consecutive_failed_login}")
+            log_activity(Attendance, login_id=employee.employee_id, logs_description=f"Password incorrect {employee.consecutive_failed_login}")
 
             status = None
             if existing_attendance:
@@ -80,6 +80,8 @@ def get_attendance():
 
                 existing_attendance.logout_location = request.form.get("logout_location")
 
+                log_activity(Attendance, login_id=employee.employee_id, logs_description=f"logout")
+
             else:
                 status = "login"
                 # Employee is not logged in, so log them in
@@ -95,6 +97,7 @@ def get_attendance():
                 else:
                     attendance.login_status = "On-Time"
 
+                log_activity(Attendance, login_id=employee.employee_id, logs_description=f"logout")
                 db.session.add(attendance)
 
             db.session.commit()

@@ -72,21 +72,22 @@ def get_all_customer_data():
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
-@customer_api.post("/customer/<email_address>")
-def verify_email(email_address):
+@customer_api.post("/customer/<email>")
+def verify_email(email):
     try:
         api_key_header = request.headers.get("x-api-key")
         if api_key_header != API_KEY:
             return jsonify(
                 error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
-        query_user_email = Customer.query.filter_by(email_address=email_address).first()
+        query_user_email = Customer.query.filter_by(email=email).first()
 
         if query_user_email is None:
             new_customer = Customer(
                 first_name=request.form.get("first_name"),
-                last_name=request.form.get("Last_name"),
-                email=email_address,
+                last_name=request.form.get("last_name"),
+                google_id=request.form.get("google_id"),
+                email=email,
                 google_login=True
             )
 
@@ -99,22 +100,41 @@ def verify_email(email_address):
                     "first_name": new_customer.first_name,
                     "last_name": new_customer.last_name,
                     "email": new_customer.email,
-                    "google_login": new_customer.google_login
+                    "google_login": new_customer.google_login,
+                    "google_id": new_customer.google_id,
+                    "addresses": None
                 }
             ]
 
             return jsonify(success={"message": "Successfully Registered.", "customer_data": new_customer_data}), 201
 
-        customer_data = [
+        addresses = None
+        if query_user_email.addresses:
+            addresses = [
+                {
+                    "address_id": address.address_id,
+                    "houseno_street": address.houseno_street,
+                    "barangay": address.barangay,
+                    "city": address.city,
+                    "region": address.region,
+                    "zipcode": address.zipcode,
+                    "full_address": f"{address.houseno_street}, {address.barangay}, {address.city}, {address.region}, {address.zipcode}"
+                } for address in query_user_email.addresses
+            ]
+
+        user_data = [
             {
                 "customer_id": query_user_email.customer_id,
-                "name": query_user_email.first_name,
-                "google_id": query_user_email.google_id,
+                "first_name": query_user_email.first_name,
+                "last_name": query_user_email.last_name,
                 "email": query_user_email.email,
-                "google_login": query_user_email.google_login
+                "google_login": query_user_email.google_login,
+                "google_id": query_user_email.google_id,
+                "addresses": addresses
             }
         ]
-        return jsonify(success={"message": "Successfully Fetch Data", "customer_data": customer_data}), 200
+
+        return jsonify(success={"message": "Successfully Fetch Data", "customer_data": user_data}), 200
 
     except Exception as e:
         db.session.rollback()
