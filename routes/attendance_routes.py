@@ -2,7 +2,7 @@ import os
 from passlib.hash import pbkdf2_sha256
 from flask import Blueprint, request, jsonify
 from models import Employee, Attendance, Schedule
-from models.activity_logs_models import PayrollAdminActivityLogs
+from models.activity_logs_models import PayrollAdminActivityLogs, AttendanceAdminActivityLogs
 from db import db
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
@@ -40,93 +40,109 @@ def get_attendance():
             return jsonify(error={"message": "Account has been deactivated. Please email as at "
                                              "www.busyhands.cleaningservices2024@gmail.com"}), 401
 
-        if employee and pbkdf2_sha256.verify(request.form.get("password"), employee.password):
-            # Check if employee is already logged in
-            existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
-                                                             work_date=datetime.now().date()).first()
+        if employee.failed_timer is not None:
+            if employee.failed_timer > datetime.now():
+                time_remaining = employee.failed_timer - datetime.now()
+
+                attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.login_id, location=location,
+                                        logs_description=f"Too many failed attempts {employee.consecutive_failed_login}x. ")
+
+                return jsonify(success=False,
+                               message=f"Please try again in {time_remaining.seconds} seconds.")
+
+        if not pbkdf2_sha256.verify(request.form.get("password"), employee.password):
+
+            if employee.consecutive_failed_login is None:
+                employee.consecutive_failed_login = 0
+
+            employee.consecutive_failed_login += 1
 
             if employee.consecutive_failed_login >= 3:
 
-                if employee.consecutive_failed_login is None:
-                    employee.consecutive_failed_login = 0
-
-                employee.consecutive_failed_login += 1
-
                 employee.failed_timer = datetime.now() + timedelta(seconds=30)
 
-                attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
+                attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.employee_id, location=location,
                                         logs_description=f"Password incorrect {employee.consecutive_failed_login}x times.")
 
                 return jsonify(success=False, message=f"Password incorrect {employee.consecutive_failed_login}x, "
                                                       f"please try again in 30secs."), 401
 
-            status = None
-            if existing_attendance:
-                # Employee already has login and logout for today.
-                if existing_attendance.login_time and existing_attendance.logout_time:
-                    return jsonify(error={"message": "Employee is already logged in and out for today."}), 401
+            attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.employee_id, location=location,
+                                    logs_description=f"Password incorrect {employee.consecutive_failed_login}")
 
-                status = "logout"
-                # Employee is already logged in, so log them out
-                existing_attendance.logout_time = datetime.now()
+            return jsonify(
+                error={"message": f"Password incorrect {employee.consecutive_failed_login}x, please try again."}), 401
 
-                # Determine logout_status based on employee's schedule and logout_time
-                schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
-                end_time = datetime.combine(datetime.today(), schedule.end_time)
-                logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
+        employee.consecutive_failed_login = 0
+        employee.failed_timer = None
 
-                if logout_time < end_time:
-                    existing_attendance.logout_status = "Early-Out"
-                else:
-                    existing_attendance.logout_status = "On-Time"
+        # Check if employee is already logged in
+        existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
+                                                         work_date=datetime.now().date()).first()
 
-                # Compute the tardiness based on the difference of Employee's schedule start_time and login_time
-                start_time = datetime.combine(datetime.today(), schedule.start_time)
-                login_time = datetime.combine(datetime.today(), existing_attendance.login_time.time())
-                tardiness_delta = login_time - start_time
+        status = None
+        if existing_attendance:
+            # Employee already has login and logout for today.
+            if existing_attendance.login_time and existing_attendance.logout_time:
+                return jsonify(error={"message": "Employee is already logged in and out for today."}), 401
 
-                existing_attendance.tardiness = max(0, tardiness_delta.total_seconds() // 60)
+            status = "logout"
+            # Employee is already logged in, so log them out
+            existing_attendance.logout_time = datetime.now()
 
-                # Compute the ot_hrs based on the difference of Employee's schedule end_time and logout_time
-                end_time = datetime.combine(datetime.today(), schedule.end_time)
-                logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
-                ot_delta = logout_time - end_time
+            # Determine logout_status based on employee's schedule and logout_time
+            schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
+            end_time = datetime.combine(datetime.today(), schedule.end_time)
+            logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
 
-                existing_attendance.ot_hrs = max(0, (ot_delta.total_seconds() + 59) // 3600)
-
-                existing_attendance.logout_location = request.form.get("location")
-
-                attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
-                                        logs_description="logout")
-
+            if logout_time < end_time:
+                existing_attendance.logout_status = "Early-Out"
             else:
-                status = "login"
-                # Employee is not logged in, so log them in
-                login_time = datetime.now()
-                attendance = Attendance(employee_id=employee.employee_id, work_date=login_time.date(),
-                                        login_time=login_time, login_location=request.form.get("location"))
+                existing_attendance.logout_status = "On-Time"
 
-                # Determine login_status based on employee's schedule and login_time
-                schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
-                start_time = datetime.combine(datetime.today(), schedule.start_time)
-                if login_time > start_time:
-                    attendance.login_status = "Late"
-                else:
-                    attendance.login_status = "On-Time"
+            # Compute the tardiness based on the difference of Employee's schedule start_time and login_time
+            start_time = datetime.combine(datetime.today(), schedule.start_time)
+            login_time = datetime.combine(datetime.today(), existing_attendance.login_time.time())
+            tardiness_delta = login_time - start_time
 
-                attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
-                                        logs_description="logout")
-                db.session.add(attendance)
+            existing_attendance.tardiness = max(0, tardiness_delta.total_seconds() // 60)
 
-            db.session.commit()
+            # Compute the ot_hrs based on the difference of Employee's schedule end_time and logout_time
+            end_time = datetime.combine(datetime.today(), schedule.end_time)
+            logout_time = datetime.combine(datetime.today(), existing_attendance.logout_time.time())
+            ot_delta = logout_time - end_time
 
-            return jsonify(success={"message": f"Hello {employee.first_name}, "
-                                               f"your attendance {status} was successfully saved."}), 200
+            existing_attendance.ot_hrs = max(0, (ot_delta.total_seconds() + 59) // 3600)
 
-        attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
-                                logs_description=f"Password incorrect {employee.consecutive_failed_login}")
+            existing_attendance.logout_location = request.form.get("location")
 
-        return jsonify(error={"message": "Invalid Credentials"}), 401
+            attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.employee_id, location=location,
+                                    logs_description="logout")
+
+        else:
+            status = "login"
+            # Employee is not logged in, so log them in
+            login_time = datetime.now()
+            attendance = Attendance(employee_id=employee.employee_id, work_date=login_time.date(),
+                                    login_time=login_time, login_location=request.form.get("location"))
+
+            # Determine login_status based on employee's schedule and login_time
+            schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
+            start_time = datetime.combine(datetime.today(), schedule.start_time)
+            if login_time > start_time:
+                attendance.login_status = "Late"
+            else:
+                attendance.login_status = "On-Time"
+
+            attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.employee_id, location=location,
+                                    logs_description="logout")
+            db.session.add(attendance)
+
+        db.session.commit()
+
+        return jsonify(success={"message": f"Hello {employee.first_name}, "
+                                           f"your attendance {status} was successfully saved."}), 200
+
     except Exception as e:
         db.session.rollback()
         return jsonify(error={"Message": f"Failed to login. Error: {str(e)}"}), 500
