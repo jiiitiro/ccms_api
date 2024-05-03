@@ -45,6 +45,21 @@ def get_attendance():
             existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
                                                              work_date=datetime.now().date()).first()
 
+            if employee.consecutive_failed_login >= 3:
+
+                if employee.consecutive_failed_login is None:
+                    employee.consecutive_failed_login = 0
+
+                employee.consecutive_failed_login += 1
+
+                employee.failed_timer = datetime.now() + timedelta(seconds=30)
+
+                attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
+                                        logs_description=f"Password incorrect {employee.consecutive_failed_login}x times.")
+
+                return jsonify(success=False, message=f"Password incorrect {employee.consecutive_failed_login}x, "
+                                                      f"please try again in 30secs."), 401
+
             status = None
             if existing_attendance:
                 # Employee already has login and logout for today.
@@ -107,21 +122,6 @@ def get_attendance():
 
             return jsonify(success={"message": f"Hello {employee.first_name}, "
                                                f"your attendance {status} was successfully saved."}), 200
-
-        if employee.consecutive_failed_login >= 3:
-
-            if employee.consecutive_failed_login is None:
-                employee.consecutive_failed_login = 0
-
-            employee.consecutive_failed_login += 1
-
-            employee.failed_timer = datetime.now() + timedelta(seconds=30)
-
-            attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
-                                    logs_description=f"Password incorrect {employee.consecutive_failed_login}x times.")
-
-            return jsonify(success=False, message=f"Password incorrect {employee.consecutive_failed_login}x, "
-                                                  f"please try again in 30secs."), 401
 
         attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
                                 logs_description=f"Password incorrect {employee.consecutive_failed_login}")
