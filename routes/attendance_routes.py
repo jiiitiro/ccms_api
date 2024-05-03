@@ -109,6 +109,12 @@ def get_attendance():
                                                f"your attendance {status} was successfully saved."}), 200
 
         if employee.consecutive_failed_login >= 3:
+
+            if employee.consecutive_failed_login is None:
+                employee.consecutive_failed_login = 0
+
+            employee.consecutive_failed_login += 1
+
             employee.failed_timer = datetime.now() + timedelta(seconds=30)
 
             attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
