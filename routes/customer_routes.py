@@ -62,7 +62,6 @@ def get_all_customer_data():
                 "email_confirm": customer.email_confirm,
                 "addresses": addresses,
                 "google_login": customer.google_login,
-                "google_id": customer.google_id
             }
             customer_data.append(customer_info)
 
@@ -86,8 +85,8 @@ def verify_email(email_address):
         if query_user_email is None:
             new_customer = Customer(
                 first_name=request.form.get("first_name"),
+                last_name=request.form.get("Last_name"),
                 email=email_address,
-                google_id=request.form.get("google_id"),
                 google_login=True
             )
 
@@ -97,8 +96,8 @@ def verify_email(email_address):
             new_customer_data = [
                 {
                     "customer_id": new_customer.customer_id,
-                    "name": new_customer.first_name,
-                    "google_id": new_customer.google_id,
+                    "first_name": new_customer.first_name,
+                    "last_name": new_customer.last_name,
                     "email": new_customer.email,
                     "google_login": new_customer.google_login
                 }
