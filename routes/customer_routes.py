@@ -36,17 +36,20 @@ def get_all_customer_data():
         # Prepare response data
         customer_data = []
         for customer in customers:
-            addresses = [
-                {
-                    "address_id": address.address_id,
-                    "houseno_street": address.houseno_street,
-                    "barangay": address.barangay,
-                    "city": address.city,
-                    "region": address.region,
-                    "zipcode": address.zipcode,
-                    "full_address": f"{address.houseno_street}, {address.barangay}, {address.city}, {address.region}, {address.zipcode}"
-                } for address in customer.addresses
-            ]
+
+            addresses = None
+            if customer.addresses:
+                addresses = [
+                    {
+                        "address_id": address.address_id,
+                        "houseno_street": address.houseno_street,
+                        "barangay": address.barangay,
+                        "city": address.city,
+                        "region": address.region,
+                        "zipcode": address.zipcode,
+                        "full_address": f"{address.houseno_street}, {address.barangay}, {address.city}, {address.region}, {address.zipcode}"
+                    } for address in customer.addresses
+                ]
 
             customer_info = {
                 "customer_id": customer.customer_id,
@@ -57,7 +60,9 @@ def get_all_customer_data():
                 "phone": customer.phone,
                 "is_active": customer.is_active,
                 "email_confirm": customer.email_confirm,
-                "addresses": addresses
+                "addresses": addresses,
+                "google_login": customer.google_login,
+                "google_id": customer.google_id
             }
             customer_data.append(customer_info)
 
