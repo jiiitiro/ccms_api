@@ -6,7 +6,7 @@ from models.activity_logs_models import PayrollAdminActivityLogs
 from db import db
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-from functions import log_activity
+from functions import attendance_log_activity
 
 attendance_api = Blueprint('attendance_api', __name__)
 
@@ -26,6 +26,8 @@ def get_attendance():
     try:
         employee = Employee.query.filter(Employee.email == request.form.get("email")).first()
 
+        location = request.form.get("location")
+
         if not employee:
             return jsonify(error={"message": "Email doesn't exists in the database. "
                                              "Please use a registered email address."}), 400
@@ -42,7 +44,8 @@ def get_attendance():
             existing_attendance = Attendance.query.filter_by(employee_id=employee.employee_id,
                                                              work_date=datetime.now().date()).first()
 
-            log_activity(Attendance, login_id=employee.employee_id, logs_description=f"Password incorrect {employee.consecutive_failed_login}")
+            attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
+                                    logs_description=f"Password incorrect {employee.consecutive_failed_login}")
 
             status = None
             if existing_attendance:
@@ -78,16 +81,17 @@ def get_attendance():
 
                 existing_attendance.ot_hrs = max(0, (ot_delta.total_seconds() + 59) // 3600)
 
-                existing_attendance.logout_location = request.form.get("logout_location")
+                existing_attendance.logout_location = request.form.get("location")
 
-                log_activity(Attendance, login_id=employee.employee_id, logs_description=f"logout")
+                attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
+                                        logs_description="logout")
 
             else:
                 status = "login"
                 # Employee is not logged in, so log them in
                 login_time = datetime.now()
                 attendance = Attendance(employee_id=employee.employee_id, work_date=login_time.date(),
-                                        login_time=login_time, login_location=request.form.get("login_location"))
+                                        login_time=login_time, login_location=request.form.get("location"))
 
                 # Determine login_status based on employee's schedule and login_time
                 schedule = Schedule.query.filter_by(employee_id=employee.employee_id).first()
@@ -97,7 +101,8 @@ def get_attendance():
                 else:
                     attendance.login_status = "On-Time"
 
-                log_activity(Attendance, login_id=employee.employee_id, logs_description=f"logout")
+                attendance_log_activity(Attendance, login_id=employee.employee_id, location=location,
+                                        logs_description="logout")
                 db.session.add(attendance)
 
             db.session.commit()

@@ -62,6 +62,7 @@ class AttendanceAdminActivityLogs(db.Model):
     login_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
     logs_description = db.Column(db.String(255), nullable=False)
     log_date = db.Column(db.DateTime, nullable=False)
+    log_location = db.Column(db.String(255), nullable=True)
 
     # Relationship
     employee = db.relationship("Employee", back_populates="employee_attendance_logs")
