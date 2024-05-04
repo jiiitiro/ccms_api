@@ -75,65 +75,67 @@ def get_all_billing_data():
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
-@booking_api.get("/booking/<int:booking_id>")
-def get_specific_booking(booking_id):
+@booking_api.get("/booking/<int:customer_id>")
+def get_specific_booking(customer_id):
     try:
         api_key_header = request.headers.get("x-api-key")
         if api_key_header != API_KEY:
             return jsonify(
                 error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
-        booking = Booking.query.filter_by(booking_id=booking_id).first()
+        bookings = Booking.query.filter_by(customer_id=customer_id).all()
 
-        if booking is None:
-            return jsonify(error={"message": "Booking id not found."}), 404
+        if bookings is None:
+            return jsonify(error={"message": "Customer id not found."}), 404
 
         booking_data = []
-        booking_dict = {
-            "booking_id": booking.booking_id,
-            "customer_id": booking.customer_id,
-            "customer_name": f"{booking.customer.first_name} {booking.customer.middle_name} "
-                             f"{booking.customer.last_name}",
-            "customer_address": booking.address_id,
-            "customer_phone": booking.customer.phone,
-            "assign_employee": [],
-            "booking_date": booking.booking_date,
-            "time_arrival": booking.time_arrival,
-            "booking_status": booking.booking_status,
-            "property_size": booking.property_size_pricing.property_size,
-            "total_price": booking.total_price,
-            "notes": booking.notes,
-            "service_status": booking.service_status
-        }
-
-        if booking.employee:
-            booking_dict["assign_employee"] = [{
-                "employee_id": employee.employee_id,
-                "employee_name": f"{employee.first_name} {employee.middle_name} "
-                                 f"{employee.last_name}"
-            } for employee in booking.employee]
-
-        # Include service addons if available
-        if booking.service_addons:
-            booking_dict["service_addons"] = [
-                {
-                    "service_addon_id": addon.service_addon_id,
-                    "description": addon.description,
-                    "price": addon.price
-                } for addon in booking.service_addons
-            ]
-
-        # Include service details
-        service = Service.query.get(booking.service_id)
-        if service:
-            booking_dict["service"] = {
-                "service_id": service.service_id,
-                "category": service.category,
-                "description": service.description,
-                "price": service.price
+        for booking in bookings:
+            booking_dict = {
+                "booking_id": booking.booking_id,
+                "customer_id": booking.customer_id,
+                "customer_name": f"{booking.customer.first_name} {booking.customer.middle_name} "
+                                 f"{booking.customer.last_name}",
+                "customer_address": booking.address_id,
+                "customer_phone": booking.customer.phone,
+                "assign_employee": [],
+                "booking_date": booking.booking_date,
+                "time_arrival": booking.time_arrival,
+                "booking_status": booking.booking_status,
+                "property_size": booking.property_size_pricing.property_size,
+                "total_price": booking.total_price,
+                "notes": booking.notes,
+                "service_status": booking.service_status
             }
 
-        booking_data.append(booking_dict)
+            if booking.employee:
+                booking_dict["assign_employee"] = [{
+                    "employee_id": employee.employee_id,
+                    "employee_name": f"{employee.first_name} {employee.middle_name} "
+                                     f"{employee.last_name}"
+                } for employee in booking.employee]
+
+            # Include service addons if available
+            if booking.service_addons:
+                booking_dict["service_addons"] = [
+                    {
+                        "service_addon_id": addon.service_addon_id,
+                        "description": addon.description,
+                        "price": addon.price
+                    } for addon in booking.service_addons
+                ]
+
+            # Include service details
+            service = Service.query.get(booking.service_id)
+
+            if service:
+                booking_dict["service"] = {
+                    "service_id": service.service_id,
+                    "category": service.category,
+                    "description": service.description,
+                    "price": service.price
+                }
+
+            booking_data.append(booking_dict)
 
         return jsonify(success={"booking_data": booking_data}), 200
 

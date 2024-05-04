@@ -3,6 +3,7 @@ from email.mime.application import MIMEApplication
 import os
 from flask import Blueprint, request, jsonify, render_template_string
 from models import Payroll, Employee, Attendance, PayrollDeduction, PayrollContribution
+from models.activity_logs_models import PayrollAdminActivityLogs
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 import calendar
@@ -15,6 +16,7 @@ import asyncio
 import pdfcrowd
 import sys
 import uuid
+from functions import log_activity
 
 payroll_api = Blueprint('payroll_api', __name__)
 
@@ -235,6 +237,9 @@ def add_payroll_contribution():
         db.session.add(new_payroll_contribution_rate)
         db.session.commit()
 
+        log_activity(PayrollAdminActivityLogs, login_id=request.form.get("login_id"),
+                     logs_description="Add payroll contribution rate")
+
         return jsonify(success={"message": "Payroll contribution rate successfully added."}), 201
 
     except Exception as e:
@@ -263,6 +268,9 @@ def update_payroll_contribution_rate(payroll_contribution_id):
         query_data.year = request.form.get("year", query_data.year)
 
         db.session.commit()
+
+        log_activity(PayrollAdminActivityLogs, login_id=request.form.get("login_id"),
+                     logs_description="update payroll contribution rate")
 
         payroll_contribution_rate_data = [
             {
@@ -355,6 +363,9 @@ async def send_payslip():
 
         await asyncio.gather(*tasks)
 
+        log_activity(PayrollAdminActivityLogs, login_id=request.form.get("login_id"),
+                     logs_description=f"Send payslip to all employee from {period_start} to {period_end}")
+
         return jsonify(success={"message": "Payslip sent successfully."}), 200
 
     except Exception as e:
@@ -396,6 +407,10 @@ async def send_payslip_specific_employee(employee_id):
                 send_email(payroll.employee.email, pdf, period_start, period_end, payroll.employee.last_name))
 
         await asyncio.gather(*tasks)
+
+        log_activity(PayrollAdminActivityLogs, login_id=request.form.get("login_id"),
+                     logs_description=f"Send payslip to {query_employee.first_name} {query_employee.last_name} "
+                                      f"from {period_start} to {period_end}")
 
         return jsonify(success={"message": "Payslip sent successfully."}), 200
 
@@ -914,7 +929,6 @@ async def create_pdf(payroll):
     except pdfcrowd.Error as why:
         sys.stderr.write('Pdfcrowd Error: {}\n'.format(why))
         raise
-
 
 
 async def send_email(recipient_email, pdf_bytes, period_start, period_end, last_name):
