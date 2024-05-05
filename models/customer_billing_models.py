@@ -91,7 +91,6 @@ class Service(db.Model):
     description = db.Column(db.String(255), nullable=False)
     category = db.Column(db.String(255), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    add_price_per_floor = db.Column(db.Float, nullable=True)
 
     bookings = db.relationship('Booking', back_populates='services', lazy=True)
     property_size_pricing = db.relationship('PropertySizePricing', back_populates='services', lazy=True)
@@ -103,6 +102,7 @@ class PropertySizePricing(db.Model):
     service_id = db.Column(db.Integer, db.ForeignKey('service_tbl.service_id'), nullable=True)
     property_size = db.Column(db.String(255), nullable=False)
     pricing = db.Column(db.Float, nullable=False)
+    add_price_per_floor = db.Column(db.Float, nullable=True)
 
     services = db.relationship('Service', back_populates="property_size_pricing", lazy=True)
     bookings = db.relationship("Booking", back_populates='property_size_pricing', lazy=True)

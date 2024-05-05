@@ -25,7 +25,8 @@ def add_property_size_pricing():
         new_data = PropertySizePricing(
             service_id=request.form.get("service_id"),
             property_size=request.form.get("property_size"),
-            pricing=float(request.form.get("pricing"))
+            pricing=float(request.form.get("pricing")),
+            add_price_per_floor=float(request.form.get("add_price_per_floor"))
         )
 
         db.session.add(new_data)
@@ -54,6 +55,7 @@ def update_property_size_pricing(property_size_pricing_id):
         query_data.service_id = request.form.get("service_id", query_data.service_id)
         query_data.property_size = request.form.get("property_size", query_data.property_size)
         query_data.pricing = request.form.get("pricing", query_data.pricing)
+        query_data.pricing = request.form.get("")
 
         db.session.commit()
 

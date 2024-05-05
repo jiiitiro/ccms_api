@@ -31,7 +31,6 @@ def get_all_data():
                 "category": data.category,
                 "description": data.description,
                 "price": data.price,
-                "add_price_per_floor": data.add_price_per_floor,
             }
 
             services_data.append(service)
@@ -41,7 +40,8 @@ def get_all_data():
                     "service_id": data.service_id,
                     "property_size_pricing_id": data1.property_size_pricing_id,
                     "property_size": data1.property_size,
-                    "pricing": data1.pricing
+                    "pricing": data1.pricing,
+                    "add_price_per_floor": data1.add_price_per_floor,
                 }
 
                 property_size.append(property1)
@@ -76,12 +76,12 @@ def get_specific_data(service_id):
                 "category": service_data.category,
                 "description": service_data.description,
                 "price": service_data.price,
-                "add_price_per_floor": service_data.add_price_per_floor,
                 "property_sizes": [
                     {
                         "property_size_pricing_id": data.property_size_pricing_id,
                         "property_size": data.property_size,
-                        "pricing": data.pricing
+                        "pricing": data.pricing,
+                        "add_price_per_floor": data.add_price_per_floor,
                     } for data in service_data.property_size_pricing
                 ]
             }
@@ -103,8 +103,7 @@ def add_service():
             new_service = Service(
                 description=request.form.get("description"),
                 category=request.form.get("category"),
-                price=request.form.get("price"),
-                add_price_per_floor=request.form.get("add_price_per_floor")
+                price=request.form.get("price")
             )
 
             db.session.add(new_service)
@@ -115,8 +114,7 @@ def add_service():
                     "service_id": new_service.service_id,
                     "description": new_service.description,
                     "category": new_service.category,
-                    "price": new_service.price,
-                    "add_price_per_floor": new_service.add_price_per_floor
+                    "price": new_service.price
                 }
             ]
 
@@ -161,7 +159,6 @@ def update_service(service_id):
                 'description': request.form.get('description', service_to_update.description),
                 'category': request.form.get('category', service_to_update.category),
                 'price': request.form.get('price', service_to_update.price),
-                'add_price_per_floor': request.form.get('add_price_per_floor', service_to_update.add_price_per_floor)
             }
 
             # Update the service fields
@@ -169,11 +166,9 @@ def update_service(service_id):
                 setattr(service_to_update, key, value)
 
             db.session.commit()
-            logging.info(f"Service updated successfully: {service_to_update}")
 
-            return jsonify(success={"message": "Service data updated successfully."}), 200
+            return jsonify(success={"message": "Service data updated successfully.", "update_data": update_data}), 200
         else:
-            logging.warning(f"Service id {service_id} not found")
             return jsonify(error={"message": "Service id not found"}), 404
 
     except Exception as e:

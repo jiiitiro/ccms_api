@@ -292,11 +292,6 @@ def get_booking_of_specific_customer(customer_id):
             "full_address": f"{booking.address.houseno_street}, {booking.address.barangay}, {booking.address.city}, {booking.address.region}, {booking.address.zipcode}"
         }for booking in query_customer.bookings]
 
-
-
-
-
-
     except Exception as e:
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
