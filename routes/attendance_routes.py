@@ -135,7 +135,7 @@ def get_attendance():
                 attendance.login_status = "On-Time"
 
             attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.employee_id, location=location,
-                                    logs_description="logout")
+                                    logs_description="login")
             db.session.add(attendance)
 
         db.session.commit()
