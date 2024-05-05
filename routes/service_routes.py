@@ -109,14 +109,12 @@ def add_service():
             db.session.add(new_service)
             db.session.commit()
 
-            new_service_dict = [
-                {
-                    "service_id": new_service.service_id,
-                    "description": new_service.description,
-                    "category": new_service.category,
-                    "price": new_service.price
-                }
-            ]
+            new_service_dict = {
+                "service_id": new_service.service_id,
+                "description": new_service.description,
+                "category": new_service.category,
+                "price": new_service.price
+            }
 
             return jsonify(success={"message": "Service successfully added", "service": new_service_dict}), 201
         except Exception as e:
@@ -135,7 +133,7 @@ def delete_data(service_id):
         if service_to_delete:
             db.session.delete(service_to_delete)
             db.session.commit()
-            return jsonify(success={"Success": "Successfully deleted a service."}), 200
+            return jsonify(success={"message": "Successfully deleted a service."}), 200
         else:
             return jsonify(error={"Not Found": "Sorry a data with that id was not found in the database."}), 404
     else:

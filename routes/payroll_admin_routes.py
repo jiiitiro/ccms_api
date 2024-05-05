@@ -246,6 +246,9 @@ def login_admin():
                 "failed_timer": user.failed_timer
             }
 
+            log_activity(PayrollAdminActivityLogs, login_id=user.login_id,
+                         logs_description=f"login")
+
             return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
 
         except Exception as e:
@@ -479,4 +482,24 @@ def user_change_password(login_id):
         return jsonify(
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
+
+@payroll_admin_api.post("/payroll/admin/logout/<int:login_id>")
+def admin_payroll_logout(login_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+        query_data = PayrollAdminLogin.query.filter_by(login_id=login_id).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Login id not found."}), 404
+
+        log_activity(PayrollAdminActivityLogs, login_id=query_data.login_id,
+                     logs_description=f"logout")
+
+        return jsonify(success={"message": "Successfully logout."}), 200
+    except Exception as e:
+        return jsonify(error={"message": f"Failed to update user password. Error: {str(e)}"}), 500
 
