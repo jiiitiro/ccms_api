@@ -92,3 +92,27 @@ def update_property_size_pricing(property_size_pricing_id):
         db.session.rollback()
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
+
+@property_size_pricing_api.delete("/property_size_pricing/delete/<property_size_pricing_id>")
+def delete_property_size(property_size_pricing_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+        query_data = PropertySizePricing.query.filter_by(property_size_pricing_id=property_size_pricing_id).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Property size pricing id not found."}), 403
+
+        db.session.delete(query_data)
+        db.session.commit()
+
+        return jsonify(success={"message": "Successfully deleted."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
