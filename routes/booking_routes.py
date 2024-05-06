@@ -295,3 +295,29 @@ def get_booking_of_specific_customer(customer_id):
     except Exception as e:
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
+
+@booking_api.put("/booking/accomplished/<int:booking_id>")
+def accomplished_booking(booking_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_booking = Booking.query.filter_by(booking_id=booking_id).first()
+
+        if query_booking.billing is None:
+            return jsonify(error={"message": "Booking needs to be paid first"}), 404
+
+        if query_booking is None:
+            return jsonify(error={"message": "Booking id not found."}), 404
+
+        query_booking.service_status = "Accomplished"
+        db.session.commit()
+
+        return jsonify(success=True, message="Booking accomplished successfully."), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+

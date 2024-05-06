@@ -88,7 +88,7 @@ def add_customer_feedback(customer_id):
         if query_invoice_id is None:
             return jsonify(error={"message": "Invoice id not found."}), 404
 
-        if query_invoice_id.service_status.lower() != "accomplished":
+        if query_invoice_id.bookings.service_status.lower() != "accomplished":
             return jsonify(error={"message": "Service must be accomplished first."}), 404
 
         new_customer_feedback = CustomerFeedback(

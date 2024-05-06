@@ -9,6 +9,33 @@ API_KEY = os.environ.get('API_KEY')
 property_size_pricing_api = Blueprint('property_size_pricing_api', __name__)
 
 
+@property_size_pricing_api.get("/property-size-pricing/all")
+def get_all_property_size_data():
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+        query_data = PropertySizePricing.query.all()
+
+        property_size_pricing_data = [
+            {
+                "property_size_pricing_id": data.property_size_pricing_id,
+                "service_id": data.service_id,
+                "service_category": data.services.category,
+                "property_size": data.property_size,
+                "pricing": data.pricing,
+                "add_price_per_floor": data.add_price_per_floor
+            } for data in query_data
+        ]
+
+        return jsonify(success={"property_size_pricing_data":property_size_pricing_data}), 200
+
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
+
 @property_size_pricing_api.post("/property-size-pricing/add")
 def add_property_size_pricing():
     try:
