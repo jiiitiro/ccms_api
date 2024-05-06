@@ -44,7 +44,7 @@ def get_attendance():
             if employee.failed_timer > datetime.now():
                 time_remaining = employee.failed_timer - datetime.now()
 
-                attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.login_id, location=location,
+                attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.employee_id, location=location,
                                         logs_description=f"Too many failed attempts {employee.consecutive_failed_login}x. ")
 
                 return jsonify(success=False,
