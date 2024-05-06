@@ -48,7 +48,7 @@ def get_attendance():
                                         logs_description=f"Too many failed attempts {employee.consecutive_failed_login}x. ")
 
                 return jsonify(success=False,
-                               message=f"Please try again in {time_remaining.seconds} seconds.")
+                               message=f"Please try again in {time_remaining.seconds} seconds."), 401
 
         if not pbkdf2_sha256.verify(request.form.get("password"), employee.password):
 

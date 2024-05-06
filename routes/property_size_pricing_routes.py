@@ -82,7 +82,7 @@ def update_property_size_pricing(property_size_pricing_id):
         query_data.service_id = request.form.get("service_id", query_data.service_id)
         query_data.property_size = request.form.get("property_size", query_data.property_size)
         query_data.pricing = request.form.get("pricing", query_data.pricing)
-        query_data.pricing = request.form.get("")
+        query_data.add_price_per_floor = request.form.get("add_price_per_floor")
 
         db.session.commit()
 
