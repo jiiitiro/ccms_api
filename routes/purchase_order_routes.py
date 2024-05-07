@@ -194,3 +194,46 @@ def delete_purchase_order(purchase_order_id):
     except Exception as e:
         db.session.rollback()
         return jsonify(error={"message": f"An error occurred: {str(e)} "}), 500
+
+
+@purchase_order_api.post("/purchase-order/received/<purchase_order_id>")
+def received_purchase_order(purchase_order_id):
+    try:
+        api_header_key = request.headers.get("x-api-key")
+        if API_KEY != api_header_key:
+            return jsonify(
+                error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
+
+        query_data = PurchaseOrder.query.filter_by(purchase_order_id=purchase_order_id).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Purchase order id not found."}), 404
+
+        # Check if the purchase order is already received
+        if query_data.status == 'Received':
+            return jsonify(error={"message": "Purchase order has already been received."}), 400
+
+        # Update the status of the purchase order to 'Received'
+        query_data.status = 'Received'
+        query_data.received_by = request.form.get('received_by')  # Assuming received_by is sent in the request JSON
+        query_data.received_date = datetime.now()  # Set the received date to the current date and time
+
+        # Update inventory quantities based on purchase order
+        for association in query_data.purchase_order_associations:
+            inventory_item = association.inventory
+
+            # Update available stock in inventory
+            inventory_item.available_stock += association.item_qty
+
+            # Commit the changes to the inventory
+            db.session.commit()
+
+        # Commit changes to the purchase order
+        db.session.commit()
+
+        # Return success response
+        return jsonify(success=True, message="Purchase order received successfully."), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)} "}), 500
