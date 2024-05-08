@@ -2,6 +2,8 @@ import os
 from flask import Blueprint, request, jsonify
 from models import Service, PropertySizePricing
 from db import db
+from models.activity_logs_models import BillingAdminActivityLogs
+from functions import log_activity
 
 # api-key
 API_KEY = os.environ.get('API_KEY')
@@ -59,6 +61,12 @@ def add_property_size_pricing():
         db.session.add(new_data)
         db.session.commit()
 
+        log_activity(
+            BillingAdminActivityLogs,
+            login_id=request.form.get("login_id"),
+            logs_description=f"Add property size pricing with an id of {new_data.property_size_pricing_id}"
+        )
+
         return jsonify(success={"message": "Property size pricing successfully added."}), 201
 
     except Exception as e:
@@ -86,6 +94,12 @@ def update_property_size_pricing(property_size_pricing_id):
 
         db.session.commit()
 
+        log_activity(
+            BillingAdminActivityLogs,
+            login_id=request.form.get("login_id"),
+            logs_description=f"Update property size pricing with an id of {query_data.property_size_pricing_id}"
+        )
+
         return jsonify(success={"message": "Successfully updated the property size pricing data."}), 200
 
     except Exception as e:
@@ -108,6 +122,12 @@ def delete_property_size(property_size_pricing_id):
 
         db.session.delete(query_data)
         db.session.commit()
+
+        log_activity(
+            BillingAdminActivityLogs,
+            login_id=request.form.get("login_id"),
+            logs_description=f"Delete property size pricing with an id of {query_data.property_size_pricing_id}"
+        )
 
         return jsonify(success={"message": "Successfully deleted."}), 200
 

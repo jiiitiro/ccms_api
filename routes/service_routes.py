@@ -100,38 +100,40 @@ def get_specific_data(service_id):
 
 @service_api.post("/service/add")
 def add_service():
-    api_key_header = request.headers.get("x-api-key")
-    if api_key_header == API_KEY:
-        try:
 
-            new_service = Service(
-                description=request.form.get("description"),
-                category=request.form.get("category"),
-                price=request.form.get("price")
-            )
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
-            db.session.add(new_service)
-            db.session.commit()
+        new_service = Service(
+            description=request.form.get("description"),
+            category=request.form.get("category"),
+            price=request.form.get("price")
+        )
 
-            new_service_dict = {
-                "service_id": new_service.service_id,
-                "description": new_service.description,
-                "category": new_service.category,
-                "price": new_service.price
-            }
-            log_activity(
-                BillingAdminActivityLogs, login_id=request.form.get("login_id"),
-                logs_description=f"Add service with an id of {new_service.service_id}",
-                log_date=datetime.now()
-            )
+        db.session.add(new_service)
+        db.session.commit()
 
-            return jsonify(success={"message": "Service successfully added", "service": new_service_dict}), 201
-        except Exception as e:
-            db.session.rollback()
-            return jsonify(error={"Message": f"Failed to add service. Error: {str(e)}"}), 500
-    else:
-        return jsonify(
-            error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+        new_service_dict = {
+            "service_id": new_service.service_id,
+            "description": new_service.description,
+            "category": new_service.category,
+            "price": new_service.price
+        }
+
+        log_activity(
+            BillingAdminActivityLogs,
+            login_id=request.form.get("login_id"),
+            logs_description=f"Add service with an id of {new_service.service_id}"
+        )
+
+        return jsonify(success={"message": "Service successfully added", "service": new_service_dict}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"Message": f"Failed to add service. Error: {str(e)}"}), 500
 
 
 @service_api.delete("/service/delete/<int:service_id>")
@@ -147,8 +149,7 @@ def delete_data(service_id):
 
                 log_activity(
                     BillingAdminActivityLogs, login_id=request.form.get("login_id"),
-                    logs_description=f"Add service with an id of {service_id}",
-                    log_date=datetime.now()
+                    logs_description=f"Delete service with an id of {service_id}"
                 )
 
             except Exception as e:
@@ -189,8 +190,7 @@ def update_service(service_id):
 
             log_activity(
                 BillingAdminActivityLogs, login_id=request.form.get("login_id"),
-                logs_description=f"Update service with an id of {service_id}",
-                log_date=datetime.now()
+                logs_description=f"Update service with an id of {service_id}"
             )
 
             return jsonify(success={"message": "Service data updated successfully.", "update_data": update_data}), 200

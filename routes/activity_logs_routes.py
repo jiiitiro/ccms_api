@@ -143,7 +143,7 @@ def get_all_billing_logs():
         billing_logs_data = [{
             "log_id": log.log_id,
             "login_id": log.login_id,
-            "admin_name": log.payroll_admin.name,
+            "admin_name": log.billing_admin.name,
             "logs_description": log.logs_description,
             "log_date": log.log_date
         } for log in query_attendance_logs]

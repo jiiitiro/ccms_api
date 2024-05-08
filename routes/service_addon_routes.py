@@ -2,6 +2,8 @@ import os
 from flask import Blueprint, request, jsonify
 from models import ServiceAddon
 from db import db
+from functions import log_activity
+from models.activity_logs_models import BillingAdminActivityLogs
 
 service_addon_api = Blueprint("service_addon_api", __name__)
 
@@ -79,6 +81,12 @@ def add_service_addon_data():
         db.session.add(new_service_addon)
         db.session.commit()
 
+        log_activity(
+            BillingAdminActivityLogs,
+            login_id=request.form.get("login_id"),
+            logs_description=f"Add service addon with an id of {new_service_addon.service_addon_id}"
+        )
+
         return jsonify(success={"message": "Service addon successfully added."}), 200
 
     except Exception as e:
@@ -101,6 +109,12 @@ def delete_service_addon(service_addon_id):
 
         db.session.delete(query_data)
         db.session.commit()
+
+        log_activity(
+            BillingAdminActivityLogs,
+            login_id=request.form.get("login_id"),
+            logs_description=f"Delete service addon with an id of {query_data.service_addon_id}"
+        )
 
         return jsonify(success={"message": "Service addon data successfully deleted."}), 200
 
@@ -132,6 +146,12 @@ def update_service_addon(service_addon_id):
             setattr(service_addon_to_update, key, value)
 
         db.session.commit()
+
+        log_activity(
+            BillingAdminActivityLogs,
+            login_id=request.form.get("login_id"),
+            logs_description=f"Update service addon with an id of {service_addon_to_update.service_addon_id}"
+        )
 
         service_addon_dict = {
             "description": service_addon_to_update.description,
