@@ -1,8 +1,11 @@
 import os
 from flask import Blueprint, request, jsonify
 from models import Service, ServiceAddon
+from models.activity_logs_models import BillingAdminActivityLogs
 from db import db
 import logging
+from functions import log_activity
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 
@@ -85,6 +88,7 @@ def get_specific_data(service_id):
                     } for data in service_data.property_size_pricing
                 ]
             }
+
             response = jsonify({"service_data": service_dict})
             return response, 200
         else:
@@ -115,6 +119,11 @@ def add_service():
                 "category": new_service.category,
                 "price": new_service.price
             }
+            log_activity(
+                BillingAdminActivityLogs, login_id=request.form.get("login_id"),
+                logs_description=f"Add service with an id of {new_service.service_id}",
+                log_date=datetime.now()
+            )
 
             return jsonify(success={"message": "Service successfully added", "service": new_service_dict}), 201
         except Exception as e:
@@ -131,8 +140,21 @@ def delete_data(service_id):
     if api_key_header == API_KEY:
         service_to_delete = Service.query.filter_by(service_id=service_id).first()
         if service_to_delete:
-            db.session.delete(service_to_delete)
-            db.session.commit()
+
+            try:
+                db.session.delete(service_to_delete)
+                db.session.commit()
+
+                log_activity(
+                    BillingAdminActivityLogs, login_id=request.form.get("login_id"),
+                    logs_description=f"Add service with an id of {service_id}",
+                    log_date=datetime.now()
+                )
+
+            except Exception as e:
+                db.session.rollback()
+                return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
+
             return jsonify(success={"message": "Successfully deleted a service."}), 200
         else:
             return jsonify(error={"Not Found": "Sorry a data with that id was not found in the database."}), 404
@@ -164,6 +186,12 @@ def update_service(service_id):
                 setattr(service_to_update, key, value)
 
             db.session.commit()
+
+            log_activity(
+                BillingAdminActivityLogs, login_id=request.form.get("login_id"),
+                logs_description=f"Update service with an id of {service_id}",
+                log_date=datetime.now()
+            )
 
             return jsonify(success={"message": "Service data updated successfully.", "update_data": update_data}), 200
         else:
