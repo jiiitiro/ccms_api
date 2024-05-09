@@ -25,7 +25,87 @@
 <!--                        <li><hr class="dropdown-divider" /></li>-->
                         <li>
                             <a class="dropdown-item" href="#" onclick="confirmLogout()">Logout</a>
+                            <a class="dropdown-item" href="#" onclick="changePassword()">Change Password</a>
                         </li>
+
+                        <script>
+                            function togglePasswordVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function changePassword() {
+        Swal.fire({
+            title: 'Change Password',
+            html:
+                '<input id="oldPassword" class="swal2-input" placeholder="Old Password" type="password">' +
+                '<input id="newPassword" class="swal2-input" placeholder="New Password" type="password">' +
+                '<input id="confirmPassword" class="swal2-input" placeholder="Confirm Password" type="password">' +
+                '<input id="showPassword" type="checkbox" onclick="togglePasswordVisibility(\'oldPassword\');togglePasswordVisibility(\'newPassword\');togglePasswordVisibility(\'confirmPassword\');"><label for="showPassword"> Show Password</label>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Change Password',
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+                const oldPassword = Swal.getPopup().querySelector('#oldPassword').value;
+                const newPassword = Swal.getPopup().querySelector('#newPassword').value;
+                const confirmPassword = Swal.getPopup().querySelector('#confirmPassword').value;
+
+                // Simple validation
+                if (!oldPassword || !newPassword || !confirmPassword) {
+                    Swal.showValidationMessage('Please fill in all fields!');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    Swal.showValidationMessage('New password and confirm password do not match!');
+                    return;
+                }
+
+                // Password complexity validation
+                if (!/^(?=.*[a-zA-Z])(?=.*\d).{8,}$/.test(newPassword)) {
+                    Swal.showValidationMessage('New password must be alphanumeric and have at least 8 characters!');
+                    return;
+                }
+
+                // Submit the form
+                return fetch('/superadmin/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `old_password=${encodeURIComponent(oldPassword)}&new_password=${encodeURIComponent(newPassword)}`,
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Incorrect old password');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Password changed successfully!',
+                        });
+                    } else {
+                        throw new Error(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: error.message || 'An error occurred. Please try again later.',
+                    });
+                });
+            }
+        });
+    }
+                        </script>
+
                         <!-- Theme Toggle Button -->
 
                         <script>

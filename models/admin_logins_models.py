@@ -12,6 +12,8 @@ class BillingAdminLogin(db.Model):
     role = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=False)
     email_confirm = db.Column(db.Boolean, default=False)
+    consecutive_failed_login = db.Column(db.Integer, nullable=True)
+    failed_timer = db.Column(db.DateTime, nullable=True)
 
     billing_admin_activity_logs = db.relationship("BillingAdminActivityLogs", back_populates="billing_admin")
 

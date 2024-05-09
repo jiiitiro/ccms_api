@@ -1,0 +1,57 @@
+{% from "bootstrap5/form.html" import render_form %} {% block content %}
+{% include "header.html" %}
+{% include "nav_bar.html" %}
+{% include "side_nav_bar.html" %}
+
+            <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid px-4">
+                        <h1 class="mt-4">Superadmin - Activity Logs</h1>
+                        <ol class="breadcrumb mb-4">
+                            <li class="breadcrumb-item"><a href="{{ url_for('superadmin_api.dashboard_superadmin') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Superadmin</li>
+                        </ol>
+                        <hr>
+                        <br>
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-table me-1"></i>
+                                Activity Logs - Superadmin
+                            </div>
+                            <div class="card-body">
+                                <table id="datatablesSimple">
+                                    <thead>
+                                        <tr>
+                                            <th>Log ID</th>
+                                            <th>Log Name</th>
+                                            <th>Log Description</th>
+                                            <th>Log Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tfoot>
+                                        <tr>
+                                            <th>Log ID</th>
+                                            <th>Log Name</th>
+                                            <th>Log Description</th>
+                                            <th>Log Date</th>
+                                        </tr>
+                                    </tfoot>
+                                    <tbody>
+                                        {% for entry in result %}
+                                            <tr>
+                                                <td>{{ entry.log_id }}</td>
+                                                <td>{{ entry.admin_name }}</td>
+                                                <td>{{ entry.logs_description }}</td>
+                                                <td>{{ entry.log_date }}</td>
+                                            </tr>
+
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+
+{% include "footer.html" %} {% endblock %}

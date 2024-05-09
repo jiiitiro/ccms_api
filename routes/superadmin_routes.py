@@ -6,7 +6,8 @@ from passlib.handlers.pbkdf2 import pbkdf2_sha256
 from flask import flash, request, session
 from models import CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
 from models.admin_logins_models import SuperadminLogin
-from models.activity_logs_models import SuperadminActivityLogs
+from models.activity_logs_models import SuperadminActivityLogs, BillingAdminActivityLogs, PayrollAdminActivityLogs, \
+    CustomerAdminActivityLogs, EmployeeAdminActivityLogs
 from forms import SuperadminLoginForm, ForgotPasswordForm, ChangePasswordForm, RegistrationForm
 import smtplib
 from email.mime.text import MIMEText
@@ -1169,3 +1170,130 @@ def delete_billing_admin_account(login_id):
         return jsonify(success=True, message="Successfully deleted the billing admin account.")
     else:
         return jsonify(success=False, message="billing admin account not found."), 404
+
+
+@superadmin_api.get("/superadmin/billing/activity-logs")
+@login_required
+def billing_activity_logs():
+    activity_logs = BillingAdminActivityLogs.query.all()
+
+    billing_logs_data = [{
+        "log_id": log.log_id,
+        "admin_name": log.billing_admin.name,
+        "logs_description": log.logs_description,
+        "log_date": log.log_date
+    } for log in activity_logs]
+
+    return render_template("billing_activity_logs.html", result=billing_logs_data)
+
+
+@superadmin_api.get("/superadmin/payroll/activity-logs")
+@login_required
+def payroll_activity_logs():
+    activity_logs = PayrollAdminActivityLogs.query.all()
+
+    payroll_logs_data = [{
+        "log_id": log.log_id,
+        "admin_name": log.payroll_admin.name,
+        "logs_description": log.logs_description,
+        "log_date": log.log_date
+    } for log in activity_logs]
+
+    return render_template("payroll_activity_logs.html", result=payroll_logs_data)
+
+
+@superadmin_api.get("/superadmin/customer/activity-logs")
+@login_required
+def customer_activity_logs():
+    activity_logs = CustomerAdminActivityLogs.query.all()
+
+    customer_logs_data = [{
+        "log_id": log.log_id,
+        "admin_name": log.customer_admin.name,
+        "logs_description": log.logs_description,
+        "log_date": log.log_date
+    } for log in activity_logs]
+
+    return render_template("customer_activity_logs.html", result=customer_logs_data)
+
+
+@superadmin_api.get("/superadmin/employee/activity-logs")
+@login_required
+def employee_activity_logs():
+    activity_logs = EmployeeAdminActivityLogs.query.all()
+
+    employee_logs_data = [{
+        "log_id": log.log_id,
+        "admin_name": log.employee_admin.name,
+        "logs_description": log.logs_description,
+        "log_date": log.log_date
+    } for log in activity_logs]
+
+    return render_template("employee_activity_logs.html", result=employee_logs_data)
+
+
+@superadmin_api.get("/superadmin/inventory/activity-logs")
+@login_required
+def inventory_activity_logs():
+    activity_logs = EmployeeAdminActivityLogs.query.all()
+
+    inventory_logs_data = [{
+        "log_id": log.log_id,
+        "admin_name": log.inventory_admin.name,
+        "logs_description": log.logs_description,
+        "log_date": log.log_date
+    } for log in activity_logs]
+
+    return render_template("inventory_activity_logs.html", result=inventory_logs_data)
+
+
+@superadmin_api.get("/superadmin/activity-logs")
+@login_required
+def superadmin_activity_logs():
+    activity_logs = SuperadminActivityLogs.query.all()
+
+    superadmin_logs_data = [{
+        "log_id": log.log_id,
+        "admin_name": log.superadmin.name,
+        "logs_description": log.logs_description,
+        "log_date": log.log_date
+    } for log in activity_logs]
+
+    return render_template("superadmin_activity_logs.html", result=superadmin_logs_data)
+
+
+@superadmin_api.post("/superadmin/change-password")
+@login_required
+def superadmin_change_password():
+    try:
+        login_id = session.get("login_id")
+
+        query_data = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if query_data is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        old_password = request.form.get("old_password")
+        if old_password and not pbkdf2_sha256.verify(old_password, query_data.password):
+            return jsonify(success=False, message="Incorrect old password."), 400
+
+        new_password = request.form.get("new_password")
+        if new_password:
+            query_data.password = pbkdf2_sha256.hash(new_password)
+
+        db.session.commit()
+
+        return jsonify(success=True, message="Successfully update your password")
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=f"An error occurred: {str(e)}"), 500
+
+
+
+
+
+
+
+
+

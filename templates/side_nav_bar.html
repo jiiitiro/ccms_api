@@ -8,80 +8,113 @@
                                 <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                                 Dashboard
                             </a>
-                            <div class="sb-sidenav-menu-heading">User Management</div>
-<!--                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">-->
-<!--                                <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>-->
-<!--                                Layouts-->
-<!--                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>-->
-<!--                            </a>-->
-<!--                            <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">-->
-<!--                                <nav class="sb-sidenav-menu-nested nav">-->
-<!--                                    <a class="nav-link" href="layout-static.html">Static Navigation</a>-->
-<!--                                    <a class="nav-link" href="layout-sidenav-light.html">Light Sidenav</a>-->
-<!--                                </nav>-->
-<!--                            </div>-->
-<!--                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">-->
-<!--                                <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>-->
-<!--                                Pages-->
-<!--                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>-->
-<!--                            </a>-->
-<!--                            <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">-->
-<!--                                <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">-->
-<!--                                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseAuth" aria-expanded="false" aria-controls="pagesCollapseAuth">-->
-<!--                                        Authentication-->
-<!--                                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>-->
-<!--                                    </a>-->
-<!--                                    <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">-->
-<!--                                        <nav class="sb-sidenav-menu-nested nav">-->
-<!--                                            <a class="nav-link" href="login.html">Login</a>-->
-<!--                                            <a class="nav-link" href="register.html">Register</a>-->
-<!--                                            <a class="nav-link" href="password.html">Forgot Password</a>-->
-<!--                                        </nav>-->
-<!--                                    </div>-->
-<!--                                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseError" aria-expanded="false" aria-controls="pagesCollapseError">-->
-<!--                                        Error-->
-<!--                                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>-->
-<!--                                    </a>-->
-<!--                                    <div class="collapse" id="pagesCollapseError" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">-->
-<!--                                        <nav class="sb-sidenav-menu-nested nav">-->
-<!--                                            <a class="nav-link" href="401.html">401 Page</a>-->
-<!--                                            <a class="nav-link" href="404.html">404 Page</a>-->
-<!--                                            <a class="nav-link" href="500.html">500 Page</a>-->
-<!--                                        </nav>-->
-<!--                                    </div>-->
-<!--                                </nav>-->
-<!--                            </div>-->
-<!--                            <div class="sb-sidenav-menu-heading">Addons</div>-->
-<!--                            <a class="nav-link" href="charts.html">-->
-<!--                                <div class="sb-nav-link-icon"><i class="fas fa-chart-area"></i></div>-->
-<!--                                Charts-->
-<!--                            </a>-->
                             <a class="nav-link" href="{{ url_for('superadmin_api.user_registration') }}">
                                 <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
                                 User Registration
                             </a>
-                            <a class="nav-link" href="{{ url_for('superadmin_api.billing_superadmin') }}">
-                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                                Billing Subsystem
+                            <div class="sb-sidenav-menu-heading">User Management</div>
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts" onclick="handleCollapse()">
+                                    <div class="sb-nav-link-icon"><i class="fa-solid fa-bars-progress"></i></div>
+                                    Subsystems
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <script>
+                                    function handleCollapse() {
+                                        var collapseLayouts = document.getElementById('collapseLayouts');
+                                        var isCollapsed = collapseLayouts.classList.contains('show');
+                                        localStorage.setItem('isCollapsed', isCollapsed ? 'true' : 'false');
+                                    }
+
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var isCollapsed = localStorage.getItem('isCollapsed');
+                                        var collapseLayouts = document.getElementById('collapseLayouts');
+                                        if (isCollapsed === 'true') {
+                                            collapseLayouts.classList.remove('show');
+                                        } else {
+                                            collapseLayouts.classList.add('show');
+                                        }
+                                    });
+                                </script>
+                                <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav">
+                                        <a class="nav-link" href="{{ url_for('superadmin_api.billing_superadmin') }}">
+    <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                            Billing Subsystem
+                                        </a>
+                                        <a class="nav-link" href="{{ url_for('superadmin_api.customer_superadmin') }}">
+            <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                            Customer Subsystem
+                                        </a>
+                                         <a class="nav-link" href="{{ url_for('superadmin_api.employee_superadmin') }}">
+            <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                            Employee Subsystem
+                                        </a>
+                                         <a class="nav-link" href="{{ url_for('superadmin_api.inventory_superadmin') }}">
+            <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                            Inventory Subsystem
+                                        </a>
+                                         <a class="nav-link" href="{{ url_for('superadmin_api.payroll_superadmin') }}">
+            <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                            Payroll Subsystem
+                                        </a>
+                                    </nav>
+                                </div>
+
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseActivityLogs" aria-expanded="false" aria-controls="collapseActivityLogs" onclick="handleActivityLogsCollapse()">
+                                <div class="sb-nav-link-icon"><i class="fa-solid fa-book"></i></div>
+                                Activity Logs
+                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                             </a>
-                            <a class="nav-link" href="{{ url_for('superadmin_api.customer_superadmin') }}">
-                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                                Customer Subsystem
-                            </a>
-                             <a class="nav-link" href="{{ url_for('superadmin_api.employee_superadmin') }}">
-                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                                Employee Subsystem
-                            </a>
-                             <a class="nav-link" href="{{ url_for('superadmin_api.inventory_superadmin') }}">
-                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                                Inventory Subsystem
-                            </a>
-                             <a class="nav-link" href="{{ url_for('superadmin_api.payroll_superadmin') }}">
-                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                                Payroll Subsystem
-                            </a>
+
+                            <script>
+                                function handleActivityLogsCollapse() {
+                                    var collapseActivityLogs = document.getElementById('collapseActivityLogs');
+                                    var isCollapsed = collapseActivityLogs.classList.contains('show');
+                                    localStorage.setItem('isActivityLogsCollapsed', isCollapsed ? 'true' : 'false');
+                                }
+
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    var isActivityLogsCollapsed = localStorage.getItem('isActivityLogsCollapsed');
+                                    var collapseActivityLogs = document.getElementById('collapseActivityLogs');
+                                    if (isActivityLogsCollapsed === 'true') {
+                                        collapseActivityLogs.classList.remove('show');
+                                    } else {
+                                        collapseActivityLogs.classList.add('show');
+                                    }
+                                });
+                            </script>
+                            <div class="collapse" id="collapseActivityLogs" aria-labelledby="headingActivityLogs" data-bs-parent="#sidenavAccordion">
+                                <nav class="sb-sidenav-menu-nested nav">
+                                    <a class="nav-link" href="{{ url_for('superadmin_api.billing_activity_logs') }}">
+<!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                        Billing Subsystem
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('superadmin_api.customer_activity_logs') }}">
+        <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                        Customer Subsystem
+                                    </a>
+                                     <a class="nav-link" href="{{ url_for('superadmin_api.employee_activity_logs') }}">
+        <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                        Employee Subsystem
+                                    </a>
+                                     <a class="nav-link" href="{{ url_for('superadmin_api.inventory_activity_logs') }}">
+        <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                        Inventory Subsystem
+                                    </a>
+                                     <a class="nav-link" href="{{ url_for('superadmin_api.payroll_activity_logs') }}">
+        <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                        Payroll Subsystem
+                                    </a>
+                                    <a class="nav-link" href="{{ url_for('superadmin_api.superadmin_activity_logs') }}">
+        <!--                                <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>-->
+                                        Superadmin
+                                    </a>
+                                </nav>
+                            </div>
+
+
+                            </div>
                         </div>
-                    </div>
 <!--                    <div class="sb-sidenav-footer">-->
 <!--                        <div class="small">Logged in as:</div>-->
 <!--                        Start Bootstrap-->

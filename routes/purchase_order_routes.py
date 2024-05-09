@@ -144,7 +144,6 @@ def add_purchase_order():
             )
             new_purchase_order.purchase_order_associations.append(new_association)
 
-
         db.session.add(new_purchase_order)
         db.session.commit()
 
