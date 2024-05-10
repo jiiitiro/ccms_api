@@ -19,7 +19,8 @@
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
                                 <script>
-                                    function handleCollapse() {
+                                    <!--
+                                        function handleCollapse() {
                                         var collapseLayouts = document.getElementById('collapseLayouts');
                                         var isCollapsed = collapseLayouts.classList.contains('show');
                                         localStorage.setItem('isCollapsed', isCollapsed ? 'true' : 'false');
@@ -33,7 +34,8 @@
                                         } else {
                                             collapseLayouts.classList.add('show');
                                         }
-                                    });
+                                    });-->
+
                                 </script>
                                 <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav">
@@ -60,28 +62,15 @@
                                     </nav>
                                 </div>
 
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseActivityLogs" aria-expanded="false" aria-controls="collapseActivityLogs" onclick="handleActivityLogsCollapse()">
-                                <div class="sb-nav-link-icon"><i class="fa-solid fa-book"></i></div>
-                                Activity Logs
-                                <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                            </a>
+                         <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseActivityLogs" aria-expanded="false" aria-controls="collapseActivityLogs" onclick="handleActivityLogsCollapse()">
+                             <div class="sb-nav-link-icon"><i class="fa-solid fa-book"></i></div>
+                                  Activity Logs
+                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                         </a>
 
                             <script>
-                                function handleActivityLogsCollapse() {
-                                    var collapseActivityLogs = document.getElementById('collapseActivityLogs');
-                                    var isCollapsed = collapseActivityLogs.classList.contains('show');
-                                    localStorage.setItem('isActivityLogsCollapsed', isCollapsed ? 'true' : 'false');
-                                }
 
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    var isActivityLogsCollapsed = localStorage.getItem('isActivityLogsCollapsed');
-                                    var collapseActivityLogs = document.getElementById('collapseActivityLogs');
-                                    if (isActivityLogsCollapsed === 'true') {
-                                        collapseActivityLogs.classList.remove('show');
-                                    } else {
-                                        collapseActivityLogs.classList.add('show');
-                                    }
-                                });
+
                             </script>
                             <div class="collapse" id="collapseActivityLogs" aria-labelledby="headingActivityLogs" data-bs-parent="#sidenavAccordion">
                                 <nav class="sb-sidenav-menu-nested nav">

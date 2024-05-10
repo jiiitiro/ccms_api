@@ -9,6 +9,9 @@ from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
 import smtplib
 from passlib.hash import pbkdf2_sha256
+from models.activity_logs_models import InventoryAdminActivityLogs
+from functions import log_activity, send_email_notification
+from datetime import datetime, timedelta
 
 
 inventory_admin_api = Blueprint('inventory_admin_api', __name__)
@@ -173,21 +176,64 @@ def login_admin():
                 return jsonify(error={"message": "Account has been deactivated. Please email as at "
                                                  "www.busyhands_cleaningservices@gmail.com"}), 401
 
-            if user and pbkdf2_sha256.verify(request.form.get("password"), user.password):
-                # access_token = create_access_token(identity=customer.customer_id)
-                # return {"access_token": access_token}
-                login_data_dict = {
-                    "login_id": user.login_id,
-                    "name": user.name,
-                    "email": user.email,
-                    "role": user.role,
-                    "is_active": user.is_active,
-                    "email_confirm": user.email_confirm,
-                }
+            if user.failed_timer is not None:
+                if user.failed_timer > datetime.now():
+                    time_remaining = user.failed_timer - datetime.now()
 
-                return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
+                    log_activity(InventoryAdminActivityLogs, login_id=user.login_id,
+                                 logs_description=f"Too many failed attempts {user.consecutive_failed_login}x. ")
 
-            return jsonify(error={"message": "Invalid credentials."}), 401
+                    return jsonify(success=False,
+                                   message=f"Please try again in {time_remaining.seconds} seconds.")
+
+            if not pbkdf2_sha256.verify(request.form.get("password"), user.password):
+
+                if user.consecutive_failed_login is None:
+                    user.consecutive_failed_login = 0
+
+                user.consecutive_failed_login += 1
+
+                if user.consecutive_failed_login >= 3:
+                    user.failed_timer = datetime.now() + timedelta(seconds=30)
+
+                    log_activity(InventoryAdminActivityLogs, login_id=user.login_id,
+                                 logs_description=f"Password incorrect {user.consecutive_failed_login}x times.")
+
+                    send_email_notification(user.email, user.name)
+
+                    return jsonify(success=False, message=f"Password incorrect {user.consecutive_failed_login}x, "
+                                                          f"please try again in 30secs."), 401
+
+                log_activity(InventoryAdminActivityLogs, login_id=user.login_id,
+                             logs_description=f"Password incorrect {user.consecutive_failed_login}")
+
+                return jsonify(
+                    error={
+                        "message": f"Password incorrect {user.consecutive_failed_login}x, please try again."}), 401
+
+            user.consecutive_failed_login = None
+            user.failed_timer = None
+
+            db.session.commit()
+            # access_token = create_access_token(identity=customer.customer_id)
+            # return {"access_token": access_token}
+            login_data_dict = {
+                "login_id": user.login_id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+                "is_active": user.is_active,
+                "email_confirm": user.email_confirm,
+                "consecutive_failed_login": user.consecutive_failed_login,
+                "failed_timer": user.failed_timer
+            }
+
+            log_activity(InventoryAdminActivityLogs, login_id=user.login_id,
+                         logs_description=f"login")
+
+            return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
+
+
         except Exception as e:
             db.session.rollback()
             return jsonify(error={"Message": f"Failed to login. Error: {str(e)}"}), 500

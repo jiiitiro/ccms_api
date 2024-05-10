@@ -9,7 +9,7 @@ from itsdangerous import SignatureExpired
 import smtplib
 from passlib.hash import pbkdf2_sha256
 from db import db
-from functions import log_activity
+from functions import log_activity, send_email_notification
 from models.activity_logs_models import EmployeeAdminActivityLogs
 from datetime import datetime, timedelta
 
@@ -196,6 +196,9 @@ def login_admin():
 
                     log_activity(EmployeeAdminActivityLogs, login_id=user.login_id,
                                  logs_description=f"Password incorrect {user.consecutive_failed_login}x times.")
+
+                    send_email_notification(user.email, user.name)
+
 
                     return jsonify(success=False, message=f"Password incorrect {user.consecutive_failed_login}x, "
                                                           f"please try again in 30secs."), 401

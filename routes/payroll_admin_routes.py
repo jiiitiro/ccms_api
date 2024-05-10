@@ -10,7 +10,7 @@ from itsdangerous import URLSafeTimedSerializer
 from itsdangerous import SignatureExpired
 import smtplib
 from passlib.hash import pbkdf2_sha256
-from functions import log_activity
+from functions import log_activity, send_email_notification
 from datetime import datetime, timedelta
 
 payroll_admin_api = Blueprint('payroll_admin_api', __name__)
@@ -219,6 +219,8 @@ def login_admin():
 
                     log_activity(PayrollAdminActivityLogs, login_id=user.login_id,
                                  logs_description=f"Password incorrect {user.consecutive_failed_login}x times.")
+
+                    send_email_notification(user.email, user.name)
 
                     return jsonify(success=False, message=f"Password incorrect {user.consecutive_failed_login}x, "
                                                           f"please try again in 30secs."), 401

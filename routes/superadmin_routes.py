@@ -7,7 +7,8 @@ from flask import flash, request, session
 from models import CustomerAdminLogin, BillingAdminLogin, EmployeeAdminLogin, InventoryAdminLogin, PayrollAdminLogin
 from models.admin_logins_models import SuperadminLogin
 from models.activity_logs_models import SuperadminActivityLogs, BillingAdminActivityLogs, PayrollAdminActivityLogs, \
-    CustomerAdminActivityLogs, EmployeeAdminActivityLogs
+    CustomerAdminActivityLogs, EmployeeAdminActivityLogs, EmployeeActivityLogs, InventoryAdminActivityLogs, \
+    AttendanceAdminActivityLogs
 from forms import SuperadminLoginForm, ForgotPasswordForm, ChangePasswordForm, RegistrationForm
 import smtplib
 from email.mime.text import MIMEText
@@ -19,7 +20,7 @@ import random
 import string
 from datetime import datetime, timedelta
 from functools import wraps
-from functions import log_activity
+from functions import log_activity, send_email_notification
 
 superadmin_api = Blueprint('superadmin_api', __name__)
 login_manager = LoginManager()
@@ -596,6 +597,7 @@ def register_superadmin():
             error={"Not Authorised": "Sorry, that's not allowed. Make sure you have the correct api_key."}), 403
 
 
+
 @superadmin_api.route("/superadmin/login", methods=["GET", "POST"])
 def superadmin_login():
     form = SuperadminLoginForm()
@@ -632,6 +634,8 @@ def superadmin_login():
 
                     log_activity(SuperadminActivityLogs, login_id=user.login_id,
                                  logs_description=f"Password incorrect {user.consecutive_failed_login}x times.")
+
+                    send_email_notification(user.email, user.name)
 
                     return jsonify(success=False, message=f"Password incorrect {user.consecutive_failed_login}x, "
                                                           f"please try again in 30secs.")
@@ -1588,6 +1592,33 @@ def superadmin_change_password():
         return jsonify(success=False, message=f"An error occurred: {str(e)}"), 500
 
 
+@superadmin_api.post("/superadmin/delete-all-activity-logs")
+def delete_all_activity_logs():
+    try:
+        # List of all activity logs table classes
+        activity_log_tables = [
+            CustomerAdminActivityLogs,
+            BillingAdminActivityLogs,
+            EmployeeAdminActivityLogs,
+            EmployeeActivityLogs,
+            InventoryAdminActivityLogs,
+            PayrollAdminActivityLogs,
+            AttendanceAdminActivityLogs,
+            SuperadminActivityLogs
+        ]
+
+        # Delete all records from each activity logs table
+        for table in activity_log_tables:
+            table.query.delete()
+
+        # Commit the transaction
+        db.session.commit()
+
+        return jsonify(success={"message": "All activity logs successfully deleted."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 
 
 
