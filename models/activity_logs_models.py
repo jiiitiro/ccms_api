@@ -34,6 +34,17 @@ class EmployeeAdminActivityLogs(db.Model):
     employee_admin = db.relationship("EmployeeAdminLogin", back_populates="employee_admin_activity_logs")
 
 
+class EmployeeActivityLogs(db.Model):
+    __tablename__ = "employee_activity_logs_tbl"
+    log_id = db.Column(db.Integer, primary_key=True)
+    login_id = db.Column(db.Integer, db.ForeignKey('employee_tbl.employee_id'))
+    logs_description = db.Column(db.String(255), nullable=False)
+    log_date = db.Column(db.DateTime, nullable=False)
+
+    # Relationship
+    employee = db.relationship("Employee", back_populates="employee_activity_logs")
+
+
 class InventoryAdminActivityLogs(db.Model):
     __tablename__ = "inventory_admin_activity_logs_tbl"
     log_id = db.Column(db.Integer, primary_key=True)

@@ -29,7 +29,7 @@ class Employee(db.Model):
     payrolls = db.relationship('Payroll', back_populates='employee', lazy=True)
     employee_request_order = db.relationship("EmployeeRequestOrder", back_populates='employee', lazy=True)
     employee_attendance_logs = db.relationship("AttendanceAdminActivityLogs", back_populates='employee', lazy=True)
-
+    employee_activity_logs = db.relationship("EmployeeActivityLogs", back_populates="employee")
 
 # Define the Schedule class
 class Schedule(db.Model):

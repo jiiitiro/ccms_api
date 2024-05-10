@@ -210,8 +210,21 @@ def activate_customer_account(login_id):
     admin_user = CustomerAdminLogin.query.get(login_id)
 
     if admin_user:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = True
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Activate admin account for customer subsystem with an id of {admin_user.login_id}")
 
     return redirect(url_for("superadmin_api.customer_superadmin"))
 
@@ -222,8 +235,20 @@ def deactivate_customer_account(login_id):
     admin_user = CustomerAdminLogin.query.get(login_id)
 
     if admin_user:
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = False
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Deactivate admin account for customer subsystem with an id of {admin_user.login_id}")
 
     return redirect(url_for("superadmin_api.customer_superadmin"))
 
@@ -301,9 +326,20 @@ def activate_billing_admin(login_id):
         user_ = BillingAdminLogin.query.filter_by(login_id=login_id).first()
 
         if user_:
-            # Update the email_confirm status to True
+            login_id = session.get("login_id")
+            if login_id is None:
+                return jsonify(success=False, message="Login id not found."), 404
+
+            user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             user_.is_active = True
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Activate admin account for billing subsystem with an id of {user_.login_id}")
 
             return jsonify(success={"Message": f" The email {user_.email} is activated successfully."})
         else:
@@ -321,9 +357,20 @@ def deactivate_billing_admin(login_id):
         user_ = BillingAdminLogin.query.filter_by(login_id=login_id).first()
 
         if user_:
-            # Update the email_confirm status to True
+            login_id = session.get("login_id")
+            if login_id is None:
+                return jsonify(success=False, message="Login id not found."), 404
+
+            user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             user_.is_active = False
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Deactivate admin account for billing subsystem with an id of {user_.login_id}")
 
             return jsonify(success={"Message": f" The email {user_.email} is deactivated successfully."})
         else:
@@ -341,9 +388,20 @@ def activate_employee_admin(login_id):
         user_ = EmployeeAdminLogin.query.filter_by(login_id=login_id).first()
 
         if user_:
-            # Update the email_confirm status to True
+            login_id = session.get("login_id")
+            if login_id is None:
+                return jsonify(success=False, message="Login id not found."), 404
+
+            user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             user_.is_active = True
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Activate admin account for employee subsystem with an id of {user_.login_id}")
 
             return jsonify(success={"Message": f" The email {user_.email} is activated successfully."})
         else:
@@ -361,9 +419,20 @@ def activate_inventory_admin(login_id):
         user_ = InventoryAdminLogin.query.filter_by(login_id=login_id).first()
 
         if user_:
-            # Update the email_confirm status to True
+            login_id = session.get("login_id")
+            if login_id is None:
+                return jsonify(success=False, message="Login id not found."), 404
+
+            user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             user_.is_active = True
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Activate admin account for inventory subsystem with an id of {user_.login_id}")
 
             return jsonify(success={"Message": f" The email {user_.email} is activated successfully."})
         else:
@@ -381,9 +450,20 @@ def deactivate_inventory_admin(login_id):
         user_ = InventoryAdminLogin.query.filter_by(login_id=login_id).first()
 
         if user_:
-            # Update the email_confirm status to True
+            login_id = session.get("login_id")
+            if login_id is None:
+                return jsonify(success=False, message="Login id not found."), 404
+
+            user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             user_.is_active = False
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Deactivate admin account for inventory subsystem with an id of {user_.login_id}")
 
             return jsonify(success={"Message": f" The email {user_.email} is deactivated successfully."})
         else:
@@ -401,9 +481,20 @@ def activate_payroll_admin(login_id):
         user_ = PayrollAdminLogin.query.filter_by(login_id=login_id).first()
 
         if user_:
-            # Update the email_confirm status to True
+            login_id = session.get("login_id")
+            if login_id is None:
+                return jsonify(success=False, message="Login id not found."), 404
+
+            user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             user_.is_active = True
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Activate admin account for payroll subsystem with an id of {user_.login_id}")
 
             return jsonify(success={"Message": f" The email {user_.email} is activated successfully."})
         else:
@@ -421,9 +512,20 @@ def deactivate_payroll_admin(login_id):
         user_ = PayrollAdminLogin.query.filter_by(login_id=login_id).first()
 
         if user_:
-            # Update the email_confirm status to True
+            login_id = session.get("login_id")
+            if login_id is None:
+                return jsonify(success=False, message="Login id not found."), 404
+
+            user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             user_.is_active = False
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                         logs_description=f"Deactivate admin account for payroll subsystem with an id of {user_.login_id}")
 
             return jsonify(success={"Message": f" The email {user_.email} is deactivated successfully."})
         else:
@@ -498,10 +600,6 @@ def register_superadmin():
 def superadmin_login():
     form = SuperadminLoginForm()
 
-    if request.args.get("refresh") == "true":
-        flash("You have been logged out.", "info")
-        return render_template("superadmin_login.html", form=form)
-
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
@@ -554,6 +652,7 @@ def superadmin_login():
 
             # Store user login_id in session storage
             session['login_id'] = user.login_id
+            print(session['login_id'])
 
             # Return a JSON response indicating successful login
             log_activity(SuperadminActivityLogs, login_id=user.login_id,
@@ -816,7 +915,21 @@ def user_registration():
 
             # Add the new user to the database
             db.session.add(new_login)
+
+            login_id = session.get("login_id")
+            print(login_id)
+            if login_id is None:
+                return jsonify(success=False, message="New to provide login id."), 404
+
+            superadmin_user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+            if not superadmin_user:
+                return jsonify(success=False, message="Superadmin user not found."), 404
+
             db.session.commit()
+
+            log_activity(SuperadminActivityLogs, login_id=login_id,
+                         logs_description=f"Add user for {subsystem} subsystem with an id of {new_login.login_id}")
 
             recipient_email = form.email.data
 
@@ -913,6 +1026,7 @@ def user_registration():
         except Exception as e:
             # Rollback the session in case of an error during registration
             db.session.rollback()
+            print({str(e)})
             return jsonify(error={"Message": f"Failed to register user. Error: {str(e)}"}), 500
 
     return render_template("registration.html", form=form)
@@ -962,8 +1076,21 @@ def activate_payroll_account(login_id):
     admin_user = PayrollAdminLogin.query.get(login_id)
 
     if admin_user:
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = True
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Activate admin account for payroll subsystem with an id of {admin_user.login_id}")
+
         return jsonify(success=True, message="Successfully activated the payroll admin account.")
     else:
         return jsonify(success=False, message="Payroll admin account not found."), 404
@@ -975,8 +1102,21 @@ def deactivate_payroll_account(login_id):
     admin_user = PayrollAdminLogin.query.get(login_id)
 
     if admin_user:
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = False
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Deactivate admin account for customer subsystem with an id of {admin_user.login_id}")
+
         return jsonify(success=True, message="Successfully deactivated the payroll admin account.")
     else:
         return jsonify(success=False, message="Payroll admin account not found."), 404
@@ -988,8 +1128,23 @@ def delete_payroll_admin_account(login_id):
     admin_user = PayrollAdminLogin.query.get(login_id)
 
     if admin_user:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         db.session.delete(admin_user)
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Delete admin account for payroll subsystem with an id of {admin_user.login_id}")
+
+
         return jsonify(success=True, message="Successfully deleted the payroll admin account.")
     else:
         return jsonify(success=False, message="Payroll admin account not found."), 404
@@ -1002,9 +1157,20 @@ def activate_customer_admin(login_id):
     user_ = CustomerAdminLogin.query.filter_by(login_id=login_id).first()
 
     if user_:
-        # Update the email_confirm status to True
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         user_.is_active = True
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Activate admin account for customer subsystem with an id of {user_.login_id}")
 
         return jsonify(success=True, message="Successfully activated the customer admin account.")
     else:
@@ -1018,9 +1184,22 @@ def deactivate_customer_admin(login_id):
     user_ = CustomerAdminLogin.query.filter_by(login_id=login_id).first()
 
     if user_:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         # Update the email_confirm status to True
         user_.is_active = False
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Deactivate admin account for customer subsystem with an id of {user_.login_id}")
 
         return jsonify(success=True, message="Successfully deactivated the customer admin account.")
     else:
@@ -1033,8 +1212,22 @@ def delete_customer_admin_account(login_id):
     admin_user = CustomerAdminLogin.query.get(login_id)
 
     if admin_user:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         db.session.delete(admin_user)
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Delete admin account for customer subsystem with an id of {admin_user.login_id}")
+
         return jsonify(success=True, message="Successfully deleted the customer admin account.")
     else:
         return jsonify(success=False, message="Customer admin account not found."), 404
@@ -1046,8 +1239,21 @@ def activate_employee_account(login_id):
     admin_user = EmployeeAdminLogin.query.get(login_id)
 
     if admin_user:
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = True
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Activate admin account for employee subsystem with an id of {admin_user.login_id}")
+
         return jsonify(success=True, message="Successfully activated the employee admin account.")
     else:
         return jsonify(success=False, message="Employee admin account not found."), 404
@@ -1059,8 +1265,20 @@ def deactivate_employee_account(login_id):
     admin_user = EmployeeAdminLogin.query.get(login_id)
 
     if admin_user:
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = False
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Deactivate admin account for employee subsystem with an id of {admin_user.login_id}")
 
         return jsonify(success=True, message="Successfully deactivated the customer admin account.")
     else:
@@ -1073,8 +1291,22 @@ def delete_employee_admin_account(login_id):
     admin_user = EmployeeAdminLogin.query.get(login_id)
 
     if admin_user:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         db.session.delete(admin_user)
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Delete admin account for employee subsystem with an id of {admin_user.login_id}")
+
         return jsonify(success=True, message="Successfully deleted the employee admin account.")
     else:
         return jsonify(success=False, message="Employee admin account not found."), 404
@@ -1086,8 +1318,20 @@ def activate_inventory_account(login_id):
     admin_user = InventoryAdminLogin.query.get(login_id)
 
     if admin_user:
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = True
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Activate admin account for inventory subsystem with an id of {admin_user.login_id}")
 
         return jsonify(success=True, message="Successfully activated the inventory admin account.")
     else:
@@ -1100,8 +1344,20 @@ def deactivate_inventory_account(login_id):
     admin_user = InventoryAdminLogin.query.get(login_id)
 
     if admin_user:
-        admin_user.is_active = False
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
+        admin_user.is_active = True
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Deactivate admin account for inventory subsystem with an id of {admin_user.login_id}")
 
         return jsonify(success=True, message="Successfully deactivated the inventory admin account.")
     else:
@@ -1114,8 +1370,23 @@ def delete_inventory_admin_account(login_id):
     admin_user = InventoryAdminLogin    .query.get(login_id)
 
     if admin_user:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         db.session.delete(admin_user)
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Delete admin account for inventory subsystem with an id of {admin_user.login_id}")
+
+
         return jsonify(success=True, message="Successfully deleted the inventory admin account.")
     else:
         return jsonify(success=False, message="Inventory admin account not found."), 404
@@ -1127,10 +1398,23 @@ def activate_billing_account(login_id):
     admin_user = BillingAdminLogin.query.get(login_id)
 
     if admin_user:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         admin_user.is_active = True
         db.session.commit()
 
-        return jsonify(success=True, message="Successfully activated the billing admin account.")
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Activate admin account for billing subsystem with an id of {admin_user.login_id}")
+
+        return jsonify(success=True, message="Successfully activated the billing admin account."), 200
     else:
         return jsonify(success=False, message="Billing admin account not found."), 404
 
@@ -1154,7 +1438,7 @@ def deactivate_billing_account(login_id):
         log_activity(SuperadminActivityLogs, login_id=user_login_id,
                      logs_description=f"Successfully deactivated the billing admin account. User is {admin_user.name}")
 
-        return jsonify(success=True, message="Successfully deactivated the billing admin account.")
+        return jsonify(success=True, message="Successfully deactivated the billing admin account."), 200
     else:
         return jsonify(success=False, message="Billing admin account not found."), 404
 
@@ -1165,8 +1449,22 @@ def delete_billing_admin_account(login_id):
     admin_user = BillingAdminLogin.query.get(login_id)
 
     if admin_user:
+
+        login_id = session.get("login_id")
+        if login_id is None:
+            return jsonify(success=False, message="Login id not found."), 404
+
+        user = SuperadminLogin.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(success=False, message="Superadmin user not found."), 404
+
         db.session.delete(admin_user)
         db.session.commit()
+
+        log_activity(SuperadminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Delete admin account for billing  subsystem with an id of {admin_user.login_id}")
+
         return jsonify(success=True, message="Successfully deleted the billing admin account.")
     else:
         return jsonify(success=False, message="billing admin account not found."), 404

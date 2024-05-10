@@ -9,6 +9,9 @@ from itsdangerous import SignatureExpired
 import smtplib
 from passlib.hash import pbkdf2_sha256
 from db import db
+from functions import log_activity
+from models.activity_logs_models import EmployeeAdminActivityLogs
+from datetime import datetime, timedelta
 
 employee_admin_api = Blueprint('employee_admin_api', __name__)
 
@@ -172,21 +175,60 @@ def login_admin():
                 return jsonify(error={"message": "Account has been deactivated. Please email as at "
                                                  "www.busyhands_cleaningservices@gmail.com"}), 401
 
-            if user and pbkdf2_sha256.verify(request.form.get("password"), user.password):
-                # access_token = create_access_token(identity=customer.customer_id)
-                # return {"access_token": access_token}
-                login_data_dict = {
-                    "login_id": user.login_id,
-                    "name": user.name,
-                    "email": user.email,
-                    "role": user.role,
-                    "is_active": user.is_active,
-                    "email_confirm": user.email_confirm,
-                }
+            if user.failed_timer is not None:
+                if user.failed_timer > datetime.now():
+                    time_remaining = user.failed_timer - datetime.now()
 
-                return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
+                    log_activity(EmployeeAdminActivityLogs, login_id=user.login_id,
+                                 logs_description=f"Too many failed attempts {user.consecutive_failed_login}x. ")
 
-            return jsonify(error={"message": "Invalid credentials."}), 401
+                    return jsonify(success=False,
+                                   message=f"Please try again in {time_remaining.seconds} seconds.")
+
+            if not pbkdf2_sha256.verify(request.form.get("password"), user.password):
+                if user.consecutive_failed_login is None:
+                    user.consecutive_failed_login = 0
+
+                user.consecutive_failed_login += 1
+
+                if user.consecutive_failed_login >= 3:
+                    user.failed_timer = datetime.now() + timedelta(seconds=30)
+
+                    log_activity(EmployeeAdminActivityLogs, login_id=user.login_id,
+                                 logs_description=f"Password incorrect {user.consecutive_failed_login}x times.")
+
+                    return jsonify(success=False, message=f"Password incorrect {user.consecutive_failed_login}x, "
+                                                          f"please try again in 30secs."), 401
+
+                log_activity(EmployeeAdminActivityLogs, login_id=user.login_id,
+                             logs_description=f"Password incorrect {user.consecutive_failed_login}")
+
+                return jsonify(
+                    error={
+                        "message": f"Password incorrect {user.consecutive_failed_login}x, please try again."}), 401
+
+            user.consecutive_failed_login = None
+            user.failed_timer = None
+
+            db.session.commit()
+            # access_token = create_access_token(identity=customer.customer_id)
+            # return {"access_token": access_token}
+            login_data_dict = {
+                "login_id": user.login_id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+                "is_active": user.is_active,
+                "email_confirm": user.email_confirm,
+                "consecutive_failed_login": user.consecutive_failed_login,
+                "failed_timer": user.failed_timer
+            }
+
+            log_activity(EmployeeAdminActivityLogs, login_id=user.login_id,
+                         logs_description=f"login")
+
+            return jsonify(success={"message": "email and password are match.", "user_data": login_data_dict}), 200
+
         except Exception as e:
             db.session.rollback()
             return jsonify(error={"Message": f"Failed to login. Error: {str(e)}"}), 500
@@ -351,6 +393,9 @@ def user_forgot_password():
             # Send the reset email
             send_reset_email(email, reset_token, existing_user.name)
 
+            log_activity(EmployeeAdminActivityLogs, login_id=existing_user.login_id,
+                         logs_description=f"Reset password link sent to {email}.")
+
             return jsonify(success={"message": "Reset link sent to your email. Check your inbox."}), 200
 
         except Exception as e:
@@ -407,6 +452,9 @@ def user_change_password(login_id):
                 # Commit the changes to the database
                 db.session.commit()
 
+                log_activity(EmployeeAdminActivityLogs, login_id=user_to_change_pass.login_id,
+                             logs_description=f"Changed password.")
+
                 return jsonify(success={"message": "Successfully change the password."}), 200
             else:
                 return jsonify(error={"message": "User not found"}), 404
@@ -418,4 +466,20 @@ def user_change_password(login_id):
         return jsonify(
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
+
+@employee_admin_api.post("/employee/admin/logout/<login_id>")
+def employee_admin_logout(login_id):
+    try:
+
+        query_data = EmployeeAdminLogin.query.filter_by(login_id=login_id).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Login id not found."}), 404
+
+        log_activity(EmployeeAdminActivityLogs, login_id=login_id, logs_description=f"User logout.")
+
+        return jsonify(success={"message": "Successfully logout."}), 200
+
+    except Exception as e:
+        return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
 

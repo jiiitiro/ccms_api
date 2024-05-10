@@ -1,8 +1,9 @@
 import os
 from flask import Blueprint, request, jsonify
 from models import Employee, Attendance, Schedule, Inventory, Supplier
+from models.activity_logs_models import InventoryAdminActivityLogs
 from db import db
-
+from functions import log_activity
 
 inventory_api = Blueprint('inventory_api', __name__)
 
@@ -64,6 +65,7 @@ def get_specific_inventory_data(inventory_id):
                 }
             ]
 
+
             return jsonify({"inventory_data": inventory_data_dict}), 200
         else:
             return jsonify(error={"message": "Inventory ID not found."}), 404
@@ -112,7 +114,20 @@ def add_item_with_supplier():
 
         db.session.add(new_inventory)
 
+        login_id = request.form.get("login_id")
+
+        if login_id is None:
+            return jsonify(error={"message": "Need to provide login id."}), 404
+
+        user = Inventory.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(error={"message": "Login id not found."}), 404
+
         db.session.commit()
+
+        log_activity(InventoryAdminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Add inventory item with an id of {new_inventory.inventory_id}")
 
         return jsonify(success={"message": "Inventory item successfully added."}), 200
 
@@ -190,7 +205,20 @@ def update_inventory_data(inventory_id):
         else:
             query_data.item_status = "Available"
 
+        login_id = request.form.get("login_id")
+
+        if login_id is None:
+            return jsonify(error={"message": "Need to provide login id."}), 404
+
+        user = Inventory.query.filter_by(login_id=login_id).first()
+
+        if not user:
+            return jsonify(error={"message": "Login id not found."}), 404
+
         db.session.commit()
+
+        log_activity(InventoryAdminActivityLogs, login_id=user.login_id,
+                     logs_description=f"Add inventory item with an id of {query_data.inventory_id}")
 
         return jsonify(success={"message": "Inventory data updated successfully"}), 200
 
