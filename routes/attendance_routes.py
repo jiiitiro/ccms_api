@@ -6,7 +6,7 @@ from models.activity_logs_models import PayrollAdminActivityLogs, AttendanceAdmi
 from db import db
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-from functions import attendance_log_activity
+from functions import attendance_log_activity, send_email_notification
 from datetime import datetime, timedelta
 
 attendance_api = Blueprint('attendance_api', __name__)
@@ -63,6 +63,8 @@ def get_attendance():
 
                 attendance_log_activity(AttendanceAdminActivityLogs, login_id=employee.employee_id, location=location,
                                         logs_description=f"Password incorrect {employee.consecutive_failed_login}x times.")
+
+                send_email_notification(employee.email, employee.last_name)
 
                 return jsonify(success=False, message=f"Password incorrect {employee.consecutive_failed_login}x, "
                                                       f"please try again in 30secs."), 401

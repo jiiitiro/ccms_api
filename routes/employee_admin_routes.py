@@ -199,7 +199,6 @@ def login_admin():
 
                     send_email_notification(user.email, user.name)
 
-
                     return jsonify(success=False, message=f"Password incorrect {user.consecutive_failed_login}x, "
                                                           f"please try again in 30secs."), 401
 

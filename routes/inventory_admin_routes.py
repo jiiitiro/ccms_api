@@ -466,3 +466,22 @@ def user_change_password(login_id):
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
+@inventory_admin_api.post("/payroll/admin/logout/<int:login_id>")
+def admin_inventory_logout(login_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+        query_data = InventoryAdminLogin.query.filter_by(login_id=login_id).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Login id not found."}), 404
+
+        log_activity(InventoryAdminLogin, login_id=query_data.login_id,
+                     logs_description=f"logout")
+
+        return jsonify(success={"message": "Successfully logout."}), 200
+    except Exception as e:
+        return jsonify(error={"message": f"Failed to update user password. Error: {str(e)}"}), 500

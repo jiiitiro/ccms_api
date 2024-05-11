@@ -3,8 +3,9 @@ from db import db
 from flask import Blueprint, request, jsonify
 from models import EmployeeRequestOrder, Employee, Inventory
 from datetime import datetime
-
 from models.inventory_models import EmployeeRequestInventoryAssociation
+from models.activity_logs_models import EmployeeAdminActivityLogs, EmployeeActivityLogs
+from functions import log_activity
 
 employee_request_api = Blueprint("employee_request_api", __name__)
 
@@ -50,6 +51,19 @@ def add_employee_request_order():
 
         db.session.add(new_employee_request_order)
         db.session.commit()
+
+        employee_id = request.form.get("employee_id")
+        if employee_id is None:
+            return jsonify(error={"message": "Need to provide employee id."}), 404
+
+        validate_employee_id = Employee.query.filter_by(employee_id=employee_id).first()
+
+        if not validate_employee_id:
+            return jsonify(error={"message": "Employee id not found."}), 404
+
+        log_activity(EmployeeActivityLogs, login_id=validate_employee_id.login_id,
+                     logs_description=f"Employee request order successfully added, "
+                                      f"with an id of {new_employee_request_order.employee_request_id}")
 
         return jsonify(success={"message": "Employee request order successfully added."}), 200
 
@@ -99,7 +113,6 @@ def get_all_employee_request_order():
 
     except Exception as e:
         return jsonify(error={"message": f"An error occurred: {str(e)}"}), 500
-
 
 
 @employee_request_api.get("/employee-request-order/<int:employee_order_id>")

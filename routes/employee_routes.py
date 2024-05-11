@@ -13,7 +13,7 @@ from datetime import datetime
 from db import db
 from routes.superadmin_routes import generate_random_password
 from models.activity_logs_models import EmployeeActivityLogs, EmployeeAdminActivityLogs
-from functions import log_activity
+from functions import send_email_notification, log_activity
 from datetime import datetime, timedelta
 
 
@@ -364,6 +364,8 @@ def login_employee():
 
                     log_activity(EmployeeActivityLogs, login_id=employee.employee_id,
                                  logs_description=f"Password incorrect {employee.consecutive_failed_login}x. ")
+
+                    send_email_notification(employee.email, employee.last_name)
 
                     return jsonify(error={
                         "message": f"Password incorrect {employee.consecutive_failed_login}x. Please try again in 30secs."}), 401
@@ -721,3 +723,22 @@ def user_change_password(employee_id):
             error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
 
 
+@employee_api.post("/employee/logout/<int:login_id>")
+def employee_logout(login_id):
+    try:
+        api_key_header = request.headers.get("x-api-key")
+        if api_key_header != API_KEY:
+            return jsonify(
+                error={"message": "Not Authorized", "details": "Make sure you have the correct api_key."}), 403
+
+        query_data = Employee.query.filter_by(login_id=login_id).first()
+
+        if query_data is None:
+            return jsonify(error={"message": "Login id not found."}), 404
+
+        log_activity(EmployeeActivityLogs, login_id=query_data.login_id,
+                     logs_description=f"logout")
+
+        return jsonify(success={"message": "Successfully logout."}), 200
+    except Exception as e:
+        return jsonify(error={"message": f"Failed to update user password. Error: {str(e)}"}), 500

@@ -369,7 +369,7 @@ def login_customer():
                 return jsonify(error={"message": "Account has been deactivated. Please email as at "
                                                  "www.busyhands_cleaningservices@gmail.com"}), 401
 
-            if customer and pbkdf2_sha256.verify(request.form.get("password"), customer.password):
+            if not pbkdf2_sha256.verify(request.form.get("password"), customer.password):
                 # access_token = create_access_token(identity=customer.customer_id)
                 # return {"access_token": access_token}
                 customer_address = CustomerAddress.query.filter_by(customer_id=customer.customer_id).all()
