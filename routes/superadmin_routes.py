@@ -1537,7 +1537,7 @@ def employee_activity_logs():
 @superadmin_api.get("/superadmin/inventory/activity-logs")
 @login_required
 def inventory_activity_logs():
-    activity_logs = EmployeeAdminActivityLogs.query.all()
+    activity_logs = InventoryAdminActivityLogs.query.all()
 
     inventory_logs_data = [{
         "log_id": log.log_id,
