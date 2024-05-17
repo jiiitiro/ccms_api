@@ -2,6 +2,7 @@ import os
 from flask import Blueprint, request, jsonify
 from models import Employee, Attendance, Schedule, Inventory, Supplier
 from models.activity_logs_models import InventoryAdminActivityLogs
+from models.admin_logins_models import InventoryAdminLogin
 from db import db
 from functions import log_activity
 
@@ -119,7 +120,7 @@ def add_item_with_supplier():
         if login_id is None:
             return jsonify(error={"message": "Need to provide login id."}), 404
 
-        user = Inventory.query.filter_by(login_id=login_id).first()
+        user = InventoryAdminLogin.query.filter_by(login_id=login_id).first()
 
         if not user:
             return jsonify(error={"message": "Login id not found."}), 404
