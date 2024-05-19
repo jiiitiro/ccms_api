@@ -162,13 +162,6 @@ def register_employee():
             db.session.add(new_schedule)
             db.session.commit()
 
-            login_id = request.form.get("login_id")
-            if login_id is None:
-                return jsonify(error={"message": "Need to provide the login id of the admin user."}), 404
-
-            log_activity(EmployeeAdminActivityLogs, login_id=login_id,
-                         logs_description=f"Register user with an id of {new_employee.employee_id}")
-
             # Prepare response data
             new_employee_dict = {
                 "employee_id": new_employee.employee_id,

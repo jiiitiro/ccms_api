@@ -148,21 +148,7 @@ def add_purchase_order():
             new_purchase_order.purchase_order_associations.append(new_association)
 
         db.session.add(new_purchase_order)
-
-        login_id = request.form.get("login_id")
-
-        if login_id is None:
-            return jsonify(error={"message": "Need to provide login id."}), 404
-
-        user = InventoryAdminLogin.query.filter_by(login_id=login_id).first()
-
-        if not user:
-            return jsonify(error={"message": "Login id not found."}), 404
-
         db.session.commit()
-
-        log_activity(InventoryAdminActivityLogs, login_id=user.login_id,
-                     logs_description=f"Add purchase order with an id of {new_purchase_order.purchase_order_id}")
 
         return jsonify(success={"message": "Purchase order successfully added."}), 200
 
